@@ -281,7 +281,7 @@ public class EvaluationPane extends JPanel
 		deltaLbl.setText(nf.format(engine.evaluation.deltaCityPop));
 		assessLbl.setText(formatFunds(engine.evaluation.cityAssValue));
 		cityClassLbl.setText(getCityClassName(engine.evaluation.cityClass));
-		gameLevelLbl.setText(getGameLevelName(engine.gameLevel));
+		gameLevelLbl.setText(engine.getGameLevel().name());
 		scoreLbl.setText(nf.format(engine.evaluation.cityScore));
 		scoreDeltaLbl.setText(nf.format(engine.evaluation.deltaCityScore));
 	}

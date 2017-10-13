@@ -20,17 +20,17 @@ import static micropolisj.engine.TrafficGen.ZoneType;
  */
 class MapScanner extends TileBehavior
 {
-	final B behavior;
+	final TileBehaviour behavior;
 	TrafficGen traffic;
 
-	MapScanner(Micropolis city, B behavior)
+	MapScanner(Micropolis city, TileBehaviour behavior)
 	{
 		super(city);
 		this.behavior = behavior;
 		this.traffic = new TrafficGen(city);
 	}
 
-	public static enum B
+	public static enum TileBehaviour
 	{
 		RESIDENTIAL,
 		HOSPITAL_CHURCH,
@@ -193,7 +193,7 @@ class MapScanner extends TileBehavior
 	void doNuclearPower()
 	{
 		boolean powerOn = checkZonePower();
-		if (!city.noDisasters && PRNG.nextInt(city.MltdwnTab[city.gameLevel]+1) == 0) {
+		if (!city.noDisasters && PRNG.nextInt(city.getGameLevel().getMeltdownRand()+1) == 0) {
 			city.doMeltdown(xpos, ypos);
 			return;
 		}
@@ -317,7 +317,7 @@ class MapScanner extends TileBehavior
 	/**
 	 * Place hospital or church if needed.
 	 */
-	void makeHospital()
+	void makeHospitalOrChurch()
 	{
 		if (city.needHospital > 0)
 		{
@@ -572,7 +572,7 @@ class MapScanner extends TileBehavior
 			{
 				if (tpop == 0 && PRNG.nextInt(4) == 0)
 				{
-					makeHospital();
+					makeHospitalOrChurch();
 					return;
 				}
 

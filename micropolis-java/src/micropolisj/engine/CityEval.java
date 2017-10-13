@@ -92,8 +92,8 @@ public class CityEval
 	void calculateAssValue()
 	{
 		int z = 0;
-		z += engine.roadTotal * 5;
-		z += engine.railTotal * 10;
+		z += engine.getRoadTotal() * 5;
+		z += engine.getRailTotal() * 10;
 		z += engine.policeCount * 1000;
 		z += engine.fireStationCount * 1000;
 		z += engine.hospitalCount * 400;
@@ -208,7 +208,7 @@ public class CityEval
 
 	int getFire()
 	{
-		int z = engine.firePop * 5;
+		int z = engine.getFireCount() * 5;
 		return Math.min(255, z);
 	}
 
@@ -234,7 +234,7 @@ public class CityEval
 		if (engine.resCap) { z = 0.85 * z; }
 		if (engine.comCap) { z = 0.85 * z; }
 		if (engine.indCap) { z = 0.85 * z; }
-		if (engine.roadEffect < 32) { z -= (32 - engine.roadEffect); }
+		if (engine.getRoadEffect() < 32) { z -= (32 - engine.getRoadEffect()); }
 		if (engine.policeEffect < 1000) { z *= (0.9 + (engine.policeEffect / 10000.1)); }
 		if (engine.fireEffect < 1000) { z *= (0.9 + (engine.fireEffect / 10000.1)); }
 		if (engine.resValve < -1000) { z *= 0.85; }

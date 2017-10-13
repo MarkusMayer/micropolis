@@ -15,9 +15,9 @@ public abstract class TileBehavior
 {
 	protected final Micropolis city;
 	protected final Random PRNG;
-	int xpos;
-	int ypos;
-	int tile;
+	protected int xpos;
+	protected int ypos;
+	protected int tile;
 
 	protected TileBehavior(Micropolis city)
 	{

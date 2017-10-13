@@ -8,10 +8,64 @@
 
 package micropolisj.engine;
 
-import java.io.*;
-import java.util.*;
+import static micropolisj.engine.TileConstants.ALLBITS;
+import static micropolisj.engine.TileConstants.CHANNEL;
+import static micropolisj.engine.TileConstants.COMBASE;
+import static micropolisj.engine.TileConstants.DIRT;
+import static micropolisj.engine.TileConstants.FIRE;
+import static micropolisj.engine.TileConstants.FLOOD;
+import static micropolisj.engine.TileConstants.HHTHR;
+import static micropolisj.engine.TileConstants.INDBASE;
+import static micropolisj.engine.TileConstants.LASTZONE;
+import static micropolisj.engine.TileConstants.LHTHR;
+import static micropolisj.engine.TileConstants.LOMASK;
+import static micropolisj.engine.TileConstants.NUCLEAR;
+import static micropolisj.engine.TileConstants.PORTBASE;
+import static micropolisj.engine.TileConstants.POWERPLANT;
+import static micropolisj.engine.TileConstants.PWRBIT;
+import static micropolisj.engine.TileConstants.RADTILE;
+import static micropolisj.engine.TileConstants.RESCLR;
+import static micropolisj.engine.TileConstants.RIVER;
+import static micropolisj.engine.TileConstants.RUBBLE;
+import static micropolisj.engine.TileConstants.commercialZonePop;
+import static micropolisj.engine.TileConstants.getDescriptionNumber;
+import static micropolisj.engine.TileConstants.getPollutionValue;
+import static micropolisj.engine.TileConstants.getTileBehavior;
+import static micropolisj.engine.TileConstants.getZoneSizeFor;
+import static micropolisj.engine.TileConstants.industrialZonePop;
+import static micropolisj.engine.TileConstants.isAnimated;
+import static micropolisj.engine.TileConstants.isArsonable;
+import static micropolisj.engine.TileConstants.isCombustible;
+import static micropolisj.engine.TileConstants.isConductive;
+import static micropolisj.engine.TileConstants.isConstructed;
+import static micropolisj.engine.TileConstants.isFloodable;
+import static micropolisj.engine.TileConstants.isRiverEdge;
+import static micropolisj.engine.TileConstants.isVulnerable;
+import static micropolisj.engine.TileConstants.isZoneCenter;
+import static micropolisj.engine.TileConstants.residentialZonePop;
 
-import static micropolisj.engine.TileConstants.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Stack;
+
+import micropolisj.engine.behaviour.Explosion;
+import micropolisj.engine.behaviour.Fire;
+import micropolisj.engine.behaviour.Flood;
+import micropolisj.engine.behaviour.Radioactive;
+import micropolisj.engine.behaviour.Rail;
+import micropolisj.engine.behaviour.Road;
 
 /**
  * The main simulation engine for Micropolis.
@@ -100,16 +154,16 @@ public class Micropolis
 	public Speed simSpeed = Speed.NORMAL;
 	public boolean noDisasters = false;
 
-	public int gameLevel;
+	private Levels gameLevel=Levels.easy;
 
 	boolean autoGo;
 
 	// census numbers, reset in phase 0 of each cycle, summed during map scan
 	int poweredZoneCount;
 	int unpoweredZoneCount;
-	int roadTotal;
-	int railTotal;
-	int firePop;
+	private int roadTotal;
+	private int railTotal;
+	private int fireCounter;
 	int resZoneCount;
 	int comZoneCount;
 	int indZoneCount;
@@ -174,7 +228,8 @@ public class Micropolis
 	public double firePercent = 1.0;
 
 	int taxEffect = 7;
-	int roadEffect = 32;
+	private int roadEffect = 32;
+
 	int policeEffect = 1000;
 	int fireEffect = 1000;
 
@@ -193,7 +248,7 @@ public class Micropolis
 
 	public CityEval evaluation;
 
-	ArrayList<Sprite> sprites = new ArrayList<Sprite>();
+	private ArrayList<Sprite> sprites = new ArrayList<Sprite>();
 
 	static final int VALVERATE = 2;
 	public static final int CENSUSRATE = 4;
@@ -251,6 +306,10 @@ public class Micropolis
 		centerMassY = hY;
 	}
 
+	public Levels getGameLevel() {
+		return gameLevel;
+	}
+	
 	void fireCensusChanged()
 	{
 		for (Listener l : listeners) {
@@ -520,7 +579,7 @@ public class Micropolis
 	{
 		poweredZoneCount = 0;
 		unpoweredZoneCount = 0;
-		firePop = 0;
+		fireCounter = 0;
 		roadTotal = 0;
 		railTotal = 0;
 		resPop = 0;
@@ -853,16 +912,16 @@ public class Micropolis
 				int val = landValueMem[hy][hx];
 				if (val != 0) {
 					count++;
-					int z = 128 - val + popDensity[hy][hx];
-					z = Math.min(300, z);
-					z -= policeMap[hy/4][hx/4];
-					z = Math.min(250, z);
-					z = Math.max(0, z);
-					crimeMem[hy][hx] = z;
+					int newCrimeLevel = 128 - val + popDensity[hy][hx];
+					newCrimeLevel = Math.min(300, newCrimeLevel);
+					newCrimeLevel -= policeMap[hy/4][hx/4];
+					newCrimeLevel = Math.min(250, newCrimeLevel);
+					newCrimeLevel = Math.max(0, newCrimeLevel);
+					crimeMem[hy][hx] = newCrimeLevel;
 
-					sum += z;
-					if (z > cmax || (z == cmax && PRNG.nextInt(4) == 0)) {
-						cmax = z;
+					sum += newCrimeLevel;
+					if (newCrimeLevel > cmax || (newCrimeLevel == cmax && PRNG.nextInt(4) == 0)) {
+						cmax = newCrimeLevel;
 						crimeMaxLocationX = hx*2;
 						crimeMaxLocationY = hy*2;
 					}
@@ -887,11 +946,11 @@ public class Micropolis
 			floodCnt--;
 		}
 
-		final int [] DisChance = { 480, 240, 60 };
+//		final int [] DisChance = { 480, 240, 60 };
 		if (noDisasters)
 			return;
 
-		if (PRNG.nextInt(DisChance[gameLevel]+1) != 0)
+		if (PRNG.nextInt(gameLevel.getDisiasterChance()+1) != 0)
 			return;
 
 		switch (PRNG.nextInt(9))
@@ -938,6 +997,14 @@ public class Micropolis
 			}
 		}
 		return nmap;
+	}
+	
+	public int getFireCount() {
+		return fireCounter;
+	}
+	
+	public void reportActiveFire() {
+		fireCounter++;
 	}
 
 	void fireAnalysis()
@@ -1254,9 +1321,9 @@ public class Micropolis
 		return new CityLocation(pollutionMaxLocationX, pollutionMaxLocationY);
 	}
 
-	static final int [] TaxTable = {
-		200, 150, 120, 100, 80, 50, 30, 0, -10, -40, -100,
-		-150, -200, -250, -300, -350, -400, -450, -500, -550, -600 };
+//	static final int [] TaxTable = {
+//		200, 150, 120, 100, 80, 50, 30, 0, -10, -40, -100,
+//		-150, -200, -250, -300, -350, -400, -450, -500, -550, -600 };
 
 	public static class History
 	{
@@ -1310,14 +1377,8 @@ public class Micropolis
 		double internalMarket = (double)(normResPop + comPop + indPop) / 3.7;
 		double projectedComPop = internalMarket * laborBase;
 
-		int z = gameLevel;
-		temp = 1.0;
-		switch (z)
-		{
-		case 0: temp = 1.2; break;
-		case 1: temp = 1.1; break;
-		case 2: temp = 0.98; break;
-		}
+//		int z = gameLevel;
+		temp = gameLevel.getLaborBaseMulti();
 
 		double projectedIndPop = indPop * laborBase * temp;
 		if (projectedIndPop < 5.0)
@@ -1354,13 +1415,9 @@ public class Micropolis
 		if (indRatio > 2.0)
 			indRatio = 2.0;
 
-		int z2 = taxEffect + gameLevel;
-		if (z2 > 20)
-			z2 = 20;
-
-		resRatio = (resRatio - 1) * 600 + TaxTable[z2];
-		comRatio = (comRatio - 1) * 600 + TaxTable[z2];
-		indRatio = (indRatio - 1) * 600 + TaxTable[z2];
+		resRatio = (resRatio - 1) * 600 + gameLevel.getTaxModifier(taxEffect);
+		comRatio = (comRatio - 1) * 600 + gameLevel.getTaxModifier(taxEffect);
+		indRatio = (indRatio - 1) * 600 + gameLevel.getTaxModifier(taxEffect);
 
 		// ratios are velocity changes to valves
 		resValve += (int) resRatio;
@@ -1449,24 +1506,24 @@ public class Micropolis
 		HashMap<String,TileBehavior> bb;
 		bb = new HashMap<String,TileBehavior>();
 
-		bb.put("FIRE", new TerrainBehavior(this, TerrainBehavior.B.FIRE));
-		bb.put("FLOOD", new TerrainBehavior(this, TerrainBehavior.B.FLOOD));
-		bb.put("RADIOACTIVE", new TerrainBehavior(this, TerrainBehavior.B.RADIOACTIVE));
-		bb.put("ROAD", new TerrainBehavior(this, TerrainBehavior.B.ROAD));
-		bb.put("RAIL", new TerrainBehavior(this, TerrainBehavior.B.RAIL));
-		bb.put("EXPLOSION", new TerrainBehavior(this, TerrainBehavior.B.EXPLOSION));
-		bb.put("RESIDENTIAL", new MapScanner(this, MapScanner.B.RESIDENTIAL));
-		bb.put("HOSPITAL_CHURCH", new MapScanner(this, MapScanner.B.HOSPITAL_CHURCH));
-		bb.put("COMMERCIAL", new MapScanner(this, MapScanner.B.COMMERCIAL));
-		bb.put("INDUSTRIAL", new MapScanner(this, MapScanner.B.INDUSTRIAL));
-		bb.put("COAL", new MapScanner(this, MapScanner.B.COAL));
-		bb.put("NUCLEAR", new MapScanner(this, MapScanner.B.NUCLEAR));
-		bb.put("FIRESTATION", new MapScanner(this, MapScanner.B.FIRESTATION));
-		bb.put("POLICESTATION", new MapScanner(this, MapScanner.B.POLICESTATION));
-		bb.put("STADIUM_EMPTY", new MapScanner(this, MapScanner.B.STADIUM_EMPTY));
-		bb.put("STADIUM_FULL", new MapScanner(this, MapScanner.B.STADIUM_FULL));
-		bb.put("AIRPORT", new MapScanner(this, MapScanner.B.AIRPORT));
-		bb.put("SEAPORT", new MapScanner(this, MapScanner.B.SEAPORT));
+		bb.put("FIRE", new Fire(this));
+		bb.put("FLOOD", new Flood(this));
+		bb.put("RADIOACTIVE", new Radioactive(this));
+		bb.put("ROAD", new Road(this));
+		bb.put("RAIL", new Rail(this));
+		bb.put("EXPLOSION", new Explosion (this));
+		bb.put("RESIDENTIAL", new MapScanner(this, MapScanner.TileBehaviour.RESIDENTIAL));
+		bb.put("HOSPITAL_CHURCH", new MapScanner(this, MapScanner.TileBehaviour.HOSPITAL_CHURCH));
+		bb.put("COMMERCIAL", new MapScanner(this, MapScanner.TileBehaviour.COMMERCIAL));
+		bb.put("INDUSTRIAL", new MapScanner(this, MapScanner.TileBehaviour.INDUSTRIAL));
+		bb.put("COAL", new MapScanner(this, MapScanner.TileBehaviour.COAL));
+		bb.put("NUCLEAR", new MapScanner(this, MapScanner.TileBehaviour.NUCLEAR));
+		bb.put("FIRESTATION", new MapScanner(this, MapScanner.TileBehaviour.FIRESTATION));
+		bb.put("POLICESTATION", new MapScanner(this, MapScanner.TileBehaviour.POLICESTATION));
+		bb.put("STADIUM_EMPTY", new MapScanner(this, MapScanner.TileBehaviour.STADIUM_EMPTY));
+		bb.put("STADIUM_FULL", new MapScanner(this, MapScanner.TileBehaviour.STADIUM_FULL));
+		bb.put("AIRPORT", new MapScanner(this, MapScanner.TileBehaviour.AIRPORT));
+		bb.put("SEAPORT", new MapScanner(this, MapScanner.TileBehaviour.SEAPORT));
 
 		this.tileBehaviors = bb;
 	}
@@ -1572,7 +1629,7 @@ public class Micropolis
 		}
 	}
 
-	void generateTrain(int xpos, int ypos)
+	public void generateTrain(int xpos, int ypos)
 	{
 		if (totalPop > 20 &&
 			!hasSprite(SpriteKind.TRA) &&
@@ -1717,11 +1774,11 @@ public class Micropolis
 
 	/** Road/rail maintenance cost multiplier, for various difficulty settings.
 	 */
-	static final double [] RLevels = { 0.7, 0.9, 1.2 };
+//	static final double [] RLevels = { 0.7, 0.9, 1.2 };
 
 	/** Tax income multiplier, for various difficulty settings.
 	 */
-	static final double [] FLevels = { 1.4, 1.2, 0.8 };
+//	static final double [] FLevels = { 1.4, 1.2, 0.8 };
 
 	void collectTaxPartial()
 	{
@@ -1799,10 +1856,10 @@ public class Micropolis
 		b.policePercent = Math.max(0.0, policePercent);
 
 		b.previousBalance = budget.totalFunds;
-		b.taxIncome = (int)Math.round(lastTotalPop * landValueAverage / 120 * b.taxRate * FLevels[gameLevel]);
+		b.taxIncome = (int)Math.round(lastTotalPop * landValueAverage / 120 * b.taxRate * gameLevel.getTaxIncomeMulti());
 		assert b.taxIncome >= 0;
 
-		b.roadRequest = (int)Math.round((lastRoadTotal + lastRailTotal * 2) * RLevels[gameLevel]);
+		b.roadRequest = (int)Math.round((lastRoadTotal + lastRailTotal * 2) * gameLevel.getTrafficMaintenanceMulti());
 		b.fireRequest = FIRE_STATION_MAINTENANCE * lastFireStationCount;
 		b.policeRequest = POLICE_STATION_MAINTENANCE * lastPoliceCount;
 
@@ -1937,7 +1994,7 @@ public class Micropolis
 		landValueAverage = dis.readShort(); //[12]
 		crimeAverage = dis.readShort();
 		pollutionAverage = dis.readShort(); //[14]
-		gameLevel = dis.readShort();
+		gameLevel = Levels.getLevelByKey(dis.readShort());
 		evaluation.cityClass = dis.readShort();  //[16]
 		evaluation.cityScore = dis.readShort();
 
@@ -1976,7 +2033,7 @@ public class Micropolis
 
 		if (cityTime < 0) { cityTime = 0; }
 		if (cityTax < 0 || cityTax > 20) { cityTax = 7; }
-		if (gameLevel < 0 || gameLevel > 2) { gameLevel = 0; }
+//		if (gameLevel < 0 || gameLevel > 2) { gameLevel = 0; }
 		if (evaluation.cityClass < 0 || evaluation.cityClass > 5) { evaluation.cityClass = 0; }
 		if (evaluation.cityScore < 1 || evaluation.cityScore > 999) { evaluation.cityScore = 500; }
 
@@ -2006,7 +2063,7 @@ public class Micropolis
 		out.writeShort(landValueAverage);
 		out.writeShort(crimeAverage);
 		out.writeShort(pollutionAverage);
-		out.writeShort(gameLevel);
+		out.writeShort(gameLevel.getKey());
 		//16
 		out.writeShort(evaluation.cityClass);
 		out.writeShort(evaluation.cityScore);
@@ -2227,6 +2284,16 @@ public class Micropolis
 			}
 		}
 	}
+	
+	public Optional<Sprite> getVisibleBoatSprite() {
+		for (Sprite s : sprites) {
+			if (s.isVisible() && s.kind==SpriteKind.SHI) {
+				return Optional.of(s);
+			}
+		}
+		
+		return Optional.empty();
+	}
 
 	public int getCityPopulation()
 	{
@@ -2401,6 +2468,10 @@ public class Micropolis
 		}
 	}
 
+	public boolean isCurrentlyFlooded() {
+		return floodCnt>0;
+	}
+	
 	/**
 	 * Makes all component tiles of a zone bulldozable.
 	 * Should be called whenever the key zone tile of a zone is destroyed,
@@ -2408,7 +2479,7 @@ public class Micropolis
 	 * the zone.
 	 * @see #shutdownZone
 	 */
-	void killZone(int xpos, int ypos, int zoneTile)
+	public void killZone(int xpos, int ypos, int zoneTile)
 	{
 		rateOGMem[ypos/8][xpos/8] -= 20;
 
@@ -2477,7 +2548,7 @@ public class Micropolis
 		}
 	}
 
-	void makeExplosion(int xpos, int ypos)
+	public void makeExplosion(int xpos, int ypos)
 	{
 		makeExplosionAt(xpos*16+8, ypos*16+8);
 	}
@@ -2685,7 +2756,31 @@ public class Micropolis
 	{
 		return resValve;
 	}
+	
+	public int getRoadEffect() {
+		return roadEffect;
+	}
+	
+	public int getRailTotal() {
+		return railTotal;
+	}
+	
+	public void incRailCounter() {
+		railTotal++;
+	}
+	
+	public int getRoadTotal() {
+		return roadTotal;
+	}
 
+	public void incRoadCounter() {
+		this.roadTotal++;
+	}
+
+	public void incRoadCounter(int inc) {
+		this.roadTotal+=inc;
+	}
+	
 	public int getComValve()
 	{
 		return comValve;
@@ -2696,10 +2791,8 @@ public class Micropolis
 		return indValve;
 	}
 
-	public void setGameLevel(int newLevel)
+	public void setGameLevel(Levels newLevel)
 	{
-		assert GameLevel.isValid(newLevel);
-
 		gameLevel = newLevel;
 		fireOptionsChanged();
 	}

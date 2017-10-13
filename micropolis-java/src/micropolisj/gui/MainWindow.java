@@ -509,16 +509,15 @@ public class MainWindow extends JFrame
 		setupKeys(levelMenu, "menu.difficulty");
 		optionsMenu.add(levelMenu);
 
-		difficultyMenuItems = new HashMap<Integer,JMenuItem>();
-		for (int i = GameLevel.MIN_LEVEL; i <= GameLevel.MAX_LEVEL; i++)
+		difficultyMenuItems = new HashMap<Levels,JMenuItem>();
+		for (Levels level: Levels.values())
 		{
-			final int level = i;
-			menuItem = new JRadioButtonMenuItem(strings.getString("menu.difficulty."+level));
-			setupKeys(menuItem, "menu.difficulty."+level);
+			menuItem = new JRadioButtonMenuItem(strings.getString("menu.difficulty."+level.getKey()));
+			setupKeys(menuItem, "menu.difficulty."+level.getKey());
 			menuItem.addActionListener(wrapActionListener(
 				new ActionListener() {
 				public void actionPerformed(ActionEvent evt) {
-					onDifficultyClicked(level);
+					getEngine().setGameLevel(level);
 				}
 			}));
 			levelMenu.add(menuItem);
@@ -798,7 +797,7 @@ public class MainWindow extends JFrame
 	JMenuItem disastersMenuItem;
 	JMenuItem soundsMenuItem;
 	Map<Speed,JMenuItem> priorityMenuItems;
-	Map<Integer,JMenuItem> difficultyMenuItems;
+	Map<Levels,JMenuItem> difficultyMenuItems;
 
 	private void onAutoBudgetClicked()
 	{
@@ -1506,10 +1505,10 @@ public class MainWindow extends JFrame
 		}
 	}
 
-	private void onDifficultyClicked(int newDifficulty)
-	{
-		getEngine().setGameLevel(newDifficulty);
-	}
+//	private void onDifficultyClicked(Levels newDifficulty)
+//	{
+//		getEngine().setGameLevel(newDifficulty);
+//	}
 
 	private void onPriorityClicked(Speed newSpeed)
 	{
@@ -1590,7 +1589,7 @@ public class MainWindow extends JFrame
 		}
 		for (int i = GameLevel.MIN_LEVEL; i <= GameLevel.MAX_LEVEL; i++)
 		{
-			difficultyMenuItems.get(i).setSelected(getEngine().gameLevel == i);
+			difficultyMenuItems.get(getEngine().getGameLevel()).setSelected(true);
 		}
 	}
 

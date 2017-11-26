@@ -36,7 +36,7 @@ public class MapGenerator
 	{
 		assert engine != null;
 		this.engine = engine;
-		this.map = engine.map;
+		this.map = engine.getMap();
 	}
 
 	private int getWidth()

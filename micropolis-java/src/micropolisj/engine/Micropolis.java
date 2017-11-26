@@ -60,12 +60,25 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
 
+import micropolisj.engine.behaviour.Airport;
+import micropolisj.engine.behaviour.CoalPower;
+import micropolisj.engine.behaviour.Commercial;
 import micropolisj.engine.behaviour.Explosion;
 import micropolisj.engine.behaviour.Fire;
+import micropolisj.engine.behaviour.FireStation;
 import micropolisj.engine.behaviour.Flood;
+import micropolisj.engine.behaviour.HospitalChurch;
+import micropolisj.engine.behaviour.Industrial;
+import micropolisj.engine.behaviour.IceRink;
+import micropolisj.engine.behaviour.NuclearPower;
+import micropolisj.engine.behaviour.PoliceStation;
 import micropolisj.engine.behaviour.Radioactive;
 import micropolisj.engine.behaviour.Rail;
+import micropolisj.engine.behaviour.Residential;
 import micropolisj.engine.behaviour.Road;
+import micropolisj.engine.behaviour.Seaport;
+import micropolisj.engine.behaviour.StadiumEmpty;
+import micropolisj.engine.behaviour.StadiumFull;
 
 /**
  * The main simulation engine for Micropolis.
@@ -79,7 +92,7 @@ public class Micropolis
 	Random PRNG;
 
 	// full size arrays
-	char [][] map;
+	private char [][] map;
 	boolean [][] powerMap;
 
 	// half-size arrays
@@ -136,19 +149,21 @@ public class Micropolis
 	 */
 	public int [][] rateOGMem; //rate of growth?
 
-	int [][] fireStMap;      //firestations- cleared and rebuilt each sim cycle
+	private int [][] fireStMap;      //firestations- cleared and rebuilt each sim cycle
+	
 	public int [][] fireRate;       //firestations reach- used for overlay graphs
-	int [][] policeMap;      //police stations- cleared and rebuilt each sim cycle
+	private int [][] policeMap;      //police stations- cleared and rebuilt each sim cycle
 	public int [][] policeMapEffect;//police stations reach- used for overlay graphs
 
 	/** For each 8x8 section of city, this is an integer between 0 and 64,
 	 * with higher numbers being closer to the center of the city. */
-	int [][] comRate;
+	private int [][] comRate;
 
 	static final int DEFAULT_WIDTH = 120;
 	static final int DEFAULT_HEIGHT = 100;
 
-	public final CityBudget budget = new CityBudget(this);
+//	public final CityBudget budget = new CityBudget(this);
+	public final CityBudget budget = new CityBudget();
 	public boolean autoBulldoze = true;
 	public boolean autoBudget = false;
 	public Speed simSpeed = Speed.NORMAL;
@@ -159,27 +174,27 @@ public class Micropolis
 	boolean autoGo;
 
 	// census numbers, reset in phase 0 of each cycle, summed during map scan
-	int poweredZoneCount;
-	int unpoweredZoneCount;
+	private int poweredZoneCount;
+	private int unpoweredZoneCount;
 	private int roadTotal;
 	private int railTotal;
 	private int fireCounter;
-	int resZoneCount;
-	int comZoneCount;
-	int indZoneCount;
-	int resPop;
-	int comPop;
-	int indPop;
-	int hospitalCount;
-	int churchCount;
-	int policeCount;
-	int fireStationCount;
-	int stadiumCount;
-	int coalCount;
-	int nuclearCount;
-	int seaportCount;
-	int airportCount;
-
+	private int resZoneCount;
+	private int comZoneCount;
+	private int indZoneCount;
+	private int resPop;
+	private int comPop;
+	private int indPop;
+	private int hospitalCount;
+	private int churchCount;
+	private int policeCount;
+	private int fireStationCount;
+	private int stadiumCount;
+	private int coalCount;
+	private int nuclearCount;
+	private int seaportCount;
+	private int airportCount;
+	
 	int totalPop;
 	int lastCityPop;
 
@@ -201,17 +216,17 @@ public class Micropolis
 	CityLocation meltdownLocation;  //may be null
 	CityLocation crashLocation;     //may be null
 
-	int needHospital; // -1 too many already, 0 just right, 1 not enough
-	int needChurch;   // -1 too many already, 0 just right, 1 not enough
+	private TypeDemand needHospital; // -1 too many already, 0 just right, 1 not enough
+	private TypeDemand needChurch;   // -1 too many already, 0 just right, 1 not enough
 
 	int crimeAverage;
 	int pollutionAverage;
 	int landValueAverage;
 	int trafficAverage;
 
-	int resValve;   // ranges between -2000 and 2000, updated by setValves
-	int comValve;   // ranges between -1500 and 1500
-	int indValve;   // ranges between -1500 and 1500
+	private int resValve;   // ranges between -2000 and 2000, updated by setValves
+	private int comValve;   // ranges between -1500 and 1500
+	private int indValve;   // ranges between -1500 and 1500
 
 	boolean resCap;  // residents demand a stadium, caps resValve at 0
 	boolean comCap;  // commerce demands airport,   caps comValve at 0
@@ -230,8 +245,8 @@ public class Micropolis
 	int taxEffect = 7;
 	private int roadEffect = 32;
 
-	int policeEffect = 1000;
-	int fireEffect = 1000;
+	private int policeEffect = 1000;
+	private int fireEffect = 1000;
 
 	int cashFlow; //net change in totalFunds in previous year
 
@@ -263,6 +278,11 @@ public class Micropolis
 	public Micropolis()
 	{
 		this(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+	}
+	
+	public Micropolis(int width, int height, Random rnd) {
+		this(width,height);
+		PRNG=rnd;
 	}
 
 	public Micropolis(int width, int height)
@@ -484,6 +504,7 @@ public class Micropolis
 
 	public char getTile(int xpos, int ypos)
 	{
+//		System.out.println("xpos/ypos: "+xpos+"/"+ypos+" ==> "+(int)map[40][33]);
 		return (char)(map[ypos][xpos] & LOMASK);
 	}
 
@@ -550,7 +571,7 @@ public class Micropolis
 			ypos >= 0 && ypos < getHeight();
 	}
 
-	final boolean hasPower(int x, int y)
+	public final boolean hasPower(int x, int y)
 	{
 		return powerMap[y][x];
 	}
@@ -979,6 +1000,14 @@ public class Micropolis
 			break;
 		}
 	}
+	
+	public void addFireStationMapValue(int x, int y, int value) {
+		fireStMap[y][x]+=value;
+	}
+	
+	public void addPoliceStationMapValue(int x, int y, int value) {
+		policeMap[y][x]+=value;
+	}
 
 	private int[][] smoothFirePoliceMap(int[][] omap)
 	{
@@ -997,6 +1026,86 @@ public class Micropolis
 			}
 		}
 		return nmap;
+	}
+	
+	public int getPoliceEffect() {
+		return policeEffect;
+	}
+
+	public int getFireEffect() {
+		return fireEffect;
+	}
+	
+	public int getHospitalCount() {
+		return hospitalCount;
+	}
+
+	public int getChurchCount() {
+		return churchCount;
+	}
+
+	public int getStadiumCount() {
+		return stadiumCount;
+	}
+
+	public int getNuclearCount() {
+		return nuclearCount;
+	}
+
+	public int getSeaportCount() {
+		return seaportCount;
+	}
+
+	public int getAirportCount() {
+		return airportCount;
+	}
+
+	public int getPoliceCount() {
+		return policeCount;
+	}
+
+	public int getFireStationCount() {
+		return fireStationCount;
+	}
+
+	public void incHospitalCount() {
+		hospitalCount++;
+	}
+	
+	public void incChurchCount() {
+		churchCount++;
+	}
+	
+	public void incPoliceCount() {
+		policeCount++;
+	}
+	
+	public void incFireStationCount() {
+		fireStationCount++;
+	}
+	
+	public void incStadiumCount() {
+		stadiumCount++;
+	}
+	
+	public void incNuclearCount() {
+		nuclearCount++;
+	}
+	
+	public void incSeaportCount() {
+		seaportCount++;
+	}
+	
+	public void incAirportCount() {
+		airportCount++;
+	}
+	
+	public int getCoalCount() {
+		return coalCount;
+	}
+
+	public void incCoalCount() {
+		this.coalCount++;
 	}
 	
 	public int getFireCount() {
@@ -1199,6 +1308,12 @@ public class Micropolis
 			return 0;
 		}
 	}
+	
+	public void setTrafficDensity(int xpos, int ypos,int newTrfDensity) {
+		if (testBounds(xpos, ypos)) {
+			trfDensity[ypos/2][xpos/2]=newTrfDensity;
+		}
+	}
 
 	//power, terrain, land value
 	void ptlScan()
@@ -1327,6 +1442,53 @@ public class Micropolis
 
 	public static class History
 	{
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + cityTime;
+			result = prime * result + Arrays.hashCode(com);
+			result = prime * result + comMax;
+			result = prime * result + Arrays.hashCode(crime);
+			result = prime * result + Arrays.hashCode(ind);
+			result = prime * result + indMax;
+			result = prime * result + Arrays.hashCode(money);
+			result = prime * result + Arrays.hashCode(pollution);
+			result = prime * result + Arrays.hashCode(res);
+			result = prime * result + resMax;
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			History other = (History) obj;
+//			if (cityTime != other.cityTime)
+//				return false;
+			if (!Arrays.equals(com, other.com))
+				return false;
+//			if (comMax != other.comMax)
+//				return false;
+			if (!Arrays.equals(crime, other.crime))
+				return false;
+			if (!Arrays.equals(ind, other.ind))
+				return false;
+//			if (indMax != other.indMax)
+//				return false;
+			if (!Arrays.equals(money, other.money))
+				return false;
+			if (!Arrays.equals(pollution, other.pollution))
+				return false;
+			if (!Arrays.equals(res, other.res))
+				return false;
+//			if (resMax != other.resMax)
+//				return false;
+			return true;
+		}
 		public int cityTime;
 		public int [] res = new int[240];
 		public int [] com = new int[240];
@@ -1512,19 +1674,21 @@ public class Micropolis
 		bb.put("ROAD", new Road(this));
 		bb.put("RAIL", new Rail(this));
 		bb.put("EXPLOSION", new Explosion (this));
-		bb.put("RESIDENTIAL", new MapScanner(this, MapScanner.TileBehaviour.RESIDENTIAL));
-		bb.put("HOSPITAL_CHURCH", new MapScanner(this, MapScanner.TileBehaviour.HOSPITAL_CHURCH));
-		bb.put("COMMERCIAL", new MapScanner(this, MapScanner.TileBehaviour.COMMERCIAL));
-		bb.put("INDUSTRIAL", new MapScanner(this, MapScanner.TileBehaviour.INDUSTRIAL));
-		bb.put("COAL", new MapScanner(this, MapScanner.TileBehaviour.COAL));
-		bb.put("NUCLEAR", new MapScanner(this, MapScanner.TileBehaviour.NUCLEAR));
-		bb.put("FIRESTATION", new MapScanner(this, MapScanner.TileBehaviour.FIRESTATION));
-		bb.put("POLICESTATION", new MapScanner(this, MapScanner.TileBehaviour.POLICESTATION));
-		bb.put("STADIUM_EMPTY", new MapScanner(this, MapScanner.TileBehaviour.STADIUM_EMPTY));
-		bb.put("STADIUM_FULL", new MapScanner(this, MapScanner.TileBehaviour.STADIUM_FULL));
-		bb.put("AIRPORT", new MapScanner(this, MapScanner.TileBehaviour.AIRPORT));
-		bb.put("SEAPORT", new MapScanner(this, MapScanner.TileBehaviour.SEAPORT));
-
+		bb.put("RESIDENTIAL", new Residential(this));
+		bb.put("HOSPITAL_CHURCH", new HospitalChurch(this));
+		bb.put("COMMERCIAL", new Commercial(this));
+		bb.put("INDUSTRIAL", new Industrial(this));
+		bb.put("COAL", new CoalPower(this));
+		bb.put("NUCLEAR", new NuclearPower(this));
+		bb.put("FIRESTATION", new FireStation(this));
+		bb.put("POLICESTATION", new PoliceStation(this));
+		bb.put("STADIUM_EMPTY", new StadiumEmpty(this));
+		bb.put("STADIUM_FULL", new StadiumFull(this));
+		bb.put("AIRPORT", new Airport(this));
+		bb.put("SEAPORT", new Seaport(this));
+		bb.put("ICERINK", new IceRink(this));
+		bb.put("SUBWAY", new Subway(this));
+		
 		this.tileBehaviors = bb;
 	}
 
@@ -1556,8 +1720,11 @@ public class Micropolis
 		}
 	}
 
-	void generateShip()
+	public void generateShip()
 	{
+		if (hasSprite(SpriteKind.SHI)) // maximum one ship
+			return;
+		
 		int edge = PRNG.nextInt(4);
 
 		if (edge == 0) {
@@ -1615,14 +1782,14 @@ public class Micropolis
 		sprites.add(new ShipSprite(this, xpos, ypos, edge));
 	}
 
-	void generateCopter(int xpos, int ypos)
+	public void generateCopter(int xpos, int ypos)
 	{
 		if (!hasSprite(SpriteKind.COP)) {
 			sprites.add(new HelicopterSprite(this, xpos, ypos));
 		}
 	}
 
-	void generatePlane(int xpos, int ypos)
+	public void generatePlane(int xpos, int ypos)
 	{
 		if (!hasSprite(SpriteKind.AIR)) {
 			sprites.add(new AirplaneSprite(this, xpos, ypos));
@@ -1639,10 +1806,14 @@ public class Micropolis
 		}
 	}
 
-	Stack<CityLocation> powerPlants = new Stack<CityLocation>();
+	private Stack<CityLocation> powerPlants = new Stack<CityLocation>();
+	
+	public void addPowerPlant(CityLocation loc) {
+		powerPlants.add(loc);
+	}
 
 	// counts the population in a certain type of residential zone
-	int doFreePop(int xpos, int ypos)
+	public int doFreePop(int xpos, int ypos)
 	{
 		int count = 0;
 
@@ -1715,28 +1886,28 @@ public class Micropolis
 
 		if (hospitalCount < resPop / 256)
 		{
-			needHospital = 1;
+			needHospital = TypeDemand.increase;
 		}
 		else if (hospitalCount > resPop / 256)
 		{
-			needHospital = -1;
+			needHospital = TypeDemand.decrease;
 		}
 		else
 		{
-			needHospital = 0;
+			needHospital = TypeDemand.dontChange;
 		}
 
 		if (churchCount < resPop / 256)
 		{
-			needChurch = 1;
+			needChurch = TypeDemand.increase;
 		}
 		else if (churchCount > resPop / 256)
 		{
-			needChurch = -1;
+			needChurch = TypeDemand.decrease;
 		}
 		else
 		{
-			needChurch = 0;
+			needChurch = TypeDemand.dontChange;
 		}
 	}
 
@@ -1918,12 +2089,12 @@ public class Micropolis
 		return b;
 	}
 
-	int getPopulationDensity(int xpos, int ypos)
+	public int getPopulationDensity(int xpos, int ypos)
 	{
 		return popDensity[ypos/2][xpos/2];
 	}
 
-	void doMeltdown(int xpos, int ypos)
+	public void doMeltdown(int xpos, int ypos)
 	{
 		meltdownLocation = new CityLocation(xpos, ypos);
 
@@ -1973,6 +2144,7 @@ public class Micropolis
 	{
 		for (int i = 0; i < 240; i++)
 		{
+//			System.out.println(array[i]);
 			out.writeShort(array[i]);
 		}
 	}
@@ -2294,6 +2466,94 @@ public class Micropolis
 		
 		return Optional.empty();
 	}
+	
+	public int[][] getComRate() {
+		return comRate;
+	}
+
+	public void setComRate(int[][] comRate) {
+		this.comRate = comRate;
+	}
+	
+	public TypeDemand getNeedHospital() {
+		return needHospital;
+	}
+	
+	public void resetHospitalDemand() {
+		needHospital=TypeDemand.dontChange;
+	}
+
+	public TypeDemand getNeedChurch() {
+		return needChurch;
+	}
+
+	public void resetChurchDemand() {
+		needChurch=TypeDemand.dontChange;
+	}
+	
+	public int getResPop() {
+		return resPop;
+	}
+
+	public void setResPop(int resPop) {
+		this.resPop = resPop;
+	}
+
+	public int getComPop() {
+		return comPop;
+	}
+
+	public void setComPop(int comPop) {
+		this.comPop = comPop;
+	}
+
+	public int getIndPop() {
+		return indPop;
+	}
+
+	public void setIndPop(int indPop) {
+		this.indPop = indPop;
+	}
+	
+	public void setResValve(int resValve) {
+		this.resValve = resValve;
+	}
+
+	public void setComValve(int comValve) {
+		this.comValve = comValve;
+	}
+
+	public void setIndValve(int indValve) {
+		this.indValve = indValve;
+	}
+	
+	public int getResZoneCount() {
+		return resZoneCount;
+	}
+
+	public void incResZoneCount() {
+		this.resZoneCount++;
+	}
+	
+	public int getComZoneCount() {
+		return comZoneCount;
+	}
+
+	public void incComZoneCount() {
+		this.comZoneCount++;
+	}
+	
+	public int getIndZoneCount() {
+		return indZoneCount;
+	}
+
+	public void incIndZoneCount() {
+		this.indZoneCount++;
+	}
+	
+	public char[][] getMap() {
+		return map;
+	}
 
 	public int getCityPopulation()
 	{
@@ -2502,7 +2762,7 @@ public class Micropolis
 	 * instead.
 	 * @see #shutdownZone
 	 */
-	void powerZone(int xpos, int ypos, CityDimension zoneSize)
+	public void powerZone(int xpos, int ypos, CityDimension zoneSize)
 	{
 		assert zoneSize.width >= 3;
 		assert zoneSize.height >= 3;
@@ -2528,7 +2788,7 @@ public class Micropolis
 	 * @see #powerZone
 	 * @see #killZone
 	 */
-	void shutdownZone(int xpos, int ypos, CityDimension zoneSize)
+	public void shutdownZone(int xpos, int ypos, CityDimension zoneSize)
 	{
 		assert zoneSize.width >= 3;
 		assert zoneSize.height >= 3;
@@ -2751,6 +3011,22 @@ public class Micropolis
 
 		return zs;
 	}
+	
+	public int getPoweredZoneCount() {
+		return poweredZoneCount;
+	}
+
+	public void incPoweredZoneCount() {
+		this.poweredZoneCount++;
+	}
+	
+	public int getUnpoweredZoneCount() {
+		return unpoweredZoneCount;
+	}
+	
+	public void incUnpoweredZoneCount() {
+		unpoweredZoneCount++;
+	}
 
 	public int getResValve()
 	{
@@ -2801,4 +3077,363 @@ public class Micropolis
 	{
 		budget.totalFunds = totalFunds;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + acycle;
+		result = prime * result + airportCount;
+		result = prime * result + (autoBudget ? 1231 : 1237);
+		result = prime * result + (autoBulldoze ? 1231 : 1237);
+		result = prime * result + (autoGo ? 1231 : 1237);
+		result = prime * result + ((budget == null) ? 0 : budget.hashCode());
+		result = prime * result + cashFlow;
+		result = prime * result + centerMassX;
+		result = prime * result + centerMassY;
+		result = prime * result + churchCount;
+		result = prime * result + cityTax;
+		result = prime * result + cityTime;
+		result = prime * result + coalCount;
+		result = prime * result + (comCap ? 1231 : 1237);
+		result = prime * result + comPop;
+		result = prime * result + Arrays.deepHashCode(comRate);
+		result = prime * result + comValve;
+		result = prime * result + comZoneCount;
+		result = prime * result + ((crashLocation == null) ? 0 : crashLocation.hashCode());
+		result = prime * result + crimeAverage;
+		result = prime * result + crimeMaxLocationX;
+		result = prime * result + crimeMaxLocationY;
+		result = prime * result + Arrays.deepHashCode(crimeMem);
+		result = prime * result + crimeRamp;
+		result = prime * result + ((earthquakeListeners == null) ? 0 : earthquakeListeners.hashCode());
+		result = prime * result + ((evaluation == null) ? 0 : evaluation.hashCode());
+		result = prime * result + fcycle;
+		result = prime * result + ((financialHistory == null) ? 0 : financialHistory.hashCode());
+		result = prime * result + fireCounter;
+		result = prime * result + fireEffect;
+		long temp;
+		temp = Double.doubleToLongBits(firePercent);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + Arrays.deepHashCode(fireRate);
+		result = prime * result + Arrays.deepHashCode(fireStMap);
+		result = prime * result + fireStationCount;
+		result = prime * result + floodCnt;
+		result = prime * result + floodX;
+		result = prime * result + floodY;
+		result = prime * result + ((gameLevel == null) ? 0 : gameLevel.hashCode());
+		result = prime * result + ((history == null) ? 0 : history.hashCode());
+		result = prime * result + hospitalCount;
+		result = prime * result + (indCap ? 1231 : 1237);
+		result = prime * result + indPop;
+		result = prime * result + indValve;
+		result = prime * result + indZoneCount;
+		result = prime * result + landValueAverage;
+		result = prime * result + Arrays.deepHashCode(landValueMem);
+		result = prime * result + lastCityPop;
+		result = prime * result + lastFireStationCount;
+		result = prime * result + lastPoliceCount;
+		result = prime * result + lastRailTotal;
+		result = prime * result + lastRoadTotal;
+		result = prime * result + lastTotalPop;
+		result = prime * result + ((listeners == null) ? 0 : listeners.hashCode());
+		result = prime * result + Arrays.deepHashCode(map);
+		result = prime * result + ((mapListeners == null) ? 0 : mapListeners.hashCode());
+		result = prime * result + ((meltdownLocation == null) ? 0 : meltdownLocation.hashCode());
+		result = prime * result + ((needChurch == null) ? 0 : needChurch.hashCode());
+		result = prime * result + ((needHospital == null) ? 0 : needHospital.hashCode());
+		result = prime * result + (newPower ? 1231 : 1237);
+		result = prime * result + (noDisasters ? 1231 : 1237);
+		result = prime * result + nuclearCount;
+		result = prime * result + policeCount;
+		result = prime * result + policeEffect;
+		result = prime * result + Arrays.deepHashCode(policeMap);
+		result = prime * result + Arrays.deepHashCode(policeMapEffect);
+		temp = Double.doubleToLongBits(policePercent);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + polluteRamp;
+		result = prime * result + pollutionAverage;
+		result = prime * result + pollutionMaxLocationX;
+		result = prime * result + pollutionMaxLocationY;
+		result = prime * result + Arrays.deepHashCode(pollutionMem);
+		result = prime * result + Arrays.deepHashCode(popDensity);
+		result = prime * result + Arrays.deepHashCode(powerMap);
+		result = prime * result + ((powerPlants == null) ? 0 : powerPlants.hashCode());
+		result = prime * result + poweredZoneCount;
+		result = prime * result + railTotal;
+		result = prime * result + Arrays.deepHashCode(rateOGMem);
+		result = prime * result + (resCap ? 1231 : 1237);
+		result = prime * result + resPop;
+		result = prime * result + resValve;
+		result = prime * result + resZoneCount;
+		result = prime * result + roadEffect;
+		temp = Double.doubleToLongBits(roadPercent);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + roadTotal;
+		result = prime * result + scycle;
+		result = prime * result + seaportCount;
+		result = prime * result + ((simSpeed == null) ? 0 : simSpeed.hashCode());
+		result = prime * result + ((sprites == null) ? 0 : sprites.hashCode());
+		result = prime * result + stadiumCount;
+		result = prime * result + taxEffect;
+		result = prime * result + Arrays.deepHashCode(terrainMem);
+		result = prime * result + ((tileBehaviors == null) ? 0 : tileBehaviors.hashCode());
+		result = prime * result + totalPop;
+		result = prime * result + trafficAverage;
+		result = prime * result + trafficMaxLocationX;
+		result = prime * result + trafficMaxLocationY;
+		result = prime * result + Arrays.deepHashCode(trfDensity);
+		result = prime * result + unpoweredZoneCount;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Micropolis other = (Micropolis) obj;
+//		if (acycle != other.acycle)
+//			return false;
+//		if (airportCount != other.airportCount)
+//			return false;
+		if (autoBudget != other.autoBudget)
+			return false;
+		if (autoBulldoze != other.autoBulldoze)
+			return false;
+		if (autoGo != other.autoGo)
+			return false;
+		if (budget == null) {
+			if (other.budget != null)
+				return false;
+		} else if (!budget.equals(other.budget))
+			return false;
+//		if (cashFlow != other.cashFlow)
+//			return false;
+//		if (centerMassX != other.centerMassX)
+//			return false;
+//		if (centerMassY != other.centerMassY)
+//			return false;
+//		if (churchCount != other.churchCount)
+//			return false;
+		if (cityTax != other.cityTax)
+			return false;
+		if (cityTime != other.cityTime)
+			return false;
+//		if (coalCount != other.coalCount)
+//			return false;
+//		if (comCap != other.comCap)
+//			return false;
+		if (comPop != other.comPop)
+			return false;
+//		if (!Arrays.deepEquals(comRate, other.comRate))
+//			return false;
+		if (comValve != other.comValve)
+			return false;
+//		if (comZoneCount != other.comZoneCount)
+//			return false;
+//		if (crashLocation == null) {
+//			if (other.crashLocation != null)
+//				return false;
+//		} else if (!crashLocation.equals(other.crashLocation))
+//			return false;
+		if (crimeAverage != other.crimeAverage)
+			return false;
+//		if (crimeMaxLocationX != other.crimeMaxLocationX)
+//			return false;
+//		if (crimeMaxLocationY != other.crimeMaxLocationY)
+//			return false;
+//		if (!Arrays.deepEquals(crimeMem, other.crimeMem))
+//			return false;
+		if (crimeRamp != other.crimeRamp)
+			return false;
+//		if (earthquakeListeners == null) {
+//			if (other.earthquakeListeners != null)
+//				return false;
+//		} else if (!earthquakeListeners.equals(other.earthquakeListeners))
+//			return false;
+		if (evaluation == null) {
+			if (other.evaluation != null)
+				return false;
+		} else if (!evaluation.equals(other.evaluation))
+			return false;
+//		if (fcycle != other.fcycle)
+//			return false;
+//		if (financialHistory == null) {
+//			if (other.financialHistory != null)
+//				return false;
+//		} else if (!financialHistory.equals(other.financialHistory))
+//			return false;
+//		if (fireCounter != other.fireCounter)
+//			return false;
+//		if (fireEffect != other.fireEffect)
+//			return false;
+		if (Double.doubleToLongBits(firePercent) != Double.doubleToLongBits(other.firePercent))
+			return false;
+//		if (!Arrays.deepEquals(fireRate, other.fireRate))
+//			return false;
+//		if (!Arrays.deepEquals(fireStMap, other.fireStMap))
+//			return false;
+//		if (fireStationCount != other.fireStationCount)
+//			return false;
+//		if (floodCnt != other.floodCnt)
+//			return false;
+//		if (floodX != other.floodX)
+//			return false;
+//		if (floodY != other.floodY)
+//			return false;
+		if (gameLevel != other.gameLevel)
+			return false;
+		if (history == null) {
+			if (other.history != null)
+				return false;
+		} else if (!history.equals(other.history))
+			return false;
+//		if (hospitalCount != other.hospitalCount)
+//			return false;
+//		if (indCap != other.indCap)
+//			return false;
+		if (indPop != other.indPop)
+			return false;
+		if (indValve != other.indValve)
+			return false;
+//		if (indZoneCount != other.indZoneCount)
+//			return false;
+		if (landValueAverage != other.landValueAverage)
+			return false;
+//		if (!Arrays.deepEquals(landValueMem, other.landValueMem))
+//			return false;
+//		if (lastCityPop != other.lastCityPop)
+//			return false;
+//		if (lastFireStationCount != other.lastFireStationCount)
+//			return false;
+//		if (lastPoliceCount != other.lastPoliceCount)
+//			return false;
+//		if (lastRailTotal != other.lastRailTotal)
+//			return false;
+//		if (lastRoadTotal != other.lastRoadTotal)
+//			return false;
+//		if (lastTotalPop != other.lastTotalPop)
+//			return false;
+//		if (listeners == null) {
+//			if (other.listeners != null)
+//				return false;
+//		} else if (!listeners.equals(other.listeners))
+//			return false;
+		for (int y=0; y<getHeight();y++) {
+			for (int x=0; x<getWidth();x++) {
+				if(map[y][x]!=other.map[y][x]) {
+					System.out.println("x: "+x+", y: "+y+" "+map[y][x]+" <-> "+other.map[y][x]+" "+(int)map[y][x]+" <-> "+(int)other.map[y][x]);
+				}
+			}
+		}
+//		if (mapListeners == null) {
+//			if (other.mapListeners != null)
+//				return false;
+//		} else if (!mapListeners.equals(other.mapListeners))
+//			return false;
+//		if (meltdownLocation == null) {
+//			if (other.meltdownLocation != null)
+//				return false;
+//		} else if (!meltdownLocation.equals(other.meltdownLocation))
+//			return false;
+//		if (needChurch != other.needChurch)
+//			return false;
+//		if (needHospital != other.needHospital)
+//			return false;
+//		if (newPower != other.newPower)
+//			return false;
+//		if (noDisasters != other.noDisasters)
+//			return false;
+//		if (nuclearCount != other.nuclearCount)
+//			return false;
+//		if (policeCount != other.policeCount)
+//			return false;
+//		if (policeEffect != other.policeEffect)
+//			return false;
+//		if (!Arrays.deepEquals(policeMap, other.policeMap))
+//			return false;
+//		if (!Arrays.deepEquals(policeMapEffect, other.policeMapEffect))
+//			return false;
+		if (Double.doubleToLongBits(policePercent) != Double.doubleToLongBits(other.policePercent))
+			return false;
+		if (polluteRamp != other.polluteRamp)
+			return false;
+		if (pollutionAverage != other.pollutionAverage)
+			return false;
+//		if (pollutionMaxLocationX != other.pollutionMaxLocationX)
+//			return false;
+//		if (pollutionMaxLocationY != other.pollutionMaxLocationY)
+//			return false;
+//		if (!Arrays.deepEquals(pollutionMem, other.pollutionMem))
+//			return false;
+//		if (!Arrays.deepEquals(popDensity, other.popDensity))
+//			return false;
+//		if (!Arrays.deepEquals(powerMap, other.powerMap))
+//			return false;
+//		if (powerPlants == null) {
+//			if (other.powerPlants != null)
+//				return false;
+//		} else if (!powerPlants.equals(other.powerPlants))
+//			return false;
+//		if (poweredZoneCount != other.poweredZoneCount)
+//			return false;
+//		if (railTotal != other.railTotal)
+//			return false;
+//		if (!Arrays.deepEquals(rateOGMem, other.rateOGMem))
+//			return false;
+//		if (resCap != other.resCap)
+//			return false;
+		if (resPop != other.resPop)
+			return false;
+		if (resValve != other.resValve)
+			return false;
+//		if (resZoneCount != other.resZoneCount)
+//			return false;
+//		if (roadEffect != other.roadEffect)
+//			return false;
+		if (Double.doubleToLongBits(roadPercent) != Double.doubleToLongBits(other.roadPercent))
+			return false;
+//		if (roadTotal != other.roadTotal)
+//			return false;
+//		if (scycle != other.scycle)
+//			return false;
+//		if (seaportCount != other.seaportCount)
+//			return false;
+		if (simSpeed != other.simSpeed)
+			return false;
+//		if (sprites == null) {
+//			if (other.sprites != null)
+//				return false;
+//		} else if (!sprites.equals(other.sprites))
+//			return false;
+//		if (stadiumCount != other.stadiumCount)
+//			return false;
+//		if (taxEffect != other.taxEffect)
+//			return false;
+//		if (!Arrays.deepEquals(terrainMem, other.terrainMem))
+//			return false;
+//		if (tileBehaviors == null) {
+//			if (other.tileBehaviors != null)
+//				return false;
+//		} else if (!tileBehaviors.equals(other.tileBehaviors))
+//			return false;
+//		if (totalPop != other.totalPop)
+//			return false;
+//		if (trafficAverage != other.trafficAverage)
+//			return false;
+//		if (trafficMaxLocationX != other.trafficMaxLocationX)
+//			return false;
+//		if (trafficMaxLocationY != other.trafficMaxLocationY)
+//			return false;
+//		if (!Arrays.deepEquals(trfDensity, other.trfDensity))
+//			return false;
+//		if (unpoweredZoneCount != other.unpoweredZoneCount)
+//			return false;
+		return true;
+	}
+	
 }

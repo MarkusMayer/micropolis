@@ -61,6 +61,16 @@ public class TileSpec
 		int width;
 		int height;
 		short [] members;
+		
+		public int getWidth() {
+			return width;
+		}
+		public int getHeight() {
+			return height;
+		}
+		public short[] getMembers() {
+			return members;
+		}
 	}
 
 	public BuildingInfo getBuildingInfo()

@@ -63,8 +63,11 @@ public class NewCityDialog extends JDialog {
 					selectedLevel=level;
 				}
 			});
-			if (level==Levels.easy) 
+			//Default level is easy
+			if (level==Levels.easy) {
 				levelBtn.setSelected(true);
+				selectedLevel=level;
+			}
 			levelBox.add(levelBtn);			
 			// levelBtns.put(lev, radioBtn);
 		}

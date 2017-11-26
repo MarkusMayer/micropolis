@@ -112,9 +112,12 @@ public class OverlayMapView extends JComponent
 		return bi;
 	}
 
-	static final Color VAL_LOW       = new Color(0xbfbfbf);
-	static final Color VAL_MEDIUM    = new Color(0xffff00);
-	static final Color VAL_HIGH      = new Color(0xff7f00);
+//	static final Color VAL_LOW       = new Color(0xbfbfbf);
+	static final Color VAL_LOW       = new Color(0x000000);
+	//	static final Color VAL_MEDIUM    = new Color(0xffff00);
+	static final Color VAL_MEDIUM    = new Color(0x000000);
+//	static final Color VAL_HIGH      = new Color(0xff7f00);
+	static final Color VAL_HIGH      = new Color(0x000000);
 	static final Color VAL_VERYHIGH  = new Color(0xff0000);
 	static final Color VAL_PLUS      = new Color(0x007f00);
 	static final Color VAL_VERYPLUS  = new Color(0x00e600);
@@ -396,7 +399,8 @@ public class OverlayMapView extends JComponent
 		for (ConnectedView cv : views)
 		{
 			Rectangle rect = getViewRect(cv);
-			gr.setColor(Color.WHITE);
+//			gr.setColor(Color.WHITE);
+			gr.setColor(Color.RED);
 			gr.drawRect(rect.x-2,rect.y-2,rect.width+2,rect.height+2);
 
 			gr.setColor(Color.BLACK);

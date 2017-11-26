@@ -8,7 +8,15 @@
 
 package micropolisj.engine;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.AIRPORT;
+import static micropolisj.engine.TileConstants.FIRESTATION;
+import static micropolisj.engine.TileConstants.ICERINK;
+import static micropolisj.engine.TileConstants.NUCLEAR;
+import static micropolisj.engine.TileConstants.POLICESTATION;
+import static micropolisj.engine.TileConstants.PORT;
+import static micropolisj.engine.TileConstants.POWERPLANT;
+import static micropolisj.engine.TileConstants.STADIUM;
+import static micropolisj.engine.TileConstants.SUBWAY;
 
 class BuildingTool extends ToolStroke
 {
@@ -29,6 +37,7 @@ class BuildingTool extends ToolStroke
 	@Override
 	boolean apply1(ToolEffectIfc eff)
 	{
+		//TODO: Tool effect apply for new building type
 		switch (tool)
 		{
 		case FIRE:
@@ -51,7 +60,13 @@ class BuildingTool extends ToolStroke
 
 		case AIRPORT:
 			return applyZone(eff, AIRPORT);
+		
+		case ICERINK:
+			return applyZone(eff, ICERINK);
 
+		case SUBWAY:
+			return applyZone(eff, SUBWAY);
+			
 		default:
 			// not expected
 			throw new Error("unexpected tool: "+tool);

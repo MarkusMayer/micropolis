@@ -14,8 +14,11 @@ import static micropolisj.engine.TileConstants.*;
  * Enumerates the various tools that can be applied to the map by the user.
  * Call the tool's apply() method to actually use the tool on the map.
  */
+//TODO: New Tool Type
 public enum MicropolisTool
 {
+	SUBWAY(1, 500),
+	ICERINK(4, 500),
 	BULLDOZER(1, 1),
 	WIRE(1, 5),   //cost=25 for underwater
 	ROADS(1, 10), //cost=50 for over water
@@ -70,6 +73,8 @@ public enum MicropolisTool
 		case POWERPLANT:
 		case NUCLEAR:
 		case AIRPORT:
+		case ICERINK:
+		case SUBWAY:
 			return new BuildingTool(engine, this, xpos, ypos);
 
 		default:

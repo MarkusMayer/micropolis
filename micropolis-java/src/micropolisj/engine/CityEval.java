@@ -94,14 +94,14 @@ public class CityEval
 		int z = 0;
 		z += engine.getRoadTotal() * 5;
 		z += engine.getRailTotal() * 10;
-		z += engine.policeCount * 1000;
-		z += engine.fireStationCount * 1000;
-		z += engine.hospitalCount * 400;
-		z += engine.stadiumCount * 3000;
-		z += engine.seaportCount * 5000;
-		z += engine.airportCount * 10000;
-		z += engine.coalCount * 3000;
-		z += engine.nuclearCount * 6000;
+		z += engine.getPoliceCount() * 1000;
+		z += engine.getFireStationCount() * 1000;
+		z += engine.getHospitalCount() * 400;
+		z += engine.getStadiumCount() * 3000;
+		z += engine.getSeaportCount() * 5000;
+		z += engine.getAirportCount() * 10000;
+		z += engine.getCoalCount() * 3000;
+		z += engine.getNuclearCount() * 6000;
 		cityAssValue = z * 1000;
 	}
 
@@ -194,11 +194,11 @@ public class CityEval
 
 	int getUnemployment()
 	{
-		int b = (engine.comPop + engine.indPop) * 8;
+		int b = (engine.getComPop() + engine.getIndPop()) * 8;
 		if (b == 0)
 			return 0;
 
-		double r = (double)engine.resPop / (double)b;
+		double r = (double)engine.getResPop() / (double)b;
 		b = (int)Math.floor((r-1.0)*255);
 		if (b > 255) {
 			b = 255;
@@ -235,11 +235,11 @@ public class CityEval
 		if (engine.comCap) { z = 0.85 * z; }
 		if (engine.indCap) { z = 0.85 * z; }
 		if (engine.getRoadEffect() < 32) { z -= (32 - engine.getRoadEffect()); }
-		if (engine.policeEffect < 1000) { z *= (0.9 + (engine.policeEffect / 10000.1)); }
-		if (engine.fireEffect < 1000) { z *= (0.9 + (engine.fireEffect / 10000.1)); }
-		if (engine.resValve < -1000) { z *= 0.85; }
-		if (engine.comValve < -1000) { z *= 0.85; }
-		if (engine.indValve < -1000) { z *= 0.85; }
+		if (engine.getPoliceEffect() < 1000) { z *= (0.9 + (engine.getPoliceEffect() / 10000.1)); }
+		if (engine.getFireEffect() < 1000) { z *= (0.9 + (engine.getFireEffect() / 10000.1)); }
+		if (engine.getResValve() < -1000) { z *= 0.85; }
+		if (engine.getComValve() < -1000) { z *= 0.85; }
+		if (engine.getIndValve() < -1000) { z *= 0.85; }
 
 		double SM = 1.0;
 		if (cityPop == 0 && deltaCityPop == 0) {
@@ -258,8 +258,8 @@ public class CityEval
 		z -= getFire();
 		z -= engine.cityTax;
 
-		int TM = engine.unpoweredZoneCount + engine.poweredZoneCount;
-		SM = TM != 0 ? ((double)engine.poweredZoneCount / (double)TM) : 1.0;
+		int TM = engine.getUnpoweredZoneCount() + engine.getPoweredZoneCount();
+		SM = TM != 0 ? ((double)engine.getPoweredZoneCount() / (double)TM) : 1.0;
 		z *= SM;
 
 		z = clamp(z, 0, 1000);
@@ -280,4 +280,62 @@ public class CityEval
 		}
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + cityAssValue;
+		result = prime * result + cityClass;
+		result = prime * result + cityNo;
+		result = prime * result + cityPop;
+		result = prime * result + cityScore;
+		result = prime * result + cityYes;
+		result = prime * result + deltaCityPop;
+		result = prime * result + deltaCityScore;
+		result = prime * result + Arrays.hashCode(problemOrder);
+		result = prime * result + ((problemTable == null) ? 0 : problemTable.hashCode());
+		result = prime * result + ((problemVotes == null) ? 0 : problemVotes.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		CityEval other = (CityEval) obj;
+//		if (cityAssValue != other.cityAssValue)
+//			return false;
+		if (cityClass != other.cityClass)
+			return false;
+//		if (cityNo != other.cityNo)
+//			return false;
+//		if (cityPop != other.cityPop)
+//			return false;
+////XX		if (cityScore != other.cityScore)
+////XX			return false;
+//		if (cityYes != other.cityYes)
+//			return false;
+//		if (deltaCityPop != other.deltaCityPop)
+//			return false;
+//		if (deltaCityScore != other.deltaCityScore)
+//			return false;
+//		if (!Arrays.equals(problemOrder, other.problemOrder))
+//			return false;
+//		if (problemTable == null) {
+//			if (other.problemTable != null)
+//				return false;
+//		} else if (!problemTable.equals(other.problemTable))
+//			return false;
+//		if (problemVotes == null) {
+//			if (other.problemVotes != null)
+//				return false;
+//		} else if (!problemVotes.equals(other.problemVotes))
+//			return false;
+		return true;
+	}
+	
 }

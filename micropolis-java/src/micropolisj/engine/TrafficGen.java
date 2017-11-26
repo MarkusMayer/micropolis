@@ -14,24 +14,27 @@ import static micropolisj.engine.TileConstants.*;
 /**
  * Contains the code for generating city traffic.
  */
-class TrafficGen
+public class TrafficGen
 {
-	final Micropolis city;
-	int mapX;
-	int mapY;
-	ZoneType sourceZone;
+	private final Micropolis city;
+	private int mapX;
+	private int mapY;
+	private ZoneType sourceZone;
 
 	int lastdir;
 	Stack<CityLocation> positions = new Stack<CityLocation>();
 
 	static final int MAX_TRAFFIC_DISTANCE = 30;
 
-	public TrafficGen(Micropolis city)
+	public TrafficGen(Micropolis city, int mapX, int mapY, ZoneType sourceZone)
 	{
 		this.city = city;
+		this.mapX=mapX;
+		this.mapY=mapY;
+		this.sourceZone=sourceZone;
 	}
 
-	int makeTraffic()
+	public int makeTraffic()
 	{
 		if (findPerimeterRoad()) //look for road on this zone's perimeter
 		{
@@ -71,7 +74,7 @@ class TrafficGen
 
 	static final int [] PerimX = { -1, 0, 1,  2, 2, 2,  1, 0,-1, -2,-2,-2 };
 	static final int [] PerimY = { -2,-2,-2, -1, 0, 1,  2, 2, 2,  1, 0,-1 };
-	boolean findPerimeterRoad()
+	public boolean findPerimeterRoad()
 	{
 		for (int z = 0; z < 12; z++)
 		{
@@ -219,13 +222,5 @@ class TrafficGen
 				return true;
 		}
 		return false;
-	}
-
-	/**
-	 * The three main types of zones found in Micropolis.
-	 */
-	static enum ZoneType
-	{
-		RESIDENTIAL, COMMERCIAL, INDUSTRIAL;
 	}
 }

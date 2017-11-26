@@ -49,6 +49,8 @@ public class Tiles
 		for (int i = 0; i < tileNames.length; i++) {
 			String tileName = tileNames[i];
 			String rawSpec = tilesRc.getProperty(tileName);
+//			System.out.println("Nr. "+i+": "+tileNames[i]+" ,Spec: "+rawSpec);
+
 			if (rawSpec == null) {
 				break;
 			}

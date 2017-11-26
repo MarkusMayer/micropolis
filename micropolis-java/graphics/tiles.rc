@@ -1009,3 +1009,22 @@
 957   misc_animation@0,2080
 958   misc_animation@0,2096
 959   misc_animation@0,2112
+960   icerink@0,0            (conducts)
+961   icerink@16,0           (conducts)
+962   icerink@32,0           (conducts)
+963   icerink@48,0           (conducts)
+964   icerink@0,16           (conducts)
+965   icerink@16,16    (zone)(conducts)(building=4x4)(behavior=ICERINK)(description=#18)
+966   icerink@32,16          (conducts)
+967   icerink@48,16          (conducts)
+968   icerink@0,32           (conducts)
+969   icerink@16,32          (conducts)
+970   icerink@32,32          (conducts)
+971   icerink@48,32          (conducts)
+972   icerink@0,48           (conducts)
+973   icerink@16,48          (conducts)
+974   icerink@32,48          (conducts)
+975   icerink@48,48          (conducts)
+976   subway@0,0           (conducts)
+977   subway@16,0    (zone)(conducts)(building=3x1)(behavior=SUBWAY)(description=#18)
+978   subway@32,0          (conducts)

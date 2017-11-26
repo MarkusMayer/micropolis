@@ -73,7 +73,9 @@ class Bulldozer extends ToolStroke
 			eff.makeSound(0, 0, Sound.EXPLOSION_BOTH);
 		}
 
-		putRubble(new TranslatedToolEffect(eff, -1, -1), dim.width, dim.height);
+		int offX=dim.width>1 ? -1 : 0;
+		int offY=dim.height>1 ? -1 : 0;
+		putRubble(new TranslatedToolEffect(eff, offX,offY), dim.width, dim.height);
 		return;
 	}
 

@@ -957,6 +957,7 @@ public class MainWindow extends JFrame
 			tool.name();
 
 		JToggleButton btn = new JToggleButton();
+//		System.out.println(iconName+" "+iconSelectedName);
 		btn.setIcon(new ImageIcon(MainWindow.class.getResource(iconName)));
 		btn.setSelectedIcon(new ImageIcon(MainWindow.class.getResource(iconSelectedName)));
 		btn.setToolTipText(tipText);
@@ -1001,7 +1002,9 @@ public class MainWindow extends JFrame
 		c.insets = new Insets(0,0,0,0);
 		Box b0 = new Box(BoxLayout.X_AXIS);
 		gridBox.add(b0,c);
-
+		
+		
+		//TODO: Toolbar for new Building Type
 		b0.add(makeToolBtn(MicropolisTool.BULLDOZER));
 		b0.add(makeToolBtn(MicropolisTool.WIRE));
 		b0.add(makeToolBtn(MicropolisTool.PARK));
@@ -1048,7 +1051,15 @@ public class MainWindow extends JFrame
 		gridBox.add(b6,c);
 
 		b6.add(makeToolBtn(MicropolisTool.AIRPORT));
+		b6.add(makeToolBtn(MicropolisTool.ICERINK));
 
+		c.gridy++;
+		Box b7 = new Box(BoxLayout.X_AXIS);
+		gridBox.add(b7,c);
+
+		b7.add(makeToolBtn(MicropolisTool.SUBWAY));
+
+		
 		// add glue to make all elements align toward top
 		c.gridy++;
 		c.weighty = 1.0;

@@ -3,7 +3,6 @@ package micropolisj.engine.behaviour;
 import static micropolisj.engine.TileConstants.DIRT;
 
 import micropolisj.engine.Micropolis;
-import micropolisj.engine.TileBehavior;
 
 public class Radioactive extends TileBehavior {
 

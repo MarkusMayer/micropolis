@@ -7,7 +7,6 @@ import static micropolisj.engine.TileConstants.isCombustible;
 import static micropolisj.engine.TileConstants.isZoneCenter;
 
 import micropolisj.engine.Micropolis;
-import micropolisj.engine.TileBehavior;
 
 public class Fire extends TileBehavior {
 	

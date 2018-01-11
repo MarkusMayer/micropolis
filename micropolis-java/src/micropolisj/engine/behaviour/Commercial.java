@@ -5,7 +5,6 @@ import static micropolisj.engine.TileConstants.CZB;
 import static micropolisj.engine.TileConstants.commercialZonePop;
 
 import micropolisj.engine.Micropolis;
-import micropolisj.engine.TileBehavior;
 import micropolisj.engine.ZoneType;
 
 public class Commercial extends BuildingBehaviour {

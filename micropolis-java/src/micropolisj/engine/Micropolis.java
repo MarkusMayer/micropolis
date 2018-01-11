@@ -55,6 +55,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -68,8 +69,8 @@ import micropolisj.engine.behaviour.Fire;
 import micropolisj.engine.behaviour.FireStation;
 import micropolisj.engine.behaviour.Flood;
 import micropolisj.engine.behaviour.HospitalChurch;
-import micropolisj.engine.behaviour.Industrial;
 import micropolisj.engine.behaviour.IceRink;
+import micropolisj.engine.behaviour.Industrial;
 import micropolisj.engine.behaviour.NuclearPower;
 import micropolisj.engine.behaviour.PoliceStation;
 import micropolisj.engine.behaviour.Radioactive;
@@ -79,6 +80,12 @@ import micropolisj.engine.behaviour.Road;
 import micropolisj.engine.behaviour.Seaport;
 import micropolisj.engine.behaviour.StadiumEmpty;
 import micropolisj.engine.behaviour.StadiumFull;
+import micropolisj.engine.behaviour.TileBehavior;
+import micropolisj.engine.subway.SubwayConnection;
+import micropolisj.engine.subway.SubwayNetwork;
+import micropolisj.engine.subway.SubwayStation;
+import micropolisj.engine.tool.ToolEffect;
+import micropolisj.engine.tool.ToolEffectIfc;
 
 /**
  * The main simulation engine for Micropolis.
@@ -89,7 +96,7 @@ public class Micropolis
 {
 	static final Random DEFAULT_PRNG = new Random();
 
-	Random PRNG;
+	public Random PRNG;
 
 	// full size arrays
 	private char [][] map;
@@ -189,6 +196,7 @@ public class Micropolis
 	private int churchCount;
 	private int policeCount;
 	private int fireStationCount;
+	private int subStationCount;
 	private int stadiumCount;
 	private int coalCount;
 	private int nuclearCount;
@@ -237,10 +245,11 @@ public class Micropolis
 	//
 	// budget stuff
 	//
-	public int cityTax = 7;
-	public double roadPercent = 1.0;
-	public double policePercent = 1.0;
-	public double firePercent = 1.0;
+	private int cityTax = 7;
+	private double roadPercent = 1.0;
+	private double subPercent=1.0;
+	private double policePercent = 1.0;
+	private double firePercent = 1.0;
 
 	int taxEffect = 7;
 	private int roadEffect = 32;
@@ -262,19 +271,15 @@ public class Micropolis
 	int acycle; //animation cycle (mod 960)
 
 	public CityEval evaluation;
+	
+	public SubwayNetwork subNet;
 
 	private ArrayList<Sprite> sprites = new ArrayList<Sprite>();
 
 	static final int VALVERATE = 2;
 	public static final int CENSUSRATE = 4;
 	static final int TAXFREQ = 48;
-
-	public void spend(int amount)
-	{
-		budget.totalFunds -= amount;
-		fireFundsChanged();
-	}
-
+	
 	public Micropolis()
 	{
 		this(DEFAULT_WIDTH, DEFAULT_HEIGHT);
@@ -289,6 +294,7 @@ public class Micropolis
 	{
 		PRNG = DEFAULT_PRNG;
 		evaluation = new CityEval(this);
+		subNet=new SubwayNetwork(this);
 		init(width, height);
 		initTileBehaviors();
 	}
@@ -325,7 +331,72 @@ public class Micropolis
 		centerMassX = hX;
 		centerMassY = hY;
 	}
+	
+	public void addSubwayStation(MapPosition pos) {
+		subNet.addStation(pos);
+	}
+	
+	public void setSubwayPercent(double newSubPerc) {
+		subPercent=newSubPerc;
+	}
 
+	public double getSubwayPercent() {
+		return subPercent;
+	}
+	
+	public double getRoadPercent() {
+		return roadPercent;
+	}
+
+	public void setRoadPercent(double roadPercent) {
+		this.roadPercent = roadPercent;
+	}
+
+	public double getPolicePercent() {
+		return policePercent;
+	}
+
+	public void setPolicePercent(double policePercent) {
+		this.policePercent = policePercent;
+	}
+
+	public double getFirePercent() {
+		return firePercent;
+	}
+
+	public void setFirePercent(double firePercent) {
+		this.firePercent = firePercent;
+	}
+	
+	public int getCityTax() {
+		return cityTax;
+	}
+
+	public void setCityTax(int cityTax) {
+		this.cityTax = cityTax;
+	}
+
+	
+	public int findNearestTileFromRange(MapPosition pos,int lowTile,int highTile) {
+		int distance=999;
+		
+		for (int xInd=Math.max(0,pos.getX()-5);xInd<=Math.min(getWidth()-1,pos.getX()+5);xInd++) {
+			for (int yInd=Math.max(0,pos.getY()-5);yInd<=Math.min(getHeight()-1,pos.getY()+5);yInd++) {
+				int tile=getTile(xInd, yInd);
+				if (lowTile<=tile && tile<highTile) {
+					distance=Math.min(distance,pos.getDistanceToPos(xInd, yInd));
+				}
+			}
+		}
+		return distance;
+	}
+	
+	public void spend(int amount)
+	{
+		budget.totalFunds -= amount;
+		fireFundsChanged();
+	}
+	
 	public Levels getGameLevel() {
 		return gameLevel;
 	}
@@ -513,7 +584,7 @@ public class Micropolis
 		return map[ypos][xpos];
 	}
 
-	boolean isTileDozeable(ToolEffectIfc eff)
+	public boolean isTileDozeable(ToolEffectIfc eff)
 	{
 		int myTile = eff.getTile(0, 0);
 		TileSpec ts = Tiles.get(myTile);
@@ -532,7 +603,7 @@ public class Micropolis
 		return false;
 	}
 
-	boolean isTileDozeable(int xpos, int ypos)
+	public boolean isTileDozeable(int xpos, int ypos)
 	{
 		return isTileDozeable(
 			new ToolEffect(this, xpos, ypos)
@@ -613,6 +684,7 @@ public class Micropolis
 		churchCount = 0;
 		policeCount = 0;
 		fireStationCount = 0;
+		subStationCount=0;
 		stadiumCount = 0;
 		coalCount = 0;
 		nuclearCount = 0;
@@ -1067,7 +1139,11 @@ public class Micropolis
 	public int getFireStationCount() {
 		return fireStationCount;
 	}
-
+	
+	public int getSubStationCount() {
+		return subStationCount;
+	}
+	
 	public void incHospitalCount() {
 		hospitalCount++;
 	}
@@ -1084,6 +1160,10 @@ public class Micropolis
 		fireStationCount++;
 	}
 	
+	public void incSubwayStationCount() {
+		subStationCount++;
+	}
+
 	public void incStadiumCount() {
 		stadiumCount++;
 	}
@@ -2023,6 +2103,7 @@ public class Micropolis
 		BudgetNumbers b = new BudgetNumbers();
 		b.taxRate = Math.max(0, cityTax);
 		b.roadPercent = Math.max(0.0, roadPercent);
+		b.subPercent = Math.max(0.0, subPercent);
 		b.firePercent = Math.max(0.0, firePercent);
 		b.policePercent = Math.max(0.0, policePercent);
 
@@ -2031,45 +2112,61 @@ public class Micropolis
 		assert b.taxIncome >= 0;
 
 		b.roadRequest = (int)Math.round((lastRoadTotal + lastRailTotal * 2) * gameLevel.getTrafficMaintenanceMulti());
+		//TODO: ConnectionPrice depending on connection length
+		b.subRequest = subNet.getMaintenanceCost();
+		System.out.println(subNet);
+		
 		b.fireRequest = FIRE_STATION_MAINTENANCE * lastFireStationCount;
 		b.policeRequest = POLICE_STATION_MAINTENANCE * lastPoliceCount;
 
 		b.roadFunded = (int)Math.round(b.roadRequest * b.roadPercent);
+		b.subFunded=(int)Math.round(b.subRequest * b.subPercent);
 		b.fireFunded = (int)Math.round(b.fireRequest * b.firePercent);
 		b.policeFunded = (int)Math.round(b.policeRequest * b.policePercent);
 
 		int yumDuckets = budget.totalFunds + b.taxIncome;
 		assert yumDuckets >= 0;
-
 		if (yumDuckets >= b.roadFunded)
 		{
 			yumDuckets -= b.roadFunded;
-			if (yumDuckets >= b.fireFunded)
-			{
-				yumDuckets -= b.fireFunded;
-				if (yumDuckets >= b.policeFunded)
+			
+			if (yumDuckets>=b.subFunded) {
+				yumDuckets-=b.subFunded;
+				if (yumDuckets >= b.fireFunded)
 				{
-					yumDuckets -= b.policeFunded;
+					yumDuckets -= b.fireFunded;
+					if (yumDuckets >= b.policeFunded)
+					{
+						yumDuckets -= b.policeFunded;
+					}
+					else
+					{
+						assert b.policeRequest != 0;
+	
+						b.policeFunded = yumDuckets;
+						b.policePercent = (double)b.policeFunded / (double)b.policeRequest;
+						yumDuckets = 0;
+					}
 				}
 				else
 				{
-					assert b.policeRequest != 0;
-
-					b.policeFunded = yumDuckets;
-					b.policePercent = (double)b.policeFunded / (double)b.policeRequest;
+					assert b.fireRequest != 0;
+	
+					b.fireFunded = yumDuckets;
+					b.firePercent = (double)b.fireFunded / (double)b.fireRequest;
+					b.policeFunded = 0;
+					b.policePercent = 0.0;
 					yumDuckets = 0;
 				}
+			} else {
+				if (b.subRequest>0) {
+					b.subFunded=yumDuckets;
+					b.subPercent=(double)b.subFunded / (double) b.subRequest;
+					yumDuckets=b.fireFunded=b.policeFunded=0;
+					b.firePercent=b.policePercent=0;
+				}
 			}
-			else
-			{
-				assert b.fireRequest != 0;
-
-				b.fireFunded = yumDuckets;
-				b.firePercent = (double)b.fireFunded / (double)b.fireRequest;
-				b.policeFunded = 0;
-				b.policePercent = 0.0;
-				yumDuckets = 0;
-			}
+				
 		}
 		else
 		{
@@ -2077,13 +2174,15 @@ public class Micropolis
 
 			b.roadFunded = yumDuckets;
 			b.roadPercent = (double)b.roadFunded / (double)b.roadRequest;
+			b.subFunded=0;
+			b.subPercent=0;
 			b.fireFunded = 0;
 			b.firePercent = 0.0;
 			b.policeFunded = 0;
 			b.policePercent = 0.0;
 		}
 
-		b.operatingExpenses = b.roadFunded + b.fireFunded + b.policeFunded;
+		b.operatingExpenses = b.roadFunded + b.subFunded + b.fireFunded + b.policeFunded;
 		b.newBalance = b.previousBalance + b.taxIncome - b.operatingExpenses;
 
 		return b;
@@ -2197,8 +2296,31 @@ public class Micropolis
 		firePercent = (double)n / 65536.0;
 		n = dis.readInt();                     //62,63... road percent
 		roadPercent = (double)n / 65536.0;
+		n = dis.readInt();
+		subPercent = (double)n / 65536.0;
+		
+		short nrStations=dis.readShort();
+		short nrConns=dis.readShort();
+		
+		for (int i=0;i<nrStations;i++) {
+			short x1=dis.readShort();
+			short y1=dis.readShort();
+			subNet.addStation(new MapPosition(x1, y1));
+		}
 
-		for (int i = 64; i < 120; i++)
+		for (int i=0;i<nrConns;i++) {
+			short x1=dis.readShort();
+			short y1=dis.readShort();
+			short x2=dis.readShort();
+			short y2=dis.readShort();
+			SubwayStation stat1=new SubwayStation(x1,y1);
+			SubwayStation stat2=new SubwayStation(x2, y2);
+			subNet.connect(stat1, stat2);
+		}
+		
+		
+		
+		for (int i = 68+nrStations*2+nrConns*4; i < 120; i++)
 		{
 			dis.readShort();
 		}
@@ -2257,9 +2379,24 @@ public class Micropolis
 		out.writeInt((int)(policePercent * 65536));
 		out.writeInt((int)(firePercent * 65536));
 		out.writeInt((int)(roadPercent * 65536));
-
-		//64
-		for (int i = 64; i < 120; i++) {
+		out.writeInt((int)(subPercent * 65536));
+		//64 <==66
+		out.writeShort(subNet.getSubStationCount());
+		out.writeShort(subNet.getSubConnectionCount());
+		//68
+		for (SubwayStation aStation : subNet.getStations()) {
+			out.writeShort(aStation.getX());
+			out.writeShort(aStation.getY());
+		}
+		for (SubwayConnection aConn : subNet.getConnections()) {
+			out.writeShort(aConn.getStation1().getX());
+			out.writeShort(aConn.getStation1().getY());
+			out.writeShort(aConn.getStation2().getX());
+			out.writeShort(aConn.getStation2().getY());
+		}
+		
+		
+		for (int i = 68+subNet.getSubStationCount()*2+subNet.getSubConnectionCount()*4;i < 120; i++) {
 			out.writeShort(0);
 		}
 	}
@@ -2560,7 +2697,7 @@ public class Micropolis
 		return lastCityPop;
 	}
 
-	void makeSound(int x, int y, Sound sound)
+	public void makeSound(int x, int y, Sound sound)
 	{
 		fireCitySound(sound, new CityLocation(x,y));
 	}
@@ -3077,6 +3214,18 @@ public class Micropolis
 	{
 		budget.totalFunds = totalFunds;
 	}
+	
+	public List<SubwayStation> getSubways(){
+		ArrayList<SubwayStation> stations=new ArrayList<>();
+		for (int x=0;x<getWidth();x++) {
+			for (int y=0;y<getHeight();y++) {
+				if (TileConstants.isSubway(getTile(x, y))) {
+					stations.add(new SubwayStation(x, y));
+				}
+			}
+		}
+		return stations;
+	}
 
 	@Override
 	public int hashCode() {
@@ -3434,6 +3583,10 @@ public class Micropolis
 //		if (unpoweredZoneCount != other.unpoweredZoneCount)
 //			return false;
 		return true;
+	}
+
+	public SubwayNetwork getSubNet() {
+		return subNet;
 	}
 	
 }

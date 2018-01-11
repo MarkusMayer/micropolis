@@ -6,23 +6,28 @@
 // it under the terms of the GNU GPLv3, with additional terms.
 // See the README file, included in this distribution, for details.
 
-package micropolisj.engine;
+package micropolisj.engine.tool;
 
 import static micropolisj.engine.TileConstants.CLEAR;
 
-class ToolEffect implements ToolEffectIfc
+import micropolisj.engine.MapPosition;
+import micropolisj.engine.Micropolis;
+import micropolisj.engine.Sound;
+
+public class ToolEffect implements ToolEffectIfc
 {
 	final Micropolis city;
 	final ToolPreview preview;
 	final int originX;
 	final int originY;
+	private CityToolEffect cityEff;
 
-	ToolEffect(Micropolis city)
+	public ToolEffect(Micropolis city)
 	{
 		this(city, 0, 0);
 	}
 
-	ToolEffect(Micropolis city, int xpos, int ypos)
+	public ToolEffect(Micropolis city, int xpos, int ypos)
 	{
 		this.city = city;
 		this.preview = new ToolPreview();
@@ -109,5 +114,16 @@ class ToolEffect implements ToolEffectIfc
 		else {
 			return preview.toolResult;
 		}
+	}
+
+	@Override
+	public void setCityToolEffect(CityToolEffect cityEff) {
+		this.cityEff=cityEff;
+	}
+
+	@Override
+	public void applyCityToolEffect(MapPosition pos) {
+		if (cityEff!=null)
+			cityEff.applyEffect(city, pos);
 	}
 }

@@ -43,7 +43,7 @@ public class NewCityDialog extends JDialog {
 		engine = new Micropolis();
 		new MapGenerator(engine).generateNewCity();
 
-		mapPane = new OverlayMapView(engine);
+		mapPane = new OverlayMapView(engine,1);
 		mapPane.setBorder(BorderFactory.createLoweredBevelBorder());
 		p1.add(mapPane, BorderLayout.WEST);
 

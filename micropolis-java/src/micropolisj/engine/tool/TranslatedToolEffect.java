@@ -6,11 +6,15 @@
 // it under the terms of the GNU GPLv3, with additional terms.
 // See the README file, included in this distribution, for details.
 
-package micropolisj.engine;
+package micropolisj.engine.tool;
+
+import micropolisj.engine.MapPosition;
+import micropolisj.engine.Sound;
 
 class TranslatedToolEffect implements ToolEffectIfc
 {
 	final ToolEffectIfc base;
+	CityToolEffect cityEff;
 	final int dx;
 	final int dy;
 
@@ -49,5 +53,15 @@ class TranslatedToolEffect implements ToolEffectIfc
 	public void toolResult(ToolResult tr)
 	{
 		base.toolResult(tr);
+	}
+
+	@Override
+	public void setCityToolEffect(CityToolEffect cityEff) {
+		base.setCityToolEffect(cityEff);
+		this.cityEff=cityEff;
+	}
+
+	@Override
+	public void applyCityToolEffect(MapPosition pos) {
 	}
 }

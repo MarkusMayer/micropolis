@@ -6,10 +6,17 @@
 // it under the terms of the GNU GPLv3, with additional terms.
 // See the README file, included in this distribution, for details.
 
-package micropolisj.engine;
+package micropolisj.engine.tool;
 
-import java.util.*;
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.CLEAR;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import micropolisj.engine.CityRect;
+import micropolisj.engine.MapPosition;
+import micropolisj.engine.Sound;
 
 public class ToolPreview implements ToolEffectIfc
 {
@@ -19,6 +26,7 @@ public class ToolPreview implements ToolEffectIfc
 	public int cost;
 	public ToolResult toolResult;
 	public List<SoundInfo> sounds;
+	private CityToolEffect cityEff;
 
 	public static class SoundInfo
 	{
@@ -162,5 +170,14 @@ public class ToolPreview implements ToolEffectIfc
 	public void toolResult(ToolResult tr)
 	{
 		this.toolResult = tr;
+	}
+
+	@Override
+	public void setCityToolEffect(CityToolEffect cityEff) {
+		this.cityEff=cityEff;
+	}
+
+	@Override
+	public void applyCityToolEffect(MapPosition pos) {
 	}
 }

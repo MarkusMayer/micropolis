@@ -6,9 +6,17 @@
 // it under the terms of the GNU GPLv3, with additional terms.
 // See the README file, included in this distribution, for details.
 
-package micropolisj.engine;
+package micropolisj.engine.tool;
 
 import static micropolisj.engine.TileConstants.*;
+
+import micropolisj.engine.CityLocation;
+import micropolisj.engine.CityRect;
+import micropolisj.engine.MapPosition;
+import micropolisj.engine.Micropolis;
+import micropolisj.engine.TileSpec;
+import micropolisj.engine.Tiles;
+import micropolisj.engine.TileSpec.BuildingInfo;
 
 public class ToolStroke
 {
@@ -45,9 +53,15 @@ public class ToolStroke
 
 	public final ToolResult apply()
 	{
+		//TODO: Das Hinzufügen einer Station sollte Map ändern + Station im SubwayNetwork erzeugen.
+		// D.h. die city sollte Map und Network synchron halten.
 		ToolEffect eff = new ToolEffect(city);
 		applyArea(eff);
-		return eff.apply();
+		ToolResult res=eff.apply();
+		if (res==ToolResult.SUCCESS) {
+			eff.applyCityToolEffect(new MapPosition(xpos, ypos));
+		}
+		return res;
 	}
 
 	protected void applyArea(ToolEffectIfc eff)
@@ -136,8 +150,8 @@ public class ToolStroke
 
 		int cost = tool.getToolCost();
 		boolean canBuild = true;
-		for (int rowNum = 0; rowNum < bi.height; rowNum++) {
-			for (int columnNum = 0; columnNum < bi.width; columnNum++)
+		for (int rowNum = 0; rowNum < bi.getHeight(); rowNum++) {
+			for (int columnNum = 0; columnNum < bi.getWidth(); columnNum++)
 			{
 				int tileValue = eff.getTile(columnNum, rowNum);
 				tileValue = tileValue & LOMASK;
@@ -160,16 +174,16 @@ public class ToolStroke
 		eff.spend(cost);
 
 		int i = 0;
-		for (int rowNum = 0; rowNum < bi.height; rowNum++)
+		for (int rowNum = 0; rowNum < bi.getHeight(); rowNum++)
 		{
-			for (int columnNum = 0; columnNum < bi.width; columnNum++)
+			for (int columnNum = 0; columnNum < bi.getWidth(); columnNum++)
 			{
-				eff.setTile(columnNum, rowNum, (char) bi.members[i]);
+				eff.setTile(columnNum, rowNum, (char) bi.getMembers()[i]);
 				i++;
 			}
 		}
 
-		fixBorder(eff, bi.width, bi.height);
+		fixBorder(eff, bi.getWidth(), bi.getHeight());
 		return true;
 	}
 

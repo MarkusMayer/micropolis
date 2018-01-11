@@ -23,11 +23,17 @@ import javax.swing.Timer;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import micropolisj.engine.*;
+import micropolisj.engine.tool.MicropolisTool;
+import micropolisj.engine.tool.ToolResult;
+import micropolisj.engine.tool.ToolStroke;
 import micropolisj.util.TranslationTool;
 
 public class MainWindow extends JFrame
 	implements Micropolis.Listener, EarthquakeListener
 {
+	private static final int SUBWAY_DLG_WIDTH = 1200;
+	private static final int SUBWAY_DLG_HEIGHT = 1000;
+	SubwayDialog subwayDlg;
 	Micropolis engine;
 	MicropolisDrawingArea drawingArea;
 	JScrollPane drawingAreaScroll;
@@ -155,7 +161,7 @@ public class MainWindow extends JFrame
 		mapLegendLbl = new JLabel();
 		mapMenu.add(mapLegendLbl);
 
-		mapView = new OverlayMapView(engine);
+		mapView = new OverlayMapView(engine,1);
 		mapView.connectView(drawingArea, drawingAreaScroll);
 		mapViewContainer.add(mapView, BorderLayout.CENTER);
 
@@ -760,6 +766,18 @@ public class MainWindow extends JFrame
 			}));
 		windowsMenu.add(menuItem);
 
+		menuItem = new JMenuItem(strings.getString("menu.windows.subway"));
+		setupKeys(menuItem, "menu.windows.subway");
+		menuItem.addActionListener(wrapActionListener(
+			new ActionListener() {
+			public void actionPerformed(ActionEvent ev)
+			{
+				showSubwayDialog();
+			}
+			}));
+		windowsMenu.add(menuItem);
+
+		
 		JMenu helpMenu = new JMenu(strings.getString("menu.help"));
 		setupKeys(helpMenu, "menu.help");
 		menuBar.add(helpMenu);
@@ -1119,6 +1137,16 @@ public class MainWindow extends JFrame
 
 		ZoneStatus z = engine.queryZoneStatus(xpos, ypos);
 		notificationPane.showZoneStatus(engine, xpos, ypos, z);
+		
+		if (TileConstants.isSubway(engine.getTile(xpos, ypos))) {
+			showSubwayDialog();
+		}
+	}
+
+	private void showSubwayDialog() {
+		subwayDlg=new SubwayDialog(this, engine,engine.getSubNet());
+		subwayDlg.setSize(SUBWAY_DLG_WIDTH,SUBWAY_DLG_HEIGHT);
+		subwayDlg.setVisible(true);
 	}
 
 	private void doZoom(int dir, Point mousePt)
@@ -1410,6 +1438,7 @@ public class MainWindow extends JFrame
 			try {
 				l.actionPerformed(evt);
 			} catch (Throwable e) {
+				e.printStackTrace();
 				showErrorMessage(e);
 			}
 		}};

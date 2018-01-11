@@ -18,6 +18,9 @@ import javax.swing.event.*;
 import javax.swing.Timer;
 
 import micropolisj.engine.*;
+import micropolisj.engine.tool.MicropolisTool;
+import micropolisj.engine.tool.ToolPreview;
+
 import static micropolisj.engine.TileConstants.*;
 import static micropolisj.gui.ColorParser.parseColor;
 

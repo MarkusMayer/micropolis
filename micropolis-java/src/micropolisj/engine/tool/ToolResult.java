@@ -6,7 +6,7 @@
 // it under the terms of the GNU GPLv3, with additional terms.
 // See the README file, included in this distribution, for details.
 
-package micropolisj.engine;
+package micropolisj.engine.tool;
 
 /**
  * Lists the various results that may occur when applying a tool.

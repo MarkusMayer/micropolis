@@ -23,6 +23,10 @@ public class BudgetNumbers
 	public int roadRequest;
 	public int roadFunded;
 	public double roadPercent;
+	
+	public int subRequest;
+	public int subFunded;
+	public double subPercent;
 
 	public int fireRequest;
 	public int fireFunded;

@@ -6,7 +6,6 @@ import static micropolisj.engine.TileConstants.isConductive;
 import static micropolisj.engine.TileConstants.isOverWater;
 
 import micropolisj.engine.Micropolis;
-import micropolisj.engine.TileBehavior;
 
 public class Rail extends TileBehavior {
 	

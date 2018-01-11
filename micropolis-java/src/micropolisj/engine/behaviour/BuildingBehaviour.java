@@ -9,7 +9,6 @@ import static micropolisj.engine.TileConstants.isIndestructible2;
 import static micropolisj.engine.TileConstants.isZoneCenter;
 
 import micropolisj.engine.Micropolis;
-import micropolisj.engine.TileBehavior;
 import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
 import micropolisj.engine.TrafficGen;

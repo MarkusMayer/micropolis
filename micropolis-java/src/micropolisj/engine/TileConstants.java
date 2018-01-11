@@ -131,12 +131,18 @@ public class TileConstants
 	public static final char PORTBASE = 693;
 	public static final char PORT = 698;
 	public static final char AIRPORT = 716;
+	public static final char AIRPORTBASE = 709;
 	public static final char POWERPLANT = 750;
+	public static final char POWERPLANTBASE = 750;
 	public static final char FIRESTATION = 765;
+	public static final char FIRESTATIONBASE = 761;
 	public static final char POLICESTATION = 774;
+	public static final char POLICESTATIONBASE = 770;
+	public static final char STADIUMBASE = 779;
 	public static final char STADIUM = 784;
 	public static final char FULLSTADIUM = 800;
 	public static final char NUCLEAR = 816;
+	public static final char NUCLEARBASE = 811;
 	public static final char LASTZONE = 826;
 	public static final char LIGHTNINGBOLT = 827;
 	public static final char HBRDG0 = 828;   //draw bridge tiles (horz)
@@ -156,21 +162,21 @@ public class TileConstants
 	public static final char SUBWAY = 977;
 	public static final char LAST_TILE = 1000;
 
-	static final char [] RoadTable = new char[] {
+	public static final char [] RoadTable = new char[] {
 		ROADS, ROADS2, ROADS, ROADS3,
 		ROADS2, ROADS2, ROADS4, ROADS8,
 		ROADS, ROADS6, ROADS, ROADS7,
 		ROADS5, ROADS10, ROADS9, INTERSECTION
 		};
 
-	static final char [] RailTable = new char[] {
+	public static final char [] RailTable = new char[] {
 		LHRAIL, LVRAIL, LHRAIL, LVRAIL2,
 		LVRAIL, LVRAIL, LVRAIL3, LVRAIL7,
 		LHRAIL, LVRAIL5, LHRAIL, LVRAIL6,
 		LVRAIL4, LVRAIL9, LVRAIL8, LVRAIL10
 		};
 
-	static final char [] WireTable = new char[] {
+	public static final char [] WireTable = new char[] {
 		LHPOWER, LVPOWER, LHPOWER, LVPOWER2,
 		LVPOWER, LVPOWER, LVPOWER3, LVPOWER7,
 		LHPOWER, LVPOWER5, LHPOWER, LVPOWER6,
@@ -723,5 +729,11 @@ public class TileConstants
 
 		TileSpec ts = Tiles.get(tile);
 		return ts.getPopulation() / 8;
+	}
+	
+	public static boolean isSubway(int tile) {
+		assert (tile & LOMASK) == tile;
+		
+		return tile==SUBWAY;
 	}
 }

@@ -6,9 +6,21 @@
 // it under the terms of the GNU GPLv3, with additional terms.
 // See the README file, included in this distribution, for details.
 
-package micropolisj.engine;
+package micropolisj.engine.tool;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.CLEAR;
+import static micropolisj.engine.TileConstants.DIRT;
+import static micropolisj.engine.TileConstants.RADTILE;
+import static micropolisj.engine.TileConstants.RIVER;
+import static micropolisj.engine.TileConstants.TINYEXP;
+import static micropolisj.engine.TileConstants.getZoneSizeFor;
+import static micropolisj.engine.TileConstants.isOverWater;
+import static micropolisj.engine.TileConstants.isZoneCenter;
+
+import micropolisj.engine.CityDimension;
+import micropolisj.engine.CityRect;
+import micropolisj.engine.Micropolis;
+import micropolisj.engine.Sound;
 
 class Bulldozer extends ToolStroke
 {

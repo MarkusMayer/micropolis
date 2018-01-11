@@ -3,7 +3,6 @@ package micropolisj.engine.behaviour;
 import static micropolisj.engine.TileConstants.RUBBLE;
 
 import micropolisj.engine.Micropolis;
-import micropolisj.engine.TileBehavior;
 
 public class Explosion extends TileBehavior {
 

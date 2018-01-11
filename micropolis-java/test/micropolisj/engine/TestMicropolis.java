@@ -10,6 +10,9 @@ import java.util.Random;
 
 import org.junit.Test;
 
+import micropolisj.engine.tool.MicropolisTool;
+import micropolisj.engine.tool.ToolStroke;
+
 public class TestMicropolis {
 
 	@Test
@@ -26,7 +29,7 @@ public class TestMicropolis {
 		System.out.println(Arrays.toString(city.history.ind));
 //		System.out.println(city.budget.totalFunds);
 //		System.out.println(city.getTile(19, 19));
-		ToolStroke ts = new ToolStroke(city, MicropolisTool.RESIDENTIAL, 20, 20);
+		ToolStroke ts = MicropolisTool.RESIDENTIAL.beginStroke(city, 20, 20);
 		ts.apply();
 		for (int i = 0; i < 50; i++) {
 			city.animate();

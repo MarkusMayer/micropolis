@@ -6,7 +6,10 @@
 // it under the terms of the GNU GPLv3, with additional terms.
 // See the README file, included in this distribution, for details.
 
-package micropolisj.engine;
+package micropolisj.engine.tool;
+
+import micropolisj.engine.MapPosition;
+import micropolisj.engine.Sound;
 
 public interface ToolEffectIfc
 {
@@ -29,4 +32,8 @@ public interface ToolEffectIfc
 	void spend(int amount);
 
 	void toolResult(ToolResult tr);
+	
+	void setCityToolEffect(CityToolEffect cityEff);
+	
+	void applyCityToolEffect(MapPosition pos);
 }

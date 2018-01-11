@@ -6,7 +6,7 @@
 // it under the terms of the GNU GPLv3, with additional terms.
 // See the README file, included in this distribution, for details.
 
-package micropolisj.engine;
+package micropolisj.engine.tool;
 
 import static micropolisj.engine.TileConstants.AIRPORT;
 import static micropolisj.engine.TileConstants.FIRESTATION;
@@ -17,6 +17,8 @@ import static micropolisj.engine.TileConstants.PORT;
 import static micropolisj.engine.TileConstants.POWERPLANT;
 import static micropolisj.engine.TileConstants.STADIUM;
 import static micropolisj.engine.TileConstants.SUBWAY;
+
+import micropolisj.engine.Micropolis;
 
 class BuildingTool extends ToolStroke
 {
@@ -64,8 +66,10 @@ class BuildingTool extends ToolStroke
 		case ICERINK:
 			return applyZone(eff, ICERINK);
 
-		case SUBWAY:
+		case SUBWAY:{
+			eff.setCityToolEffect(new AddStationToNetwork());
 			return applyZone(eff, SUBWAY);
+		}
 			
 		default:
 			// not expected

@@ -102,6 +102,8 @@ public class CityEval
 		z += engine.getAirportCount() * 10000;
 		z += engine.getCoalCount() * 3000;
 		z += engine.getNuclearCount() * 6000;
+		//Subway
+		z+= engine.getSubNet().getAssetValue();
 		cityAssValue = z * 1000;
 	}
 
@@ -126,7 +128,7 @@ public class CityEval
 		problemTable.put(CityProblem.CRIME, engine.crimeAverage);
 		problemTable.put(CityProblem.POLLUTION, engine.pollutionAverage);
 		problemTable.put(CityProblem.HOUSING, (int)Math.round(engine.landValueAverage * 0.7));
-		problemTable.put(CityProblem.TAXES, engine.cityTax * 10);
+		problemTable.put(CityProblem.TAXES, engine.getCityTax() * 10);
 		problemTable.put(CityProblem.TRAFFIC, averageTrf());
 		problemTable.put(CityProblem.UNEMPLOYMENT, getUnemployment());
 		problemTable.put(CityProblem.FIRE, getFire());
@@ -256,7 +258,7 @@ public class CityEval
 		}
 		z *= SM;
 		z -= getFire();
-		z -= engine.cityTax;
+		z -= engine.getCityTax();
 
 		int TM = engine.getUnpoweredZoneCount() + engine.getPoweredZoneCount();
 		SM = TM != 0 ? ((double)engine.getPoweredZoneCount() / (double)TM) : 1.0;

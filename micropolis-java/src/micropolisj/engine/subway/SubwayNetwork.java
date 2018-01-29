@@ -6,9 +6,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import micropolisj.engine.MapPosition;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.TileConstants;
+import micropolisj.engine.map.MapPosition;
 
 public class SubwayNetwork {
 
@@ -166,7 +166,7 @@ public class SubwayNetwork {
 			sb.append("Connection: "+subwayConnection+" ==> used "+useCount+" times.\r\n");
 		}
 		
-		sb.append("ride/request ratio: "+nrRides/nrRequests);
+		sb.append("ride/request ratio: "+(nrRequests>0 ? nrRides/nrRequests : -1));
 		
 		return sb.toString();
 	}

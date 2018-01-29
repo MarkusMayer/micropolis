@@ -8,7 +8,11 @@
 
 package micropolisj.engine;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 public class TileSpec
 {
@@ -44,6 +48,10 @@ public class TileSpec
 		ts.load(inStr, tilesRc);
 		return ts;
 	}
+	
+	public int getTileNr() {
+		return tileNumber;
+	}
 
 	public String getAttribute(String key)
 	{
@@ -60,6 +68,7 @@ public class TileSpec
 	{
 		int width;
 		int height;
+		int centerTile,startTile;
 		short [] members;
 		
 		public int getWidth() {
@@ -70,6 +79,14 @@ public class TileSpec
 		}
 		public short[] getMembers() {
 			return members;
+		}
+		
+		public short getStartTile() {
+			return (short) startTile;
+		}
+		
+		public short getCenterTile() {
+			return (short) centerTile;
 		}
 	}
 
@@ -90,14 +107,16 @@ public class TileSpec
 		bi.height = Integer.parseInt(p2[1]);
 
 		bi.members = new short[bi.width*bi.height];
-		int startTile = tileNumber;
-		if (bi.width >= 3) { startTile--; }
-		if (bi.height >= 3) { startTile -= bi.width; }
-
+		bi.centerTile=tileNumber;
+		bi.startTile = tileNumber;
+		if (bi.width >= 3) { bi.startTile--; }
+		if (bi.height >= 3) { bi.startTile -= bi.width; }
+		
+		int curTile=bi.startTile;
 		for (int row = 0; row < bi.height; row++) {
 			for (int col = 0; col < bi.width; col++) {
-				bi.members[row*bi.width+col] = (short)startTile;
-				startTile++;
+				bi.members[row*bi.width+col] = (short)curTile;
+				curTile++;
 			}
 		}
 

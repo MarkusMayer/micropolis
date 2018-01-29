@@ -12,11 +12,11 @@ import static micropolisj.engine.TileConstants.*;
 
 import micropolisj.engine.CityLocation;
 import micropolisj.engine.CityRect;
-import micropolisj.engine.MapPosition;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
 import micropolisj.engine.TileSpec.BuildingInfo;
+import micropolisj.engine.map.MapPosition;
 
 public class ToolStroke
 {

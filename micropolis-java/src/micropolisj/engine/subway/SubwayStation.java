@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import micropolisj.engine.MapPosition;
+import micropolisj.engine.map.MapPosition;
 
 public class SubwayStation {
 

@@ -22,9 +22,9 @@ import javax.swing.JPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import micropolisj.engine.MapPosition;
 import micropolisj.engine.MapState;
 import micropolisj.engine.Micropolis;
+import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.subway.SubwayConnection;
 import micropolisj.engine.subway.SubwayNetwork;
 import micropolisj.engine.subway.SubwayStation;

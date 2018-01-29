@@ -15,8 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import micropolisj.engine.CityRect;
-import micropolisj.engine.MapPosition;
 import micropolisj.engine.Sound;
+import micropolisj.engine.map.MapPosition;
 
 public class ToolPreview implements ToolEffectIfc
 {

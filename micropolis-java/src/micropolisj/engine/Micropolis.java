@@ -81,6 +81,8 @@ import micropolisj.engine.behaviour.Seaport;
 import micropolisj.engine.behaviour.StadiumEmpty;
 import micropolisj.engine.behaviour.StadiumFull;
 import micropolisj.engine.behaviour.TileBehavior;
+import micropolisj.engine.map.CityMap;
+import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.subway.SubwayConnection;
 import micropolisj.engine.subway.SubwayNetwork;
 import micropolisj.engine.subway.SubwayStation;
@@ -303,6 +305,7 @@ public class Micropolis
 	{
 		map = new char[height][width];
 		powerMap = new boolean[height][width];
+		CityMap m=new CityMap(1, 1);
 
 		int hX = (width+1)/2;
 		int hY = (height+1)/2;

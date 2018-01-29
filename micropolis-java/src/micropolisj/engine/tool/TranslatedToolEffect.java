@@ -8,8 +8,8 @@
 
 package micropolisj.engine.tool;
 
-import micropolisj.engine.MapPosition;
 import micropolisj.engine.Sound;
+import micropolisj.engine.map.MapPosition;
 
 class TranslatedToolEffect implements ToolEffectIfc
 {

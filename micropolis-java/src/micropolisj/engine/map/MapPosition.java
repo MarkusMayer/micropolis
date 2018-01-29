@@ -1,4 +1,7 @@
-package micropolisj.engine;
+package micropolisj.engine.map;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MapPosition {
 	private final int x,y;
@@ -8,12 +11,34 @@ public class MapPosition {
 		this.y=y;
 	}
 	
+	public static MapPosition at(int x, int y) {
+		return new MapPosition(x, y);
+	}
+	
+	public MapPosition plus(int xAdd, int yAdd) {
+		return MapPosition.at(getX()+xAdd, getY()+yAdd);
+	}
+	
 	public int getX() {
 		return x;
 	}
 	
 	public int getY() {
 		return y;
+	}
+	
+	public List<MapPosition> getPosForRect(MapPosition rightBottom){
+		if (getX()>=rightBottom.getX() || getY() >= rightBottom.getY())
+			throw new IllegalArgumentException("leftTop is right and or below rightBottom: "+this+", "+rightBottom);
+
+		ArrayList<MapPosition> posList=new ArrayList<>();
+		for (int x=getX();x<rightBottom.getX();x++) {
+			for (int y=getY();y<rightBottom.getY();y++) {
+				posList.add(new MapPosition(x, y));
+			}			
+		}
+		
+		return posList;
 	}
 	
 	public boolean isSamePos(int x, int y) {
@@ -51,6 +76,11 @@ public class MapPosition {
 		if (y != other.y)
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "MapPosition [x=" + x + ", y=" + y + "]";
 	}
 	
 	

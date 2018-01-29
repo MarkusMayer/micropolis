@@ -17,11 +17,11 @@ import static micropolisj.engine.TileConstants.residentialZonePop;
 import java.util.List;
 import java.util.Set;
 
-import micropolisj.engine.MapPosition;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.TileConstants;
 import micropolisj.engine.TypeDemand;
 import micropolisj.engine.ZoneType;
+import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.subway.SubwayStation;
 
 public class Residential extends BuildingBehaviour {

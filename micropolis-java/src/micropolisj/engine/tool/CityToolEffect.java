@@ -1,7 +1,7 @@
 package micropolisj.engine.tool;
 
-import micropolisj.engine.MapPosition;
 import micropolisj.engine.Micropolis;
+import micropolisj.engine.map.MapPosition;
 
 public interface CityToolEffect {
 

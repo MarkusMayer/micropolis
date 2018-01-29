@@ -10,9 +10,9 @@ package micropolisj.engine.tool;
 
 import static micropolisj.engine.TileConstants.CLEAR;
 
-import micropolisj.engine.MapPosition;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.Sound;
+import micropolisj.engine.map.MapPosition;
 
 public class ToolEffect implements ToolEffectIfc
 {

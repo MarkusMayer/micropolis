@@ -46,11 +46,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import micropolisj.engine.MapListener;
-import micropolisj.engine.MapPosition;
 import micropolisj.engine.MapState;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.Sprite;
 import micropolisj.engine.TileConstants;
+import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.subway.SubwayConnection;
 import micropolisj.engine.subway.SubwayStation;
 

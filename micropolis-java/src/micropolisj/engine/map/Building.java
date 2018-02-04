@@ -10,6 +10,7 @@ class Building {
 	private final TileSpec base;
 	private boolean isPowered;
 	private final BuildingType type;
+	private boolean centerIntact;
 
 	public static Building getPolice() {
 		return new Building(BuildingType.police, Tiles.get(TileConstants.POLICESTATION));
@@ -28,6 +29,7 @@ class Building {
 		this.type = type;
 		this.base = base;
 		this.isPowered = false;
+		this.centerIntact=true;
 	}
 
 	BuildingInfo getBuildingInfo() {
@@ -44,6 +46,14 @@ class Building {
 
 	boolean getPower() {
 		return isPowered;
+	}
+	
+	boolean isCenterIntact() {
+		return centerIntact;
+	}
+	
+	void notifyCenterDestroyed() {
+		centerIntact=false;
 	}
 
 	MapFragment getFragment() {

@@ -21,12 +21,17 @@ public class CompositeMapTile extends MapTile {
 
 	@Override
 	boolean isBulldozable() {
-		return false;
+		return !building.isCenterIntact();
 	}
 
 	@Override
 	MapFragment getBulldozeFragment() {
-		throw new IllegalArgumentException("CompositeMapTile is not bulldozable");
+		if (isBulldozable()) {
+			MapFragment result=new MapFragment(MapPosition.at(1, 1));
+			result.addTile(MapPosition.at(0, 0), SingleMapTile.getRubble());
+			return result;
+		} 
+		return new MapFragment(MapPosition.at(0, 0));
 	}
 	
 	@Override

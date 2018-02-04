@@ -22,7 +22,8 @@ public class CityMap {
 		map = frag.transposeAndSetTo(map, MapPosition.at(0, 0));
 	}
 
-	private MapTile getTile(MapPosition pos) {
+	MapTile getTile(MapPosition pos) {
+		checkPosInside(pos);
 		return map.get(pos);
 	}
 
@@ -31,32 +32,47 @@ public class CityMap {
 	}
 
 	private List<MapTile> getAllTiles() {
-		return getAllPos().stream()
-			.map(aPos -> getTile(aPos))
-			.collect(Collectors.toList());
+		return getAllPos().stream().map(aPos -> getTile(aPos)).collect(Collectors.toList());
 	}
 
 	public TileSpec getSpec(MapPosition pos) {
 		return getTile(pos).getTileSpec();
 	}
 
-	public void build(MapPosition pos, Building aBuilding) {
+	public boolean build(MapPosition pos, Building aBuilding) {
+		checkPosInside(pos);
 		MapFragment frag = aBuilding.getFragment();
 		if (!isRectBuildable(pos, pos.plus(frag.getDim())))
-			return;
+			return false;
 
 		map = frag.transposeAndSetTo(map, pos);
+		return true;
 	}
 
-	public void buildRubble(MapPosition pos) {
-		map.put(pos, new SingleMapTile(Tiles.get(0), pos, this));
+	void buildRubble(MapPosition pos) {
+		putTile(pos, new SingleMapTile(Tiles.get(0), pos, this));
+	}
+
+	private void putTile(MapPosition pos, MapTile tile) {
+		checkPosInside(pos);
+		map.put(pos, tile);
 	}
 
 	public void bulldoze(MapPosition pos) {
+		checkPosInside(pos);
 		if (getTile(pos).isBulldozable()) {
-			MapFragment bulldozeFrag=getTile(pos).getBulldozeFragment();
-			map=bulldozeFrag.transposeAndSetTo(map, pos);
-		};
+			MapFragment bulldozeFrag = getTile(pos).getBulldozeFragment();
+			map = bulldozeFrag.transposeAndSetTo(map, pos);
+		}
+	}
+
+	private void checkPosInside(MapPosition pos) {
+		if (!posInside(pos))
+			throw new IllegalArgumentException("position outside city bounds. pos: "+pos+", city-dimmension: "+dim);
+	}
+
+	private boolean posInside(MapPosition pos) {
+		return (pos.greaterOrEqualThan(MapPosition.at(0, 0)) && pos.lessThan(dim));
 	}
 
 	private boolean isRectBuildable(MapPosition leftTop, MapPosition rightBottom) {
@@ -90,9 +106,7 @@ public class CityMap {
 	}
 
 	Set<Building> getAllBuildings() {
-		return getAllTiles().stream()
-				.filter(aTile -> aTile.hasBuilding())
-				.map(aTile -> aTile.getBuilding())
+		return getAllTiles().stream().filter(aTile -> aTile.hasBuilding()).map(aTile -> aTile.getBuilding())
 				.collect(Collectors.toSet());
 	}
 

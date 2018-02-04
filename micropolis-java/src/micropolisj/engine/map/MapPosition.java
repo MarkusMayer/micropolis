@@ -95,5 +95,9 @@ public class MapPosition {
 		return (x<dim.getX() && y<dim.getY());
 	}
 	
+	public boolean greaterOrEqualThan(MapPosition dim) {
+		return (x>=dim.getX() && y>=dim.getY());
+	}
+	
 	
 }

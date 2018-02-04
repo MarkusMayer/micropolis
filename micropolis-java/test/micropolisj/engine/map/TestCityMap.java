@@ -28,10 +28,15 @@ public class TestCityMap {
 	
 	@Test
 	public void testGetSpecBuildingBase() {
-		//a
 		Assert.assertNotNull(map.getSpec(MapPosition.at(0, 0)));
 		map.build(MapPosition.at(1, 1), Building.getFirestation());
 		Assert.assertEquals(Tiles.get(TileConstants.FIRESTATIONBASE),map.getSpec(MapPosition.at(1, 1)));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testBuildOutsideCity() {
+		//a
+		map.build(MapPosition.at(5, 5), Building.getFirestation());
 	}
 	
 	@Test

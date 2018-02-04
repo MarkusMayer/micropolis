@@ -1,6 +1,7 @@
 package micropolisj.engine.map;
 
-public enum BuildingType {
+public enum BuildingType
+ {
 	police (500),
 	firestation (500),
 	stadium (5000),

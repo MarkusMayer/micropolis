@@ -25,4 +25,25 @@ public class TestMapPosition {
 	public void testPosPlus() {
 		Assert.assertEquals(MapPosition.at(3, 3), MapPosition.at(1, 1).plus(2, 2));
 	}
+	
+	@Test
+	public void testLessThanOk() {
+		Assert.assertTrue(MapPosition.at(1, 1).lessThan(MapPosition.at(2, 2)));
+	}
+
+	@Test
+	public void testLessThanOutside() {
+		Assert.assertFalse(MapPosition.at(1, 1).lessThan(MapPosition.at(1, 1)));
+	}
+	
+	@Test
+	public void testLessXDimOutside() {
+		Assert.assertFalse(MapPosition.at(1, 1).lessThan(MapPosition.at(1, 2)));
+	}
+
+	@Test
+	public void testLessYDimOutside() {
+		Assert.assertFalse(MapPosition.at(1, 1).lessThan(MapPosition.at(2, 1)));
+	}
+
 }

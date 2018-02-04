@@ -2587,10 +2587,10 @@ public class Micropolis
 			{
 				char tilevalue = map[y][x];
 				TileSpec spec = Tiles.get(tilevalue & LOMASK);
-				if (spec != null && spec.animNext != null) {
+				if (spec != null && spec.getAnimNext() != null) {
 					int flags = tilevalue & ALLBITS;
 					setTile(x, y, (char)
-						(spec.animNext.tileNumber | flags)
+						(spec.getAnimNext().tileNumber | flags)
 						);
 				}
 			}

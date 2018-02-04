@@ -6,8 +6,8 @@ public class CompositeMapTile extends MapTile {
 
 	protected final Building building;
 
-	CompositeMapTile(TileSpec spec, Building building, MapPosition pos, CityMap map) {
-		super(spec, pos, map);
+	CompositeMapTile(TileSpec spec, Building building) {
+		super(spec);
 		this.building = building;
 	}
 
@@ -24,7 +24,18 @@ public class CompositeMapTile extends MapTile {
 		return false;
 	}
 
-	void bulldoze() {
+	@Override
+	MapFragment getBulldozeFragment() {
 		throw new IllegalArgumentException("CompositeMapTile is not bulldozable");
+	}
+	
+	@Override
+	boolean hasBuilding() {
+		return true;
+	}
+
+	@Override
+	Building getBuilding() {
+		return building;
 	}
 }

@@ -14,11 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class TileSpec
-{
+public class TileSpec {
 	int tileNumber;
 	String name;
-	TileSpec animNext;
+	private TileSpec animNext;
 	TileSpec onPower;
 	TileSpec onShutdown;
 	boolean canBulldoze;
@@ -26,96 +25,102 @@ public class TileSpec
 	boolean canConduct;
 	boolean overWater;
 	boolean zone;
+
 	public TileSpec owner;
 	public int ownerOffsetX;
 	public int ownerOffsetY;
 	BuildingInfo buildingInfo;
 
-	Map<String,String> attributes;
+	Map<String, String> attributes;
 	List<String> images;
 
-	protected TileSpec(int tileNumber, String tileName)
-	{
+	protected TileSpec(int tileNumber, String tileName) {
 		this.tileNumber = tileNumber;
 		this.name = tileName;
-		this.attributes = new HashMap<String,String>();
+		this.attributes = new HashMap<String, String>();
 		this.images = new ArrayList<String>();
 	}
 
-	public static TileSpec parse(int tileNumber, String tileName, String inStr, Properties tilesRc)
-	{
+	public static TileSpec parse(int tileNumber, String tileName, String inStr, Properties tilesRc) {
 		TileSpec ts = new TileSpec(tileNumber, tileName);
 		ts.load(inStr, tilesRc);
 		return ts;
 	}
-	
+
 	public int getTileNr() {
 		return tileNumber;
 	}
 
-	public String getAttribute(String key)
-	{
+	public TileSpec getAnimNext() {
+		return animNext;
+	}
+
+	public String getAttribute(String key) {
 		return attributes.get(key);
 	}
 
-	public boolean getBooleanAttribute(String key)
-	{
+	public boolean getBooleanAttribute(String key) {
 		String v = getAttribute(key);
 		return (v != null && v.equals("true"));
 	}
 
-	public static class BuildingInfo
-	{
+	public static class BuildingInfo {
 		int width;
 		int height;
-		int centerTile,startTile;
-		short [] members;
-		
+		int centerTile, startTile;
+		short[] members;
+
 		public int getWidth() {
 			return width;
 		}
+
 		public int getHeight() {
 			return height;
 		}
+
 		public short[] getMembers() {
 			return members;
 		}
-		
+
 		public short getStartTile() {
 			return (short) startTile;
 		}
-		
+
 		public short getCenterTile() {
 			return (short) centerTile;
 		}
 	}
 
-	public BuildingInfo getBuildingInfo()
-	{
+	public BuildingInfo getBuildingInfo() {
 		return buildingInfo;
 	}
 
-	private void resolveBuildingInfo(Map<String,TileSpec> tileMap)
-	{
+	private void resolveBuildingInfo(Map<String, TileSpec> tileMap) {
 		String tmp = getAttribute("building");
-		if (tmp == null) { return; }
+		if (tmp == null) {
+			return;
+		}
 
 		BuildingInfo bi = new BuildingInfo();
 
-		String [] p2 = tmp.split("x");
+		String[] p2 = tmp.split("x");
 		bi.width = Integer.parseInt(p2[0]);
 		bi.height = Integer.parseInt(p2[1]);
 
-		bi.members = new short[bi.width*bi.height];
-		bi.centerTile=tileNumber;
+		bi.members = new short[bi.width * bi.height];
+		bi.centerTile = tileNumber;
 		bi.startTile = tileNumber;
-		if (bi.width >= 3) { bi.startTile--; }
-		if (bi.height >= 3) { bi.startTile -= bi.width; }
-		
-		int curTile=bi.startTile;
+		if (bi.width >= 3) {
+			bi.startTile--;
+		}
+		if (bi.height >= 3) {
+			bi.startTile -= bi.width;
+		}
+
+		int curTile = bi.startTile;
 		for (int row = 0; row < bi.height; row++) {
 			for (int col = 0; col < bi.width; col++) {
-				bi.members[row*bi.width+col] = (short)curTile;
+				bi.members[row * bi.width + col] = (short) curTile;
 				curTile++;
 			}
 		}
@@ -123,21 +128,15 @@ public class TileSpec
 		this.buildingInfo = bi;
 	}
 
-	public CityDimension getBuildingSize()
-	{
+	public CityDimension getBuildingSize() {
 		if (buildingInfo != null) {
-			return new CityDimension(
-				buildingInfo.width,
-				buildingInfo.height
-				);
-		}
-		else {
+			return new CityDimension(buildingInfo.width, buildingInfo.height);
+		} else {
 			return null;
 		}
 	}
 
-	public int getDescriptionNumber()
-	{
+	public int getDescriptionNumber() {
 		String v = getAttribute("description");
 		if (v != null && v.startsWith("#")) {
 			return Integer.parseInt(v.substring(1));
@@ -148,39 +147,32 @@ public class TileSpec
 		return -1;
 	}
 
-	public String [] getImages()
-	{
+	public String[] getImages() {
 		return images.toArray(new String[0]);
 	}
 
-	public int getPollutionValue()
-	{
+	public int getPollutionValue() {
 		String v = getAttribute("pollution");
 		if (v != null) {
 			return Integer.parseInt(v);
-		}
-		else if (owner != null) {
+		} else if (owner != null) {
 			// pollution inherits from building tile
 			return owner.getPollutionValue();
-		}
-		else {
+		} else {
 			return 0;
 		}
 	}
 
-	public int getPopulation()
-	{
+	public int getPopulation() {
 		String v = getAttribute("population");
 		if (v != null) {
 			return Integer.parseInt(v);
-		}
-		else {
+		} else {
 			return 0;
 		}
 	}
 
-	protected void load(String inStr, Properties tilesRc)
-	{
+	protected void load(String inStr, Properties tilesRc) {
 		Scanner in = new Scanner(inStr);
 
 		while (in.hasMore()) {
@@ -201,8 +193,7 @@ public class TileSpec
 					if (sup != null) {
 						load(sup, tilesRc);
 					}
-				}
-				else {
+				} else {
 					attributes.put(k, v);
 				}
 			}
@@ -224,43 +215,36 @@ public class TileSpec
 		this.zone = getBooleanAttribute("zone");
 	}
 
-	static class Scanner
-	{
+	static class Scanner {
 		String str;
 		int off = 0;
 
-		Scanner(String str)
-		{
+		Scanner(String str) {
 			this.str = str;
 		}
 
-		private void skipWhitespace()
-		{
+		private void skipWhitespace() {
 			while (off < str.length() && Character.isWhitespace(str.charAt(off))) {
 				off++;
 			}
 		}
 
-		public int peekChar()
-		{
+		public int peekChar() {
 			skipWhitespace();
 			if (off < str.length()) {
 				return str.charAt(off);
-			}
-			else {
+			} else {
 				return -1;
 			}
 		}
 
-		public void eatChar(int ch)
-		{
+		public void eatChar(int ch) {
 			skipWhitespace();
 			assert str.charAt(off) == ch;
 			off++;
 		}
 
-		public String readAttributeKey()
-		{
+		public String readAttributeKey() {
 			skipWhitespace();
 
 			int start = off;
@@ -270,27 +254,23 @@ public class TileSpec
 
 			if (off != start) {
 				return str.substring(start, off);
-			}
-			else {
+			} else {
 				return null;
 			}
 		}
 
-		public String readAttributeValue()
-		{
+		public String readAttributeValue() {
 			return readString();
 		}
 
-		public String readImageSpec()
-		{
+		public String readImageSpec() {
 			return readString();
 		}
 
-		protected String readString()
-		{
+		protected String readString() {
 			skipWhitespace();
 
-			int endQuote = 0; //any whitespace or certain punctuation
+			int endQuote = 0; // any whitespace or certain punctuation
 			if (peekChar() == '"') {
 				off++;
 				endQuote = '"';
@@ -302,9 +282,8 @@ public class TileSpec
 				if (c == endQuote) {
 					int end = off;
 					off++;
-					return str.substring(start,end);
-				}
-				else if (endQuote == 0 && (Character.isWhitespace(c) || c == ')' || c == '|')) {
+					return str.substring(start, end);
+				} else if (endQuote == 0 && (Character.isWhitespace(c) || c == ')' || c == '|')) {
 					int end = off;
 					return str.substring(start, end);
 				}
@@ -313,24 +292,20 @@ public class TileSpec
 			return str.substring(start);
 		}
 
-		public boolean hasMore()
-		{
+		public boolean hasMore() {
 			return peekChar() != -1;
 		}
 	}
 
-	public String toString()
-	{
-		return "{tile:"+name+"}";
+	public String toString() {
+		return "{tile:" + name + "}";
 	}
 
-	boolean isNumberedTile()
-	{
+	boolean isNumberedTile() {
 		return name.matches("^\\d+$");
 	}
 
-	void resolveReferences(Map<String,TileSpec> tileMap)
-	{
+	void resolveReferences(Map<String, TileSpec> tileMap) {
 		String tmp = this.getAttribute("becomes");
 		if (tmp != null) {
 			this.animNext = tileMap.get(tmp);
@@ -351,9 +326,8 @@ public class TileSpec
 		resolveBuildingInfo(tileMap);
 	}
 
-	private void handleBuildingPart(String text, Map<String,TileSpec> tileMap)
-	{
-		String [] parts = text.split(",");
+	private void handleBuildingPart(String text, Map<String, TileSpec> tileMap) {
+		String[] parts = text.split(",");
 		if (parts.length != 3) {
 			throw new Error("Invalid building-part specification");
 		}
@@ -366,10 +340,9 @@ public class TileSpec
 		assert this.ownerOffsetX != 0 || this.ownerOffsetY != 0;
 	}
 
-	public static String [] generateTileNames(Properties recipe)
-	{
+	public static String[] generateTileNames(Properties recipe) {
 		int ntiles = recipe.size();
-		String [] tileNames = new String[ntiles];
+		String[] tileNames = new String[ntiles];
 		ntiles = 0;
 		for (int i = 0; recipe.containsKey(Integer.toString(i)); i++) {
 			tileNames[ntiles++] = Integer.toString(i);
@@ -377,7 +350,7 @@ public class TileSpec
 		int naturalNumberTiles = ntiles;
 
 		for (Object n_obj : recipe.keySet()) {
-			String n = (String)n_obj;
+			String n = (String) n_obj;
 			if (n.matches("^\\d+$")) {
 				int x = Integer.parseInt(n);
 				if (x >= 0 && x < naturalNumberTiles) {

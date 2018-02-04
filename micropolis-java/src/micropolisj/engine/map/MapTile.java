@@ -4,18 +4,10 @@ import micropolisj.engine.TileSpec;
 
 abstract class MapTile {
 	
-	protected final TileSpec spec;
-	private final MapPosition pos;
-	private final CityMap map;
+	protected TileSpec spec;
 	
-	MapTile(TileSpec spec,MapPosition pos,CityMap map){
+	MapTile(TileSpec spec){
 		this.spec=spec;
-		this.pos=pos;
-		this.map=map;
-	}
-	
-	MapPosition getPos() {
-		return pos;
 	}
 	
 	TileSpec getTileSpec() {
@@ -27,10 +19,20 @@ abstract class MapTile {
 		return true;
 	}
 
-	abstract void bulldoze();
-
 	@Override
 	public String toString() {
-		return "MapTile [spec=" + spec + ", pos=" + pos + ", map=" + map + "]";
+		return "MapTile spec=" + spec;
 	}
+
+	public void animate() {
+		if (spec.getAnimNext()!= null) {
+			spec=spec.getAnimNext();
+		}
+	}
+	
+	abstract boolean hasBuilding();
+	
+	abstract Building getBuilding();
+	
+	abstract MapFragment getBulldozeFragment();
 }

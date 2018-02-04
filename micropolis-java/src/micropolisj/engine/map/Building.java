@@ -1,35 +1,41 @@
 package micropolisj.engine.map;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import micropolisj.engine.TileConstants;
 import micropolisj.engine.TileSpec;
 import micropolisj.engine.TileSpec.BuildingInfo;
 import micropolisj.engine.Tiles;
 
-abstract class Building {
+class Building {
 
-	private final int cost;
 	private final TileSpec base;
-	private final CityMap map;
 	private boolean isPowered;
-	private List<CompositeMapTile> tiles;
-	private CompositeCenterMapTile centerTile;
+	private final BuildingType type;
 
-	protected Building(int cost, TileSpec base, CityMap map) {
-		this.cost = cost;
+	public static Building getPolice() {
+		return new Building(BuildingType.police, Tiles.get(TileConstants.POLICESTATION));
+	}
+	
+	public static Building getFirestation() {
+		return new Building(BuildingType.firestation, Tiles.get(TileConstants.FIRESTATION));
+	}
+	
+	public static Building getStadium() {
+		return new Building(BuildingType.stadium, Tiles.get(TileConstants.STADIUM));
+	}
+
+	
+	protected Building(BuildingType type, TileSpec base) {
+		this.type = type;
 		this.base = base;
 		this.isPowered = false;
-		this.tiles = new ArrayList<>();
-		this.map = map;
 	}
 
 	BuildingInfo getBuildingInfo() {
 		return base.getBuildingInfo();
 	}
 
-	int getCost() {
-		return cost;
+	BuildingType getType() {
+		return type;
 	}
 
 	void setPower(boolean newPower) {
@@ -40,30 +46,51 @@ abstract class Building {
 		return isPowered;
 	}
 
-	void build(MapPosition pos) {
+	MapFragment getFragment() {
 		BuildingInfo bi = getBuildingInfo();
-		if (!map.isRectBuildable(pos, pos.plus(bi.getWidth(),bi.getHeight())))
-				return;
+		MapFragment frag = new MapFragment(MapPosition.at(bi.getWidth(), bi.getHeight()));
+
 		for (int yIdx = 0; yIdx < bi.getHeight(); yIdx++) {
 			for (int xIdx = 0; xIdx < bi.getWidth(); xIdx++) {
 				short curTileNumber = bi.getMembers()[yIdx * bi.getWidth() + xIdx];
-				MapPosition newPos = new MapPosition(pos.getX() + xIdx, pos.getY() + yIdx);
+				MapPosition newPos = new MapPosition(xIdx, yIdx);
 				CompositeMapTile newTile;
 				if (curTileNumber == bi.getCenterTile()) {
-					newTile = centerTile = new CompositeCenterMapTile(Tiles.get(curTileNumber), this, newPos, map);
+					newTile = new CompositeCenterMapTile(Tiles.get(curTileNumber), this);
 				} else {
-					newTile = new CompositeMapTile(Tiles.get(curTileNumber), this, newPos, map);
-					tiles.add(newTile);
+					newTile = new CompositeMapTile(Tiles.get(curTileNumber), this);
 				}
-				map.setTile(newPos, newTile);
+				frag.addTile(newPos, newTile);
 			}
 		}
+
+		return frag;
 	}
 
-	void bulldoze() {
-		for (CompositeMapTile aTile : tiles) {
-			map.buildRubble(aTile.getPos());
-		}
-		map.buildRubble(centerTile.getPos());
+	MapFragment getBulldozeFragment() {
+		BuildingInfo bi = getBuildingInfo();
+
+		return MapFragment.rectOf(MapPosition.at(bi.getWidth(), bi.getHeight()), getCenterOffset(),
+				SingleMapTile.getRubble());
+
 	}
+
+	private MapPosition getCenterOffset() {
+		BuildingInfo bi = getBuildingInfo();
+
+		for (int yIdx = 0; yIdx < bi.getHeight(); yIdx++) {
+			for (int xIdx = 0; xIdx < bi.getWidth(); xIdx++) {
+				short curTileNumber = bi.getMembers()[yIdx * bi.getWidth() + xIdx];
+				if (curTileNumber == bi.getCenterTile()) {
+					return new MapPosition(-xIdx, -yIdx);
+				}
+			}
+		}
+
+		throw new IllegalArgumentException("Missing center tile for: " + bi);
+	}
+	
+	public BuildingType getBuildingType() {
+		return type;
+	};
 }

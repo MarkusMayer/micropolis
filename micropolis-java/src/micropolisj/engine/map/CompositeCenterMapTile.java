@@ -4,8 +4,8 @@ import micropolisj.engine.TileSpec;
 
 public final class CompositeCenterMapTile extends CompositeMapTile {
 
-	CompositeCenterMapTile(TileSpec spec, Building building, MapPosition pos, CityMap map) {
-		super(spec, building, pos, map);
+	CompositeCenterMapTile(TileSpec spec, Building building) {
+		super(spec, building);
 	}
 
 	@Override
@@ -14,8 +14,7 @@ public final class CompositeCenterMapTile extends CompositeMapTile {
 	}
 
 	@Override
-	void bulldoze() {
-		building.bulldoze();
+	MapFragment getBulldozeFragment() {
+		return building.getBulldozeFragment();
 	}
-
 }

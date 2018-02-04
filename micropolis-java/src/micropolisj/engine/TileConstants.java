@@ -268,7 +268,7 @@ public class TileConstants
 		assert (tile & LOMASK) == tile;
 
 		TileSpec spec = Tiles.get(tile);
-		return spec != null && spec.animNext != null;
+		return spec != null && spec.getAnimNext() != null;
 	}
 
 	//used by setFire()

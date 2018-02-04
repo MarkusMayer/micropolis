@@ -15,8 +15,16 @@ public class MapPosition {
 		return new MapPosition(x, y);
 	}
 	
+	public MapPosition step(StepDir dir) {
+		return MapPosition.at(x+dir.getXVal(), y+dir.getYVal());
+	}
+	
 	public MapPosition plus(int xAdd, int yAdd) {
-		return MapPosition.at(getX()+xAdd, getY()+yAdd);
+		return plus(MapPosition.at(xAdd,yAdd));
+	}
+	
+	public MapPosition plus(MapPosition posToAdd) {
+		return MapPosition.at(getX()+posToAdd.getX(), getY()+posToAdd.getY());
 	}
 	
 	public int getX() {
@@ -81,6 +89,10 @@ public class MapPosition {
 	@Override
 	public String toString() {
 		return "MapPosition [x=" + x + ", y=" + y + "]";
+	}
+
+	public boolean lessThan(MapPosition dim) {
+		return (x<dim.getX() && y<dim.getY());
 	}
 	
 	

@@ -8,8 +8,18 @@
 
 package micropolisj.engine;
 
-import java.util.*;
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.COMBASE;
+import static micropolisj.engine.TileConstants.LASTPOWER;
+import static micropolisj.engine.TileConstants.LASTRAIL;
+import static micropolisj.engine.TileConstants.LHTHR;
+import static micropolisj.engine.TileConstants.NUCLEAR;
+import static micropolisj.engine.TileConstants.PORT;
+import static micropolisj.engine.TileConstants.POWERBASE;
+import static micropolisj.engine.TileConstants.ROADBASE;
+
+import java.util.Stack;
+
+import micropolisj.engine.map.MapPosition;
 
 /**
  * Contains the code for generating city traffic.
@@ -22,7 +32,7 @@ public class TrafficGen
 	private ZoneType sourceZone;
 
 	int lastdir;
-	Stack<CityLocation> positions = new Stack<CityLocation>();
+	Stack<MapPosition> positions = new Stack<MapPosition>();
 
 	static final int MAX_TRAFFIC_DISTANCE = 30;
 
@@ -58,13 +68,13 @@ public class TrafficGen
 	{
 		while (!positions.isEmpty())
 		{
-			CityLocation pos = positions.pop();
-			mapX = pos.x;
-			mapY = pos.y;
-			assert city.testBounds(mapX, mapY);
+			MapPosition pos = positions.pop();
+			mapX = pos.getX();
+			mapY = pos.getY();
+			assert city.testBounds(pos);
 
 			// check for road/rail
-			int tile = city.getTile(mapX, mapY);
+			int tile = city.getTile(pos);
 			if (tile >= ROADBASE && tile < POWERBASE)
 			{
 				city.addTraffic(mapX, mapY, 50);
@@ -166,7 +176,7 @@ public class TrafficGen
 				if (z % 2 == 1)
 				{
 					// save pos every other move
-					positions.push(new CityLocation(mapX, mapY));
+					positions.push(MapPosition.at(mapX, mapY));
 				}
 
 				return true;

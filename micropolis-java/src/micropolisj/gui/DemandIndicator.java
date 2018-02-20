@@ -14,6 +14,7 @@ import java.net.URL;
 import javax.swing.*;
 
 import micropolisj.engine.*;
+import micropolisj.engine.map.MapPosition;
 
 public class DemandIndicator extends JComponent
 	implements Micropolis.Listener
@@ -141,8 +142,8 @@ public class DemandIndicator extends JComponent
 	}
 
 	//implements Micropolis.Listener
-	public void cityMessage(MicropolisMessage m, CityLocation p) { }
-	public void citySound(Sound sound, CityLocation p) { }
+	public void cityMessage(MicropolisMessage m, MapPosition p) { }
+	public void citySound(Sound sound, MapPosition p) { }
 	public void censusChanged() { }
 	public void evaluationChanged() { }
 	public void fundsChanged() { }

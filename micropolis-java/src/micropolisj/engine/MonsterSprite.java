@@ -10,6 +10,8 @@ package micropolisj.engine;
 
 import static micropolisj.engine.TileConstants.*;
 
+import micropolisj.engine.map.MapPosition;
+
 /**
  * Implements a monster (one of the Micropolis disasters).
  */
@@ -61,9 +63,9 @@ public class MonsterSprite extends Sprite
 			(ypos > city.getHeight() / 2 ? 1 : 4);
 
 		this.count = 1000;
-		CityLocation p = city.getLocationOfMaxPollution();
-		this.destX = p.x * 16 + 8;
-		this.destY = p.y * 16 + 8;
+		MapPosition p = city.getLocationOfMaxPollution();
+		this.destX = p.getX() * 16 + 8;
+		this.destY = p.getY() * 16 + 8;
 		this.flag = false;
 		this.step = 1;
 	}

@@ -8,14 +8,39 @@
 
 package micropolisj.engine.tool;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.COMCLR;
+import static micropolisj.engine.TileConstants.DIRT;
+import static micropolisj.engine.TileConstants.FOUNTAIN;
+import static micropolisj.engine.TileConstants.INDCLR;
+import static micropolisj.engine.TileConstants.LOMASK;
+import static micropolisj.engine.TileConstants.RESCLR;
+import static micropolisj.engine.TileConstants.RailTable;
+import static micropolisj.engine.TileConstants.RoadTable;
+import static micropolisj.engine.TileConstants.WOODS2;
+import static micropolisj.engine.TileConstants.WireTable;
+import static micropolisj.engine.TileConstants.canAutoBulldozeZ;
+import static micropolisj.engine.TileConstants.isRailDynamic;
+import static micropolisj.engine.TileConstants.isRoadDynamic;
+import static micropolisj.engine.TileConstants.isRubble;
+import static micropolisj.engine.TileConstants.isWireDynamic;
+import static micropolisj.engine.TileConstants.isZoneCenter;
+import static micropolisj.engine.TileConstants.railConnectsEast;
+import static micropolisj.engine.TileConstants.railConnectsNorth;
+import static micropolisj.engine.TileConstants.railConnectsSouth;
+import static micropolisj.engine.TileConstants.railConnectsWest;
+import static micropolisj.engine.TileConstants.roadConnectsEast;
+import static micropolisj.engine.TileConstants.roadConnectsNorth;
+import static micropolisj.engine.TileConstants.roadConnectsSouth;
+import static micropolisj.engine.TileConstants.roadConnectsWest;
+import static micropolisj.engine.TileConstants.wireConnectsEast;
+import static micropolisj.engine.TileConstants.wireConnectsNorth;
+import static micropolisj.engine.TileConstants.wireConnectsSouth;
+import static micropolisj.engine.TileConstants.wireConnectsWest;
 
-import micropolisj.engine.CityLocation;
 import micropolisj.engine.CityRect;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
-import micropolisj.engine.TileSpec.BuildingInfo;
 import micropolisj.engine.map.MapPosition;
 
 public class ToolStroke
@@ -134,9 +159,9 @@ public class ToolStroke
 		return r;
 	}
 
-	public CityLocation getLocation()
+	public MapPosition getLocation()
 	{
-		return new CityLocation(xpos, ypos);
+		return MapPosition.at(xpos, ypos);
 	}
 
 	boolean applyZone(ToolEffectIfc eff, int base)

@@ -11,7 +11,6 @@ package micropolisj.gui;
 import static micropolisj.engine.TileConstants.CLEAR;
 import static micropolisj.engine.TileConstants.DIRT;
 import static micropolisj.engine.TileConstants.LOMASK;
-import static micropolisj.engine.TileConstants.PWRBIT;
 import static micropolisj.engine.TileConstants.isCommercialZone;
 import static micropolisj.engine.TileConstants.isConductive;
 import static micropolisj.engine.TileConstants.isConstructed;
@@ -271,14 +270,15 @@ public class OverlayMapView extends JComponent implements Scrollable, MapListene
 	static final int POWERED = 0xff0000; // red
 	static final int CONDUCTIVE = 0xbfbfbf; // lightgray
 
-	private int checkPower(BufferedImage img, int x, int y, int rawTile) {
+	// TODO fix signature PWRBIT is not available via int rawTile
+	private int checkPower(BufferedImage img, int x, int y, int rawTile, boolean isPowered) {
 		int pix;
 
 		if ((rawTile & LOMASK) <= 63) {
 			return rawTile & LOMASK;
 		} else if (isZoneCenter(rawTile)) {
 			// zone
-			pix = ((rawTile & PWRBIT) != 0) ? POWERED : UNPOWERED;
+			pix = isPowered ? POWERED : UNPOWERED;
 		} else if (isConductive(rawTile)) {
 			pix = CONDUCTIVE;
 		} else {
@@ -371,7 +371,7 @@ public class OverlayMapView extends JComponent implements Scrollable, MapListene
 					}
 					break;
 				case POWER_OVERLAY:
-					tile = checkPower(img, x, y, engine.getTile(x, y));
+					tile = checkPower(img, x, y, engine.getTile(x, y), engine.isTilePowered(x, y));
 					break;
 				case TRANSPORT:
 				case TRAFFIC_OVERLAY:

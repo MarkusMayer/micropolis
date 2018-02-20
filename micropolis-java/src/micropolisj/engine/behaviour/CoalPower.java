@@ -2,8 +2,8 @@ package micropolisj.engine.behaviour;
 
 import static micropolisj.engine.TileConstants.POWERPLANT;
 
-import micropolisj.engine.CityLocation;
 import micropolisj.engine.Micropolis;
+import micropolisj.engine.map.MapPosition;
 
 public class CoalPower extends BuildingBehaviour {
 
@@ -18,7 +18,8 @@ public class CoalPower extends BuildingBehaviour {
 			repairZone(POWERPLANT, 4);
 		}
 
-		city.addPowerPlant(new CityLocation(xpos,ypos));
+		city.incCoalCount();
+		city.addPowerPlant(MapPosition.at(xpos,ypos));
 	}
 
 }

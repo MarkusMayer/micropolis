@@ -2,8 +2,8 @@ package micropolisj.engine.behaviour;
 
 import static micropolisj.engine.TileConstants.NUCLEAR;
 
-import micropolisj.engine.CityLocation;
 import micropolisj.engine.Micropolis;
+import micropolisj.engine.map.MapPosition;
 
 public class NuclearPower extends BuildingBehaviour {
 
@@ -25,7 +25,8 @@ public class NuclearPower extends BuildingBehaviour {
 			repairZone(NUCLEAR, 4);
 		}
 
-		city.addPowerPlant(new CityLocation(xpos, ypos));
+		city.incNuclearCount();
+		city.addPowerPlant(MapPosition.at(xpos, ypos));
 	}
 
 }

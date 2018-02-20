@@ -5,10 +5,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import micropolisj.engine.TileSpec;
+
 class MapFragment {
 
 	private final List<TilePos> fragment;
 	private final MapPosition dim, offset;
+	
+	public static MapFragment empty() {
+		return new MapFragment(MapPosition.at(0, 0));
+	}
 
 	public MapFragment(MapPosition dim) {
 		this(dim, MapPosition.at(0, 0));
@@ -20,14 +26,14 @@ class MapFragment {
 		fragment = new ArrayList<>();
 	}
 
-	static MapFragment rectOf(MapPosition dim, MapTile tile) {
-		return rectOf(dim, MapPosition.at(0, 0), tile);
+	static MapFragment rectOfSingleMapTile(MapPosition dim, TileSpec spec) {
+		return rectOfSingleMapTile(dim, MapPosition.at(0, 0), spec);
 	}
 
-	static MapFragment rectOf(MapPosition dim, MapPosition offset, MapTile tile) {
+	static MapFragment rectOfSingleMapTile(MapPosition dim, MapPosition offset, TileSpec spec) {
 		MapFragment frag = new MapFragment(dim, offset);
 		for (MapPosition aPos : MapPosition.at(0, 0).getPosForRect(dim)) {
-			frag.addTile(aPos, tile);
+			frag.addTile(aPos, new MapTile(spec));
 		}
 
 		return frag;

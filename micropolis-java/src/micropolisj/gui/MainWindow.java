@@ -8,21 +8,77 @@
 
 package micropolisj.gui;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.prefs.*;
-import javax.sound.sampled.*;
-import javax.swing.*;
+import java.util.Calendar;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.prefs.Preferences;
+
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.InputMap;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
 import javax.swing.Timer;
+import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import micropolisj.engine.*;
+import micropolisj.engine.CityRect;
+import micropolisj.engine.Disaster;
+import micropolisj.engine.EarthquakeListener;
+import micropolisj.engine.GameLevel;
+import micropolisj.engine.Levels;
+import micropolisj.engine.MapState;
+import micropolisj.engine.Micropolis;
+import micropolisj.engine.MicropolisMessage;
+import micropolisj.engine.Sound;
+import micropolisj.engine.Speed;
+import micropolisj.engine.TileConstants;
+import micropolisj.engine.ZoneStatus;
+import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.tool.MicropolisTool;
 import micropolisj.engine.tool.ToolResult;
 import micropolisj.engine.tool.ToolStroke;
@@ -1199,8 +1255,8 @@ public class MainWindow extends JFrame
 	private void onToolDown(MouseEvent ev)
 	{
 		if (ev.getButton() == MouseEvent.BUTTON3) {
-			CityLocation loc = drawingArea.getCityLocation(ev.getX(), ev.getY());
-			doQueryTool(loc.x, loc.y);
+			MapPosition loc = drawingArea.getCityLocation(ev.getX(), ev.getY());
+			doQueryTool(loc.getX(), loc.getY());
 			return;
 		}
 
@@ -1210,9 +1266,9 @@ public class MainWindow extends JFrame
 		if (currentTool == null)
 			return;
 
-		CityLocation loc = drawingArea.getCityLocation(ev.getX(), ev.getY());
-		int x = loc.x;
-		int y = loc.y;
+		MapPosition loc = drawingArea.getCityLocation(ev.getX(), ev.getY());
+		int x = loc.getX();
+		int y = loc.getY();
 
 		if (currentTool == MicropolisTool.QUERY) {
 			doQueryTool(x, y);
@@ -1247,9 +1303,9 @@ public class MainWindow extends JFrame
 		if (toolStroke != null) {
 			drawingArea.setToolPreview(null);
 
-			CityLocation loc = toolStroke.getLocation();
+			MapPosition pos = toolStroke.getLocation();
 			ToolResult tr = toolStroke.apply();
-			showToolResult(loc, tr);
+			showToolResult(pos, tr);
 			toolStroke = null;
 		}
 
@@ -1282,9 +1338,9 @@ public class MainWindow extends JFrame
 		if ((ev.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == 0)
 			return;
 
-		CityLocation loc = drawingArea.getCityLocation(ev.getX(), ev.getY());
-		int x = loc.x;
-		int y = loc.y;
+		MapPosition loc = drawingArea.getCityLocation(ev.getX(), ev.getY());
+		int x = loc.getX();
+		int y = loc.getY();
 		if (x == lastX && y == lastY)
 			return;
 
@@ -1308,9 +1364,9 @@ public class MainWindow extends JFrame
 			return;
 		}
 
-		CityLocation loc = drawingArea.getCityLocation(ev.getX(), ev.getY());
-		int x = loc.x;
-		int y = loc.y;
+		MapPosition loc = drawingArea.getCityLocation(ev.getX(), ev.getY());
+		int x = loc.getX();
+		int y = loc.getY();
 		int w = currentTool.getWidth();
 		int h = currentTool.getHeight();
 
@@ -1327,23 +1383,23 @@ public class MainWindow extends JFrame
 		drawingArea.setToolCursor(null);
 	}
 
-	private void showToolResult(CityLocation loc, ToolResult result)
+	private void showToolResult(MapPosition pos, ToolResult result)
 	{
 		switch (result) {
 		case SUCCESS:
-			citySound(currentTool == MicropolisTool.BULLDOZER ? Sound.BULLDOZE : Sound.BUILD, loc);
+			citySound(currentTool == MicropolisTool.BULLDOZER ? Sound.BULLDOZE : Sound.BUILD, pos);
 			dirty1 = true;
 			break;
 
 		case NONE: break;
 		case UH_OH:
 			messagesPane.appendCityMessage(MicropolisMessage.BULLDOZE_FIRST);
-			citySound(Sound.UHUH, loc);
+			citySound(Sound.UHUH, pos);
 			break;
 
 		case INSUFFICIENT_FUNDS:
 			messagesPane.appendCityMessage(MicropolisMessage.INSUFFICIENT_FUNDS);
-			citySound(Sound.SORRY, loc);
+			citySound(Sound.SORRY, pos);
 			break;
 
 		default:
@@ -1595,13 +1651,13 @@ public class MainWindow extends JFrame
 	}
 
 	//implements Micropolis.Listener
-	public void cityMessage(MicropolisMessage m, CityLocation p)
+	public void cityMessage(MicropolisMessage m, MapPosition p)
 	{
 		messagesPane.appendCityMessage(m);
 
 		if (m.useNotificationPane && p != null)
 		{
-			notificationPane.showMessage(engine, m, p.x, p.y);
+			notificationPane.showMessage(engine, m, p.getX(), p.getY());
 		}
 	}
 
@@ -1634,7 +1690,7 @@ public class MainWindow extends JFrame
 	}
 
 	//implements Micropolis.Listener
-	public void citySound(Sound sound, CityLocation loc)
+	public void citySound(Sound sound, MapPosition pos)
 	{
 		if (!doSounds)
 			return;
@@ -1644,7 +1700,7 @@ public class MainWindow extends JFrame
 			return;
 
 		boolean isOnScreen = drawingAreaScroll.getViewport().getViewRect().contains(
-				drawingArea.getTileBounds(loc.x, loc.y)
+				drawingArea.getTileBounds(pos.getX(), pos.getY())
 			);
 		if (sound == Sound.HONKHONK_LOW && !isOnScreen)
 			return;

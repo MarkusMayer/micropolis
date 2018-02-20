@@ -186,14 +186,20 @@ public class TileConstants
 	//
 	// status bits
 	//
-	public static final char PWRBIT = 32768;  // bit 15 ... currently powered
+	// public static final char PWRBIT = 32768;  // bit 15 ... currently powered
 	// bit 14 ... unused
 	// bit 13 ... unused
 	// bit 12 ... unused
 	// bit 11 ... unused
 	// bit 10 ... unused
 
+	/*
+	 * @deprecated
+	 */
 	public static final char ALLBITS = 64512;   // mask for upper 6 bits
+	/*
+	 * @deprecated
+	 */
 	public static final char LOMASK = 1023; //mask for low 10 bits
 
 	private TileConstants() {}
@@ -337,7 +343,7 @@ public class TileConstants
 			(tile <= LASTRUBBLE));
 	}
 
-	public static boolean isTree(char tile)
+	public static boolean isTree(int tile)
 	{
 		assert (tile & LOMASK) == tile;
 

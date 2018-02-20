@@ -9,7 +9,7 @@ public class TestCompositeMapTile {
 	public void testCenterIntactNotBulldozable() {
 		CityMap map=new CityMap(5, 5);
 		MapPosition pos = MapPosition.at(0, 0);
-		map.build(pos, Building.getFirestation());
+		map.build(pos, BuildingType.firestation);
 		MapTile origTile=map.getTile(pos);
 		map.bulldoze(pos);
 		Assert.assertEquals(origTile,map.getTile(pos));

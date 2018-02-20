@@ -22,7 +22,6 @@ import static micropolisj.engine.TileConstants.LOMASK;
 import static micropolisj.engine.TileConstants.NUCLEAR;
 import static micropolisj.engine.TileConstants.PORTBASE;
 import static micropolisj.engine.TileConstants.POWERPLANT;
-import static micropolisj.engine.TileConstants.PWRBIT;
 import static micropolisj.engine.TileConstants.RADTILE;
 import static micropolisj.engine.TileConstants.RESCLR;
 import static micropolisj.engine.TileConstants.RIVER;
@@ -81,8 +80,10 @@ import micropolisj.engine.behaviour.Seaport;
 import micropolisj.engine.behaviour.StadiumEmpty;
 import micropolisj.engine.behaviour.StadiumFull;
 import micropolisj.engine.behaviour.TileBehavior;
+import micropolisj.engine.map.BuildingType;
 import micropolisj.engine.map.CityMap;
 import micropolisj.engine.map.MapPosition;
+import micropolisj.engine.map.StepDir;
 import micropolisj.engine.subway.SubwayConnection;
 import micropolisj.engine.subway.SubwayNetwork;
 import micropolisj.engine.subway.SubwayStation;
@@ -90,95 +91,95 @@ import micropolisj.engine.tool.ToolEffect;
 import micropolisj.engine.tool.ToolEffectIfc;
 
 /**
- * The main simulation engine for Micropolis.
- * The front-end should call animate() periodically
- * to move the simulation forward in time.
+ * The main simulation engine for Micropolis. The front-end should call
+ * animate() periodically to move the simulation forward in time.
  */
-public class Micropolis
-{
+public class Micropolis {
 	static final Random DEFAULT_PRNG = new Random();
 
 	public Random PRNG;
 
 	// full size arrays
-	private char [][] map;
-	boolean [][] powerMap;
+	private CityMap map;
+	boolean[][] powerMap;
 
 	// half-size arrays
 
 	/**
-	 * For each 2x2 section of the city, the land value of the city (0-250).
-	 * 0 is lowest land value; 250 is maximum land value.
-	 * Updated each cycle by ptlScan().
+	 * For each 2x2 section of the city, the land value of the city (0-250). 0 is
+	 * lowest land value; 250 is maximum land value. Updated each cycle by
+	 * ptlScan().
 	 */
-	int [][] landValueMem;
+	int[][] landValueMem;
 
 	/**
-	 * For each 2x2 section of the city, the pollution level of the city (0-255).
-	 * 0 is no pollution; 255 is maximum pollution.
-	 * Updated each cycle by ptlScan(); affects land value.
+	 * For each 2x2 section of the city, the pollution level of the city (0-255). 0
+	 * is no pollution; 255 is maximum pollution. Updated each cycle by ptlScan();
+	 * affects land value.
 	 */
-	public int [][] pollutionMem;
+	public int[][] pollutionMem;
 
 	/**
-	 * For each 2x2 section of the city, the crime level of the city (0-250).
-	 * 0 is no crime; 250 is maximum crime.
-	 * Updated each cycle by crimeScan(); affects land value.
+	 * For each 2x2 section of the city, the crime level of the city (0-250). 0 is
+	 * no crime; 250 is maximum crime. Updated each cycle by crimeScan(); affects
+	 * land value.
 	 */
-	public int [][] crimeMem;
+	public int[][] crimeMem;
 
 	/**
-	 * For each 2x2 section of the city, the population density (0-?).
-	 * Used for map overlays and as a factor for crime rates.
+	 * For each 2x2 section of the city, the population density (0-?). Used for map
+	 * overlays and as a factor for crime rates.
 	 */
-	public int [][] popDensity;
+	public int[][] popDensity;
 
 	/**
-	 * For each 2x2 section of the city, the traffic density (0-255).
-	 * If less than 64, no cars are animated.
-	 * If between 64 and 192, then the "light traffic" animation is used.
-	 * If 192 or higher, then the "heavy traffic" animation is used.
+	 * For each 2x2 section of the city, the traffic density (0-255). If less than
+	 * 64, no cars are animated. If between 64 and 192, then the "light traffic"
+	 * animation is used. If 192 or higher, then the "heavy traffic" animation is
+	 * used.
 	 */
-	int [][] trfDensity;
+	int[][] trfDensity;
 
 	// quarter-size arrays
 
 	/**
-	 * For each 4x4 section of the city, an integer representing the natural
-	 * land features in the vicinity of this part of the city.
+	 * For each 4x4 section of the city, an integer representing the natural land
+	 * features in the vicinity of this part of the city.
 	 */
-	int [][] terrainMem;
+	int[][] terrainMem;
 
 	// eighth-size arrays
 
 	/**
-	 * For each 8x8 section of the city, the rate of growth.
-	 * Capped to a number between -200 and 200.
-	 * Used for reporting purposes only; the number has no affect.
+	 * For each 8x8 section of the city, the rate of growth. Capped to a number
+	 * between -200 and 200. Used for reporting purposes only; the number has no
+	 * affect.
 	 */
-	public int [][] rateOGMem; //rate of growth?
+	public int[][] rateOGMem; // rate of growth?
 
-	private int [][] fireStMap;      //firestations- cleared and rebuilt each sim cycle
-	
-	public int [][] fireRate;       //firestations reach- used for overlay graphs
-	private int [][] policeMap;      //police stations- cleared and rebuilt each sim cycle
-	public int [][] policeMapEffect;//police stations reach- used for overlay graphs
+	private int[][] fireStMap; // firestations- cleared and rebuilt each sim cycle
 
-	/** For each 8x8 section of city, this is an integer between 0 and 64,
-	 * with higher numbers being closer to the center of the city. */
-	private int [][] comRate;
+	public int[][] fireRate; // firestations reach- used for overlay graphs
+	private int[][] policeMap; // police stations- cleared and rebuilt each sim cycle
+	public int[][] policeMapEffect;// police stations reach- used for overlay graphs
+
+	/**
+	 * For each 8x8 section of city, this is an integer between 0 and 64, with
+	 * higher numbers being closer to the center of the city.
+	 */
+	private int[][] comRate;
 
 	static final int DEFAULT_WIDTH = 120;
 	static final int DEFAULT_HEIGHT = 100;
 
-//	public final CityBudget budget = new CityBudget(this);
+	// public final CityBudget budget = new CityBudget(this);
 	public final CityBudget budget = new CityBudget();
 	public boolean autoBulldoze = true;
 	public boolean autoBudget = false;
 	public Speed simSpeed = Speed.NORMAL;
 	public boolean noDisasters = false;
 
-	private Levels gameLevel=Levels.easy;
+	private Levels gameLevel = Levels.easy;
 
 	boolean autoGo;
 
@@ -204,7 +205,7 @@ public class Micropolis
 	private int nuclearCount;
 	private int seaportCount;
 	private int airportCount;
-	
+
 	int totalPop;
 	int lastCityPop;
 
@@ -223,24 +224,22 @@ public class Micropolis
 	int crimeMaxLocationY;
 	public int centerMassX;
 	public int centerMassY;
-	CityLocation meltdownLocation;  //may be null
-	CityLocation crashLocation;     //may be null
 
 	private TypeDemand needHospital; // -1 too many already, 0 just right, 1 not enough
-	private TypeDemand needChurch;   // -1 too many already, 0 just right, 1 not enough
+	private TypeDemand needChurch; // -1 too many already, 0 just right, 1 not enough
 
 	int crimeAverage;
 	int pollutionAverage;
 	int landValueAverage;
 	int trafficAverage;
 
-	private int resValve;   // ranges between -2000 and 2000, updated by setValves
-	private int comValve;   // ranges between -1500 and 1500
-	private int indValve;   // ranges between -1500 and 1500
+	private int resValve; // ranges between -2000 and 2000, updated by setValves
+	private int comValve; // ranges between -1500 and 1500
+	private int indValve; // ranges between -1500 and 1500
 
-	boolean resCap;  // residents demand a stadium, caps resValve at 0
-	boolean comCap;  // commerce demands airport,   caps comValve at 0
-	boolean indCap;  // industry demands sea port,  caps indValve at 0
+	boolean resCap; // residents demand a stadium, caps resValve at 0
+	boolean comCap; // commerce demands airport, caps comValve at 0
+	boolean indCap; // industry demands sea port, caps indValve at 0
 	int crimeRamp;
 	int polluteRamp;
 
@@ -249,7 +248,7 @@ public class Micropolis
 	//
 	private int cityTax = 7;
 	private double roadPercent = 1.0;
-	private double subPercent=1.0;
+	private double subPercent = 1.0;
 	private double policePercent = 1.0;
 	private double firePercent = 1.0;
 
@@ -259,21 +258,21 @@ public class Micropolis
 	private int policeEffect = 1000;
 	private int fireEffect = 1000;
 
-	int cashFlow; //net change in totalFunds in previous year
+	int cashFlow; // net change in totalFunds in previous year
 
 	boolean newPower;
 
-	int floodCnt; //number of turns the flood will last
+	int floodCnt; // number of turns the flood will last
 	int floodX;
 	int floodY;
 
-	public int cityTime;  //counts "weeks" (actually, 1/48'ths years)
-	int scycle; //same as cityTime, except mod 1024
-	int fcycle; //counts simulation steps (mod 1024)
-	int acycle; //animation cycle (mod 960)
+	public int cityTime; // counts "weeks" (actually, 1/48'ths years)
+	int scycle; // same as cityTime, except mod 1024
+	int fcycle; // counts simulation steps (mod 1024)
+	int acycle; // animation cycle (mod 960)
 
 	public CityEval evaluation;
-	
+
 	public SubwayNetwork subNet;
 
 	private ArrayList<Sprite> sprites = new ArrayList<Sprite>();
@@ -281,34 +280,31 @@ public class Micropolis
 	static final int VALVERATE = 2;
 	public static final int CENSUSRATE = 4;
 	static final int TAXFREQ = 48;
-	
-	public Micropolis()
-	{
+
+	public Micropolis() {
 		this(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 	}
-	
+
 	public Micropolis(int width, int height, Random rnd) {
-		this(width,height);
-		PRNG=rnd;
+		this(width, height);
+		PRNG = rnd;
 	}
 
-	public Micropolis(int width, int height)
-	{
+	public Micropolis(int width, int height) {
 		PRNG = DEFAULT_PRNG;
 		evaluation = new CityEval(this);
-		subNet=new SubwayNetwork(this);
+		subNet = new SubwayNetwork(this);
 		init(width, height);
 		initTileBehaviors();
 	}
 
-	protected void init(int width, int height)
-	{
-		map = new char[height][width];
+	protected void init(int width, int height) {
+		map = new CityMap(width, height);
 		powerMap = new boolean[height][width];
-		CityMap m=new CityMap(1, 1);
+		CityMap m = new CityMap(1, 1);
 
-		int hX = (width+1)/2;
-		int hY = (height+1)/2;
+		int hX = (width + 1) / 2;
+		int hY = (height + 1) / 2;
 
 		landValueMem = new int[hY][hX];
 		pollutionMem = new int[hY][hX];
@@ -316,13 +312,13 @@ public class Micropolis
 		popDensity = new int[hY][hX];
 		trfDensity = new int[hY][hX];
 
-		int qX = (width+3)/4;
-		int qY = (height+3)/4;
+		int qX = (width + 3) / 4;
+		int qY = (height + 3) / 4;
 
 		terrainMem = new int[qY][qX];
 
-		int smX = (width+7)/8;
-		int smY = (height+7)/8;
+		int smX = (width + 7) / 8;
+		int smY = (height + 7) / 8;
 
 		rateOGMem = new int[smY][smX];
 		fireStMap = new int[smY][smX];
@@ -334,19 +330,19 @@ public class Micropolis
 		centerMassX = hX;
 		centerMassY = hY;
 	}
-	
+
 	public void addSubwayStation(MapPosition pos) {
 		subNet.addStation(pos);
 	}
-	
+
 	public void setSubwayPercent(double newSubPerc) {
-		subPercent=newSubPerc;
+		subPercent = newSubPerc;
 	}
 
 	public double getSubwayPercent() {
 		return subPercent;
 	}
-	
+
 	public double getRoadPercent() {
 		return roadPercent;
 	}
@@ -370,7 +366,7 @@ public class Micropolis
 	public void setFirePercent(double firePercent) {
 		this.firePercent = firePercent;
 	}
-	
+
 	public int getCityTax() {
 		return cityTax;
 	}
@@ -379,115 +375,97 @@ public class Micropolis
 		this.cityTax = cityTax;
 	}
 
-	
-	public int findNearestTileFromRange(MapPosition pos,int lowTile,int highTile) {
-		int distance=999;
-		
-		for (int xInd=Math.max(0,pos.getX()-5);xInd<=Math.min(getWidth()-1,pos.getX()+5);xInd++) {
-			for (int yInd=Math.max(0,pos.getY()-5);yInd<=Math.min(getHeight()-1,pos.getY()+5);yInd++) {
-				int tile=getTile(xInd, yInd);
-				if (lowTile<=tile && tile<highTile) {
-					distance=Math.min(distance,pos.getDistanceToPos(xInd, yInd));
+	public int findNearestTileFromRange(MapPosition pos, int lowTile, int highTile) {
+		int distance = 999;
+
+		for (int xInd = Math.max(0, pos.getX() - 5); xInd <= Math.min(getWidth() - 1, pos.getX() + 5); xInd++) {
+			for (int yInd = Math.max(0, pos.getY() - 5); yInd <= Math.min(getHeight() - 1, pos.getY() + 5); yInd++) {
+				int tile = getTile(xInd, yInd);
+				if (lowTile <= tile && tile < highTile) {
+					distance = Math.min(distance, pos.getDistanceToPos(xInd, yInd));
 				}
 			}
 		}
 		return distance;
 	}
-	
-	public void spend(int amount)
-	{
+
+	public void spend(int amount) {
 		budget.totalFunds -= amount;
 		fireFundsChanged();
 	}
-	
+
 	public Levels getGameLevel() {
 		return gameLevel;
 	}
-	
-	void fireCensusChanged()
-	{
+
+	void fireCensusChanged() {
 		for (Listener l : listeners) {
 			l.censusChanged();
 		}
 	}
 
-	void fireCityMessage(MicropolisMessage message, CityLocation loc)
-	{
+	void fireCityMessage(MicropolisMessage message, MapPosition loc) {
 		for (Listener l : listeners) {
 			l.cityMessage(message, loc);
 		}
 	}
 
-	void fireCitySound(Sound sound, CityLocation loc)
-	{
+	void fireCitySound(Sound sound, MapPosition loc) {
 		for (Listener l : listeners) {
 			l.citySound(sound, loc);
 		}
 	}
 
-	void fireDemandChanged()
-	{
+	void fireDemandChanged() {
 		for (Listener l : listeners) {
 			l.demandChanged();
 		}
 	}
 
-	void fireEarthquakeStarted()
-	{
+	void fireEarthquakeStarted() {
 		for (EarthquakeListener l : earthquakeListeners) {
 			l.earthquakeStarted();
 		}
 	}
 
-	void fireEvaluationChanged()
-	{
+	void fireEvaluationChanged() {
 		for (Listener l : listeners) {
 			l.evaluationChanged();
 		}
 	}
 
-	void fireFundsChanged()
-	{
+	void fireFundsChanged() {
 		for (Listener l : listeners) {
 			l.fundsChanged();
 		}
 	}
 
-	void fireMapOverlayDataChanged(MapState overlayDataType)
-	{
+	void fireMapOverlayDataChanged(MapState overlayDataType) {
 		for (MapListener l : mapListeners) {
 			l.mapOverlayDataChanged(overlayDataType);
 		}
 	}
 
-	void fireOptionsChanged()
-	{
-		for (Listener l : listeners)
-		{
+	void fireOptionsChanged() {
+		for (Listener l : listeners) {
 			l.optionsChanged();
 		}
 	}
 
-	void fireSpriteMoved(Sprite sprite)
-	{
-		for (MapListener l : mapListeners)
-		{
+	void fireSpriteMoved(Sprite sprite) {
+		for (MapListener l : mapListeners) {
 			l.spriteMoved(sprite);
 		}
 	}
 
-	void fireTileChanged(int xpos, int ypos)
-	{
-		for (MapListener l : mapListeners)
-		{
+	void fireTileChanged(int xpos, int ypos) {
+		for (MapListener l : mapListeners) {
 			l.tileChanged(xpos, ypos);
 		}
 	}
 
-	void fireWholeMapChanged()
-	{
-		for (MapListener l : mapListeners)
-		{
+	void fireWholeMapChanged() {
+		for (MapListener l : mapListeners) {
 			l.wholeMapChanged();
 		}
 	}
@@ -496,61 +474,54 @@ public class Micropolis
 	ArrayList<MapListener> mapListeners = new ArrayList<MapListener>();
 	ArrayList<EarthquakeListener> earthquakeListeners = new ArrayList<EarthquakeListener>();
 
-	public void addListener(Listener l)
-	{
+	public void addListener(Listener l) {
 		this.listeners.add(l);
 	}
 
-	public void removeListener(Listener l)
-	{
+	public void removeListener(Listener l) {
 		this.listeners.remove(l);
 	}
 
-	public void addEarthquakeListener(EarthquakeListener l)
-	{
+	public void addEarthquakeListener(EarthquakeListener l) {
 		this.earthquakeListeners.add(l);
 	}
 
-	public void removeEarthquakeListener(EarthquakeListener l)
-	{
+	public void removeEarthquakeListener(EarthquakeListener l) {
 		this.earthquakeListeners.remove(l);
 	}
 
-	public void addMapListener(MapListener l)
-	{
+	public void addMapListener(MapListener l) {
 		this.mapListeners.add(l);
 	}
 
-	public void removeMapListener(MapListener l)
-	{
+	public void removeMapListener(MapListener l) {
 		this.mapListeners.remove(l);
 	}
 
 	/**
-	 * The listener interface for receiving miscellaneous events that occur
-	 * in the Micropolis city.
-	 * Use the Micropolis class's addListener interface to register an object
-	 * that implements this interface.
+	 * The listener interface for receiving miscellaneous events that occur in the
+	 * Micropolis city. Use the Micropolis class's addListener interface to register
+	 * an object that implements this interface.
 	 */
-	public interface Listener
-	{
-		void cityMessage(MicropolisMessage message, CityLocation loc);
-		void citySound(Sound sound, CityLocation loc);
+	public interface Listener {
+		void cityMessage(MicropolisMessage message, MapPosition loc);
+
+		void citySound(Sound sound, MapPosition loc);
 
 		/**
-		 * Fired whenever the "census" is taken, and the various historical
-		 * counters have been updated. (Once a month in game.)
+		 * Fired whenever the "census" is taken, and the various historical counters
+		 * have been updated. (Once a month in game.)
 		 */
 		void censusChanged();
 
 		/**
-		 * Fired whenever resValve, comValve, or indValve changes.
-		 * (Twice a month in game.) */
+		 * Fired whenever resValve, comValve, or indValve changes. (Twice a month in
+		 * game.)
+		 */
 		void demandChanged();
 
 		/**
-		 * Fired whenever the city evaluation is recalculated.
-		 * (Once a year.)
+		 * Fired whenever the city evaluation is recalculated. (Once a year.)
 		 */
 		void evaluationChanged();
 
@@ -560,35 +531,36 @@ public class Micropolis
 		void fundsChanged();
 
 		/**
-		 * Fired whenever autoBulldoze, autoBudget, noDisasters,
-		 * or simSpeed change.
+		 * Fired whenever autoBulldoze, autoBudget, noDisasters, or simSpeed change.
 		 */
 		void optionsChanged();
 	}
 
-	public int getWidth()
-	{
-		return map[0].length;
+	public int getWidth() {
+		return map.getDimension().getX();
 	}
 
-	public int getHeight()
-	{
-		return map.length;
+	public int getHeight() {
+		return map.getDimension().getY();
 	}
 
-	public char getTile(int xpos, int ypos)
-	{
-//		System.out.println("xpos/ypos: "+xpos+"/"+ypos+" ==> "+(int)map[40][33]);
-		return (char)(map[ypos][xpos] & LOMASK);
+	public char getTile(int xpos, int ypos) {
+		return (char) getTileRaw(MapPosition.at(xpos, ypos));
 	}
 
-	public char getTileRaw(int xpos, int ypos)
-	{
-		return map[ypos][xpos];
+	public char getTile(MapPosition pos) {
+		return (char) getTileRaw(pos);
 	}
 
-	public boolean isTileDozeable(ToolEffectIfc eff)
-	{
+	public char getTileRaw(MapPosition pos) {
+		return (char) map.getTileNr(pos);
+	}
+
+	public char getTileRaw(int xpos, int ypos) {
+		return getTileRaw(MapPosition.at(xpos, ypos));
+	}
+
+	public boolean isTileDozeable(ToolEffectIfc eff) {
 		int myTile = eff.getTile(0, 0);
 		TileSpec ts = Tiles.get(myTile);
 		if (ts.canBulldoze) {
@@ -606,72 +578,89 @@ public class Micropolis
 		return false;
 	}
 
-	public boolean isTileDozeable(int xpos, int ypos)
-	{
-		return isTileDozeable(
-			new ToolEffect(this, xpos, ypos)
-			);
+	public boolean isTileDozeable(int xpos, int ypos) {
+		return isTileDozeable(new ToolEffect(this, xpos, ypos));
 	}
 
-	public boolean isTilePowered(int xpos, int ypos)
-	{
-		return (getTileRaw(xpos, ypos) & PWRBIT) == PWRBIT;
+	public boolean isTilePowered(int xpos, int ypos) {
+		return map.isPowered(MapPosition.at(xpos, ypos));
 	}
 
 	/**
 	 * Note: this method clears the PWRBIT of the given location.
 	 */
-	public void setTile(int xpos, int ypos, char newTile)
-	{
-		// check to make sure we aren't setting an upper bit using
-		// this method
-		assert (newTile & LOMASK) == newTile;
-
-		if (map[ypos][xpos] != newTile)
-		{
-			map[ypos][xpos] = newTile;
-			fireTileChanged(xpos, ypos);
+	public void setTile(MapPosition pos, TileSpec newTile) {
+		if (map.setSpec(pos, newTile)) {
+			fireTileChanged(pos.getX(), pos.getY());
 		}
 	}
 
-	public void setTilePower(int xpos, int ypos, boolean power)
-	{
-		map[ypos][xpos] = (char)(map[ypos][xpos] & (~PWRBIT) | (power ? PWRBIT : 0));
+	/*
+	 * @deprecated
+	 */
+	// TODO refactor to MapPosition
+	public void setTile(int x, int y, int newTile) {
+		setTile(MapPosition.at(x, y), Tiles.get(newTile));
 	}
 
-	final public boolean testBounds(int xpos, int ypos)
-	{
-		return xpos >= 0 && xpos < getWidth() &&
-			ypos >= 0 && ypos < getHeight();
+	public void setTile(MapPosition pos, int newTile) {
+		setTile(pos, Tiles.get(newTile));
 	}
 
-	public final boolean hasPower(int x, int y)
-	{
-		return powerMap[y][x];
+	public void setTilePower(MapPosition pos, boolean power) {
+		if (power)
+			map.power(pos);
+		else
+			map.unpower(pos);
+	}
+
+	/*
+	 * @deprecated
+	 */
+	// TODO refactor to MapPosition
+	public void setTilePower(int x, int y, boolean power) {
+		setTilePower(MapPosition.at(x, y), power);
+	}
+
+	/*
+	 * @deprecated
+	 */
+	final public boolean testBounds(int xpos, int ypos) {
+		// TODO refactor to MapPosition and map.isInside()
+		return testBounds(MapPosition.at(xpos, ypos));
+	}
+
+	// TODO refactor to MapPosition and map.isInside()
+	final public boolean testBounds(MapPosition pos) {
+		return map.isPosInside(pos);
+	}
+
+	public final void setPower(MapPosition pos,boolean hasPower) {
+		powerMap[pos.getY()][pos.getX()]=hasPower;
+	}
+	
+	public final boolean hasPower(int x, int y) {
+		return hasPower(MapPosition.at(x, y));
+	}
+	
+	public final boolean hasPower(MapPosition pos) {
+		return powerMap[pos.getY()][pos.getX()];
 	}
 
 	/**
-	 * Checks whether the next call to animate() will collect taxes and
-	 * process the budget.
+	 * Checks whether the next call to animate() will collect taxes and process the
+	 * budget.
 	 */
-	public boolean isBudgetTime()
-	{
-		return (
-			cityTime != 0 &&
-			(cityTime % TAXFREQ) == 0 &&
-			((fcycle + 1) % 16) == 10 &&
-			((acycle + 1) % 2) == 0
-			);
+	public boolean isBudgetTime() {
+		return (cityTime != 0 && (cityTime % TAXFREQ) == 0 && ((fcycle + 1) % 16) == 10 && ((acycle + 1) % 2) == 0);
 	}
 
-	void step()
-	{
+	void step() {
 		fcycle = (fcycle + 1) % 1024;
 		simulate(fcycle % 16);
 	}
 
-	void clearCensus()
-	{
+	void clearCensus() {
 		poweredZoneCount = 0;
 		unpoweredZoneCount = 0;
 		fireCounter = 0;
@@ -687,7 +676,7 @@ public class Micropolis
 		churchCount = 0;
 		policeCount = 0;
 		fireStationCount = 0;
-		subStationCount=0;
+		subStationCount = 0;
 		stadiumCount = 0;
 		coalCount = 0;
 		nuclearCount = 0;
@@ -703,12 +692,10 @@ public class Micropolis
 		}
 	}
 
-	void simulate(int mod16)
-	{
+	void simulate(int mod16) {
 		final int band = getWidth() / 8;
 
-		switch (mod16)
-		{
+		switch (mod16) {
 		case 0:
 			scycle = (scycle + 1) % 1024;
 			cityTime++;
@@ -754,7 +741,7 @@ public class Micropolis
 			if (cityTime % CENSUSRATE == 0) {
 				takeCensus();
 
-				if (cityTime % (CENSUSRATE*12) == 0) {
+				if (cityTime % (CENSUSRATE * 12) == 0) {
 					takeCensus2();
 				}
 
@@ -770,21 +757,21 @@ public class Micropolis
 			break;
 
 		case 10:
-			if (scycle % 5 == 0) {  // every ~10 weeks
+			if (scycle % 5 == 0) { // every ~10 weeks
 				decROGMem();
 			}
 			decTrafficMem();
-			fireMapOverlayDataChanged(MapState.TRAFFIC_OVERLAY); //TDMAP
-			fireMapOverlayDataChanged(MapState.TRANSPORT);       //RDMAP
-			fireMapOverlayDataChanged(MapState.ALL);             //ALMAP
-			fireMapOverlayDataChanged(MapState.RESIDENTIAL);     //REMAP
-			fireMapOverlayDataChanged(MapState.COMMERCIAL);      //COMAP
-			fireMapOverlayDataChanged(MapState.INDUSTRIAL);      //INMAP
+			fireMapOverlayDataChanged(MapState.TRAFFIC_OVERLAY); // TDMAP
+			fireMapOverlayDataChanged(MapState.TRANSPORT); // RDMAP
+			fireMapOverlayDataChanged(MapState.ALL); // ALMAP
+			fireMapOverlayDataChanged(MapState.RESIDENTIAL); // REMAP
+			fireMapOverlayDataChanged(MapState.COMMERCIAL); // COMAP
+			fireMapOverlayDataChanged(MapState.INDUSTRIAL); // INMAP
 			doMessages();
 			break;
 
 		case 11:
-			powerScan();
+			powerMap=(new PowerScanner(powerPlants,this)).doScan();
 			fireMapOverlayDataChanged(MapState.POWER_OVERLAY);
 			newPower = true;
 			break;
@@ -811,8 +798,7 @@ public class Micropolis
 		}
 	}
 
-	private int computePopDen(int x, int y, char tile)
-	{
+	private int computePopDen(int x, int y, char tile) {
 		if (tile == RESCLR)
 			return doFreePop(x, y);
 
@@ -828,60 +814,52 @@ public class Micropolis
 		return 0;
 	}
 
-	private static int [][] doSmooth(int [][] tem)
-	{
+	private static int[][] doSmooth(int[][] tem) {
 		final int h = tem.length;
 		final int w = tem[0].length;
-		int [][] tem2 = new int[h][w];
+		int[][] tem2 = new int[h][w];
 
-		for (int y = 0; y < h; y++)
-		{
-			for (int x = 0; x < w; x++)
-			{
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
 				int z = tem[y][x];
 				if (x > 0)
-					z += tem[y][x-1];
+					z += tem[y][x - 1];
 				if (x + 1 < w)
-					z += tem[y][x+1];
+					z += tem[y][x + 1];
 				if (y > 0)
-					z += tem[y-1][x];
+					z += tem[y - 1][x];
 				if (y + 1 < h)
-					z += tem[y+1][x];
+					z += tem[y + 1][x];
 				z /= 4;
 				if (z > 255)
 					z = 255;
 				tem2[y][x] = z;
 			}
 		}
-	
+
 		return tem2;
 	}
 
-	public void calculateCenterMass()
-	{
+	public void calculateCenterMass() {
 		popDenScan();
 	}
 
-	private void popDenScan()
-	{
+	private void popDenScan() {
 		int xtot = 0;
 		int ytot = 0;
 		int zoneCount = 0;
 		int width = getWidth();
 		int height = getHeight();
-		int [][] tem = new int[(height+1)/2][(width+1)/2];
+		int[][] tem = new int[(height + 1) / 2][(width + 1) / 2];
 
-		for (int x = 0; x < width; x++)
-		{
-			for (int y = 0; y < height; y++)
-			{
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
 				char tile = getTile(x, y);
-				if (isZoneCenter(tile))
-				{
+				if (isZoneCenter(tile)) {
 					int den = computePopDen(x, y, tile) * 8;
 					if (den > 254)
 						den = 254;
-					tem[y/2][x/2] = den;
+					tem[y / 2][x / 2] = den;
 					xtot += x;
 					ytot += y;
 					zoneCount++;
@@ -893,39 +871,31 @@ public class Micropolis
 		tem = doSmooth(tem);
 		tem = doSmooth(tem);
 
-		for (int x = 0; x < (width+1)/2; x++)
-		{
-			for (int y = 0; y < (height+1)/2; y++)
-			{
+		for (int x = 0; x < (width + 1) / 2; x++) {
+			for (int y = 0; y < (height + 1) / 2; y++) {
 				popDensity[y][x] = 2 * tem[y][x];
 			}
 		}
 
-		distIntMarket(); //set ComRate
+		distIntMarket(); // set ComRate
 
 		// find center of mass for city
-		if (zoneCount != 0)
-		{
+		if (zoneCount != 0) {
 			centerMassX = xtot / zoneCount;
 			centerMassY = ytot / zoneCount;
-		}
-		else
-		{
-			centerMassX = (width+1)/2;
-			centerMassY = (height+1)/2;
+		} else {
+			centerMassX = (width + 1) / 2;
+			centerMassY = (height + 1) / 2;
 		}
 
-		fireMapOverlayDataChanged(MapState.POPDEN_OVERLAY);     //PDMAP
-		fireMapOverlayDataChanged(MapState.GROWTHRATE_OVERLAY); //RGMAP
+		fireMapOverlayDataChanged(MapState.POPDEN_OVERLAY); // PDMAP
+		fireMapOverlayDataChanged(MapState.GROWTHRATE_OVERLAY); // RGMAP
 	}
 
-	private void distIntMarket()
-	{
-		for (int y = 0; y < comRate.length; y++)
-		{
-			for (int x = 0; x < comRate[y].length; x++)
-			{
-				int z = getDisCC(x*4, y*4);
+	private void distIntMarket() {
+		for (int y = 0; y < comRate.length; y++) {
+			for (int x = 0; x < comRate[y].length; x++) {
+				int z = getDisCC(x * 4, y * 4);
 				z /= 4;
 				z = 64 - z;
 				comRate[y][x] = z;
@@ -933,32 +903,25 @@ public class Micropolis
 		}
 	}
 
-	//tends to empty RateOGMem[][]
-	private void decROGMem()
-	{
-		for (int y = 0; y < rateOGMem.length; y++)
-		{
-			for (int x = 0; x < rateOGMem[y].length; x++)
-			{
+	// tends to empty RateOGMem[][]
+	private void decROGMem() {
+		for (int y = 0; y < rateOGMem.length; y++) {
+			for (int x = 0; x < rateOGMem[y].length; x++) {
 				int z = rateOGMem[y][x];
 				if (z == 0)
 					continue;
 
-				if (z > 0)
-				{
+				if (z > 0) {
 					rateOGMem[y][x]--;
-					if (z > 200)
-					{
-						rateOGMem[y][x] = 200; //prevent overflow?
+					if (z > 200) {
+						rateOGMem[y][x] = 200; // prevent overflow?
 					}
 					continue;
 				}
 
-				if (z < 0)
-				{
+				if (z < 0) {
 					rateOGMem[y][x]++;
-					if (z < -200)
-					{
+					if (z < -200) {
 						rateOGMem[y][x] = -200;
 					}
 					continue;
@@ -967,16 +930,12 @@ public class Micropolis
 		}
 	}
 
-	//tends to empty trfDensity
-	private void decTrafficMem()
-	{
-		for (int y = 0; y < trfDensity.length; y++)
-		{
-			for (int x = 0; x < trfDensity[y].length; x++)
-			{
+	// tends to empty trfDensity
+	private void decTrafficMem() {
+		for (int y = 0; y < trfDensity.length; y++) {
+			for (int x = 0; x < trfDensity[y].length; x++) {
 				int z = trfDensity[y][x];
-				if (z != 0)
-				{
+				if (z != 0) {
 					if (z > 200)
 						trfDensity[y][x] = z - 34;
 					else if (z > 24)
@@ -988,8 +947,7 @@ public class Micropolis
 		}
 	}
 
-	void crimeScan()
-	{
+	void crimeScan() {
 		policeMap = smoothFirePoliceMap(policeMap);
 		policeMap = smoothFirePoliceMap(policeMap);
 		policeMap = smoothFirePoliceMap(policeMap);
@@ -1010,7 +968,7 @@ public class Micropolis
 					count++;
 					int newCrimeLevel = 128 - val + popDensity[hy][hx];
 					newCrimeLevel = Math.min(300, newCrimeLevel);
-					newCrimeLevel -= policeMap[hy/4][hx/4];
+					newCrimeLevel -= policeMap[hy / 4][hx / 4];
 					newCrimeLevel = Math.min(250, newCrimeLevel);
 					newCrimeLevel = Math.max(0, newCrimeLevel);
 					crimeMem[hy][hx] = newCrimeLevel;
@@ -1018,11 +976,10 @@ public class Micropolis
 					sum += newCrimeLevel;
 					if (newCrimeLevel > cmax || (newCrimeLevel == cmax && PRNG.nextInt(4) == 0)) {
 						cmax = newCrimeLevel;
-						crimeMaxLocationX = hx*2;
-						crimeMaxLocationY = hy*2;
+						crimeMaxLocationX = hx * 2;
+						crimeMaxLocationY = hy * 2;
 					}
-				}
-				else {
+				} else {
 					crimeMem[hy][hx] = 0;
 				}
 			}
@@ -1036,21 +993,19 @@ public class Micropolis
 		fireMapOverlayDataChanged(MapState.POLICE_OVERLAY);
 	}
 
-	void doDisasters()
-	{
+	void doDisasters() {
 		if (floodCnt > 0) {
 			floodCnt--;
 		}
 
-//		final int [] DisChance = { 480, 240, 60 };
+		// final int [] DisChance = { 480, 240, 60 };
 		if (noDisasters)
 			return;
 
-		if (PRNG.nextInt(gameLevel.getDisiasterChance()+1) != 0)
+		if (PRNG.nextInt(gameLevel.getDisiasterChance() + 1) != 0)
 			return;
 
-		switch (PRNG.nextInt(9))
-		{
+		switch (PRNG.nextInt(9)) {
 		case 0:
 		case 1:
 			setFire();
@@ -1075,34 +1030,41 @@ public class Micropolis
 			break;
 		}
 	}
-	
+
 	public void addFireStationMapValue(int x, int y, int value) {
-		fireStMap[y][x]+=value;
-	}
-	
-	public void addPoliceStationMapValue(int x, int y, int value) {
-		policeMap[y][x]+=value;
+		fireStMap[y][x] += value;
 	}
 
-	private int[][] smoothFirePoliceMap(int[][] omap)
-	{
+	public void addPoliceStationMapValue(int x, int y, int value) {
+		policeMap[y][x] += value;
+	}
+
+	private int[][] smoothFirePoliceMap(int[][] omap) {
 		int smX = omap[0].length;
 		int smY = omap.length;
 		int[][] nmap = new int[smY][smX];
 		for (int sy = 0; sy < smY; sy++) {
 			for (int sx = 0; sx < smX; sx++) {
 				int edge = 0;
-				if (sx > 0) { edge += omap[sy][sx-1]; }
-				if (sx + 1 < smX) { edge += omap[sy][sx+1]; }
-				if (sy > 0) { edge += omap[sy-1][sx]; }
-				if (sy + 1 < smY) { edge += omap[sy+1][sx]; }
+				if (sx > 0) {
+					edge += omap[sy][sx - 1];
+				}
+				if (sx + 1 < smX) {
+					edge += omap[sy][sx + 1];
+				}
+				if (sy > 0) {
+					edge += omap[sy - 1][sx];
+				}
+				if (sy + 1 < smY) {
+					edge += omap[sy + 1][sx];
+				}
 				edge = edge / 4 + omap[sy][sx];
 				nmap[sy][sx] = edge / 2;
 			}
 		}
 		return nmap;
 	}
-	
+
 	public int getPoliceEffect() {
 		return policeEffect;
 	}
@@ -1110,7 +1072,7 @@ public class Micropolis
 	public int getFireEffect() {
 		return fireEffect;
 	}
-	
+
 	public int getHospitalCount() {
 		return hospitalCount;
 	}
@@ -1142,27 +1104,27 @@ public class Micropolis
 	public int getFireStationCount() {
 		return fireStationCount;
 	}
-	
+
 	public int getSubStationCount() {
 		return subStationCount;
 	}
-	
+
 	public void incHospitalCount() {
 		hospitalCount++;
 	}
-	
+
 	public void incChurchCount() {
 		churchCount++;
 	}
-	
+
 	public void incPoliceCount() {
 		policeCount++;
 	}
-	
+
 	public void incFireStationCount() {
 		fireStationCount++;
 	}
-	
+
 	public void incSubwayStationCount() {
 		subStationCount++;
 	}
@@ -1170,19 +1132,19 @@ public class Micropolis
 	public void incStadiumCount() {
 		stadiumCount++;
 	}
-	
+
 	public void incNuclearCount() {
 		nuclearCount++;
 	}
-	
+
 	public void incSeaportCount() {
 		seaportCount++;
 	}
-	
+
 	public void incAirportCount() {
 		airportCount++;
 	}
-	
+
 	public int getCoalCount() {
 		return coalCount;
 	}
@@ -1190,17 +1152,16 @@ public class Micropolis
 	public void incCoalCount() {
 		this.coalCount++;
 	}
-	
+
 	public int getFireCount() {
 		return fireCounter;
 	}
-	
+
 	public void reportActiveFire() {
 		fireCounter++;
 	}
 
-	void fireAnalysis()
-	{
+	void fireAnalysis() {
 		fireStMap = smoothFirePoliceMap(fireStMap);
 		fireStMap = smoothFirePoliceMap(fireStMap);
 		fireStMap = smoothFirePoliceMap(fireStMap);
@@ -1213,145 +1174,119 @@ public class Micropolis
 		fireMapOverlayDataChanged(MapState.FIRE_OVERLAY);
 	}
 
-	private boolean testForCond(CityLocation loc, int dir)
-	{
-		int xsave = loc.x;
-		int ysave = loc.y;
+//	private boolean testForCond(MapPosition pos, StepDir dir) {
+//		boolean rv = false;
+//		MapPosition stepPos = pos.step(dir);
+//		if (map.isPosInside(stepPos)){
+////		if (movePowerLocation(pos, dir)) {
+//			char t = getTile(stepPos);
+//			rv = (isConductive(t) && t != NUCLEAR && t != POWERPLANT && !hasPower(stepPos));
+//		}
+//
+//		return rv;
+//	}
+//
+//	private boolean movePowerLocation(CityLocation loc, int dir) {
+//		switch (dir) {
+//		case 0:
+//			if (loc.y > 0) {
+//				loc.y--;
+//				return true;
+//			} else
+//				return false;
+//		case 1:
+//			if (loc.x + 1 < getWidth()) {
+//				loc.x++;
+//				return true;
+//			} else
+//				return false;
+//		case 2:
+//			if (loc.y + 1 < getHeight()) {
+//				loc.y++;
+//				return true;
+//			} else
+//				return false;
+//		case 3:
+//			if (loc.x > 0) {
+//				loc.x--;
+//				return true;
+//			} else
+//				return false;
+//		case 4:
+//			return true;
+//		}
+//		return false;
+//	}
 
-		boolean rv = false;
-		if (movePowerLocation(loc,dir))
-		{
-			char t = getTile(loc.x, loc.y);
-			rv = (
-				isConductive(t) &&
-				t != NUCLEAR &&
-				t != POWERPLANT &&
-				!hasPower(loc.x, loc.y)
-				);
-		}
-
-		loc.x = xsave;
-		loc.y = ysave;
-		return rv;
-	}
-
-	private boolean movePowerLocation(CityLocation loc, int dir)
-	{
-		switch(dir)
-		{
-		case 0:
-			if (loc.y > 0)
-			{
-				loc.y--;
-				return true;
-			}
-			else
-				return false;
-		case 1:
-			if (loc.x + 1 < getWidth())
-			{
-				loc.x++;
-				return true;
-			}
-			else
-				return false;
-		case 2:
-			if (loc.y + 1 < getHeight())
-			{
-				loc.y++;
-				return true;
-			}
-			else
-				return false;
-		case 3:
-			if (loc.x > 0)
-			{
-				loc.x--;
-				return true;
-			}
-			else
-				return false;
-		case 4:
-			return true;
-		}
-		return false;
-	}
-
-	void powerScan()
-	{
-		// clear powerMap
-		for (boolean [] bb : powerMap)
-		{
-			Arrays.fill(bb, false);
-		}
-
-		//
-		// Note: brownouts are based on total number of power plants, not the number
-		// of powerplants connected to your city.
-		//
-
-		int maxPower = coalCount * 700 + nuclearCount * 2000;
-		int numPower = 0;
-
-		// This is kind of odd algorithm, but I haven't the heart to rewrite it at
-		// this time.
-
-		while (!powerPlants.isEmpty())
-		{
-			CityLocation loc = powerPlants.pop();
-
-			int aDir = 4;
-			int conNum;
-			do
-			{
-				if (++numPower > maxPower)
-				{
-					// trigger notification
-					sendMessage(MicropolisMessage.BROWNOUTS_REPORT);
-					return;
-				}
-				movePowerLocation(loc, aDir);
-				powerMap[loc.y][loc.x] = true;
-
-				conNum = 0;
-				int dir = 0;
-				while (dir < 4 && conNum < 2)
-				{
-					if (testForCond(loc, dir))
-					{
-						conNum++;
-						aDir = dir;
-					}
-					else
-					{
-					}
-					dir++;
-				}
-				if (conNum > 1)
-				{
-					powerPlants.add(new CityLocation(loc.x,loc.y));
-				}
-			}
-			while (conNum != 0);
-		}
-	}
+//	void powerScan() {
+//		// clear powerMap
+//		for (boolean[] bb : powerMap) {
+//			Arrays.fill(bb, false);
+//		}
+//		System.out.println("power Scan");
+//		//
+//		// Note: brownouts are based on total number of power plants, not the number
+//		// of powerplants connected to your city.
+//		//
+//
+//		int maxPower = coalCount * 700 + nuclearCount * 2000;
+//		int numPower = 0;
+//
+//		// This is kind of odd algorithm, but I haven't the heart to rewrite it at
+//		// this time.
+//
+//		while (!powerPlants.isEmpty()) {
+//			MapPosition pos = powerPlants.pop();
+//
+//			StepDir aDir = StepDir.none;
+//			int conNum;
+//			do {
+//				if (++numPower > maxPower) {
+//					// trigger notification
+//					sendMessage(MicropolisMessage.BROWNOUTS_REPORT);
+//					return;
+//				}
+////				System.out.print("Step from " + loc + " in dir " + aDir);
+//				pos=pos.step(aDir);
+//				System.out.println("stepped to " + pos);
+//				setPower(pos, true);
+//
+//				conNum = 0;
+//				List<StepDir> dirsToCheck=StepDir.majorDirsAndNone();
+//				while (!dirsToCheck.isEmpty() && conNum < 2) {
+////					System.out.println("currently at " + loc + " checking dir: " + dir);
+//					if (testForCond(pos, dirsToCheck.get(0))) {
+////						System.out.println("dir ok");
+//						conNum++;
+//						aDir = dirsToCheck.get(0);
+//					} else {
+////						System.out.println("dir not ok");
+//					}
+//					dirsToCheck.remove(0);
+//				}
+//				if (conNum > 1) {
+//					System.out.println("power plant add at " + pos + " " + powerPlants);
+//					powerPlants.add(pos);
+//				}
+//			} while (conNum != 0);
+//		}
+//	}
 
 	/**
-	 * Increase the traffic-density measurement at a particular
-	 * spot.
-	 * @param traffic the amount to add to the density
+	 * Increase the traffic-density measurement at a particular spot.
+	 * 
+	 * @param traffic
+	 *            the amount to add to the density
 	 */
-	void addTraffic(int mapX, int mapY, int traffic)
-	{
-		int z = trfDensity[mapY/2][mapX/2];
+	void addTraffic(int mapX, int mapY, int traffic) {
+		int z = trfDensity[mapY / 2][mapX / 2];
 		z += traffic;
 
-		//FIXME- why is this only capped to 240
+		// FIXME- why is this only capped to 240
 		// by random chance. why is there no cap
 		// the rest of the time?
 
-		if (z > 240 && PRNG.nextInt(6) == 0)
-		{
+		if (z > 240 && PRNG.nextInt(6) == 0) {
 			z = 240;
 			trafficMaxLocationX = mapX;
 			trafficMaxLocationY = mapY;
@@ -1363,74 +1298,64 @@ public class Micropolis
 			}
 		}
 
-		trfDensity[mapY/2][mapX/2] = z;
+		trfDensity[mapY / 2][mapX / 2] = z;
 	}
 
 	/** Accessor method for fireRate[]. */
-	public int getFireStationCoverage(int xpos, int ypos)
-	{
-		return fireRate[ypos/8][xpos/8];
+	public int getFireStationCoverage(int xpos, int ypos) {
+		return fireRate[ypos / 8][xpos / 8];
 	}
 
 	/** Accessor method for landValueMem overlay. */
-	public int getLandValue(int xpos, int ypos)
-	{
+	public int getLandValue(int xpos, int ypos) {
 		if (testBounds(xpos, ypos)) {
-			return landValueMem[ypos/2][xpos/2];
-		}
-		else {
-			return 0;
-		}
-	}
-
-	public int getTrafficDensity(int xpos, int ypos)
-	{
-		if (testBounds(xpos, ypos)) {
-			return trfDensity[ypos/2][xpos/2];
+			return landValueMem[ypos / 2][xpos / 2];
 		} else {
 			return 0;
 		}
 	}
-	
-	public void setTrafficDensity(int xpos, int ypos,int newTrfDensity) {
+
+	public int getTrafficDensity(int xpos, int ypos) {
 		if (testBounds(xpos, ypos)) {
-			trfDensity[ypos/2][xpos/2]=newTrfDensity;
+			return trfDensity[ypos / 2][xpos / 2];
+		} else {
+			return 0;
 		}
 	}
 
-	//power, terrain, land value
-	void ptlScan()
-	{
-		final int qX = (getWidth()+3)/4;
-		final int qY = (getHeight()+3)/4;
-		int [][] qtem = new int[qY][qX];
+	public void setTrafficDensity(int xpos, int ypos, int newTrfDensity) {
+		if (testBounds(xpos, ypos)) {
+			trfDensity[ypos / 2][xpos / 2] = newTrfDensity;
+		}
+	}
+
+	// power, terrain, land value
+	void ptlScan() {
+		final int qX = (getWidth() + 3) / 4;
+		final int qY = (getHeight() + 3) / 4;
+		int[][] qtem = new int[qY][qX];
 
 		int landValueTotal = 0;
 		int landValueCount = 0;
 
-		final int HWLDX = (getWidth()+1)/2;
-		final int HWLDY = (getHeight()+1)/2;
-		int [][] tem = new int[HWLDY][HWLDX];
-		for (int x = 0; x < HWLDX; x++)
-		{
-			for (int y = 0; y < HWLDY; y++)
-			{
+		final int HWLDX = (getWidth() + 1) / 2;
+		final int HWLDY = (getHeight() + 1) / 2;
+		int[][] tem = new int[HWLDY][HWLDX];
+		for (int x = 0; x < HWLDX; x++) {
+			for (int y = 0; y < HWLDY; y++) {
 				int plevel = 0;
 				int lvflag = 0;
-				int zx = 2*x;
-				int zy = 2*y;
+				int zx = 2 * x;
+				int zy = 2 * y;
 
-				for (int mx = zx; mx <= zx+1; mx++)
-				{
-					for (int my = zy; my <= zy+1; my++)
-					{
+				for (int mx = zx; mx <= zx + 1; mx++) {
+					for (int my = zy; my <= zy + 1; my++) {
 						int tile = getTile(mx, my);
-						if (tile != DIRT)
-						{
-							if (tile < RUBBLE) //natural land features
+						if (tile != DIRT) {
+							if (tile < RUBBLE) // natural land features
 							{
-								//inc terrainMem
-								qtem[y/2][x/2] += 15;
+								// inc terrainMem
+								qtem[y / 2][x / 2] += 15;
 								continue;
 							}
 							plevel += getPollutionValue(tile);
@@ -1441,21 +1366,19 @@ public class Micropolis
 				}
 
 				if (plevel < 0)
-					plevel = 250; //?
+					plevel = 250; // ?
 
 				if (plevel > 255)
 					plevel = 255;
 
 				tem[y][x] = plevel;
 
-				if (lvflag != 0)
-				{
-					//land value equation
-
+				if (lvflag != 0) {
+					// land value equation
 
 					int dis = 34 - getDisCC(x, y);
 					dis *= 4;
-					dis += terrainMem[y/2][x/2];
+					dis += terrainMem[y / 2][x / 2];
 					dis -= pollutionMem[y][x];
 					if (crimeMem[y][x] > 190) {
 						dis -= 20;
@@ -1467,15 +1390,13 @@ public class Micropolis
 					landValueMem[y][x] = dis;
 					landValueTotal += dis;
 					landValueCount++;
-				}
-				else
-				{
+				} else {
 					landValueMem[y][x] = 0;
 				}
 			}
 		}
 
-		landValueAverage = landValueCount != 0 ? (landValueTotal/landValueCount) : 0;
+		landValueAverage = landValueCount != 0 ? (landValueTotal / landValueCount) : 0;
 
 		tem = doSmooth(tem);
 		tem = doSmooth(tem);
@@ -1483,24 +1404,19 @@ public class Micropolis
 		int pcount = 0;
 		int ptotal = 0;
 		int pmax = 0;
-		for (int x = 0; x < HWLDX; x++)
-		{
-			for (int y = 0; y < HWLDY; y++)
-			{
+		for (int x = 0; x < HWLDX; x++) {
+			for (int y = 0; y < HWLDY; y++) {
 				int z = tem[y][x];
 				pollutionMem[y][x] = z;
 
-				if (z != 0)
-				{
+				if (z != 0) {
 					pcount++;
 					ptotal += z;
 
-					if (z > pmax ||
-						(z == pmax && PRNG.nextInt(4) == 0))
-					{
+					if (z > pmax || (z == pmax && PRNG.nextInt(4) == 0)) {
 						pmax = z;
-						pollutionMaxLocationX = 2*x;
-						pollutionMaxLocationY = 2*y;
+						pollutionMaxLocationX = 2 * x;
+						pollutionMaxLocationY = 2 * y;
 					}
 				}
 			}
@@ -1510,21 +1426,19 @@ public class Micropolis
 
 		terrainMem = smoothTerrain(qtem);
 
-		fireMapOverlayDataChanged(MapState.POLLUTE_OVERLAY);   //PLMAP
-		fireMapOverlayDataChanged(MapState.LANDVALUE_OVERLAY); //LVMAP
+		fireMapOverlayDataChanged(MapState.POLLUTE_OVERLAY); // PLMAP
+		fireMapOverlayDataChanged(MapState.LANDVALUE_OVERLAY); // LVMAP
 	}
 
-	public CityLocation getLocationOfMaxPollution()
-	{
-		return new CityLocation(pollutionMaxLocationX, pollutionMaxLocationY);
+	public MapPosition getLocationOfMaxPollution() {
+		return MapPosition.at(pollutionMaxLocationX, pollutionMaxLocationY);
 	}
 
-//	static final int [] TaxTable = {
-//		200, 150, 120, 100, 80, 50, 30, 0, -10, -40, -100,
-//		-150, -200, -250, -300, -350, -400, -450, -500, -550, -600 };
+	// static final int [] TaxTable = {
+	// 200, 150, 120, 100, 80, 50, 30, 0, -10, -40, -100,
+	// -150, -200, -250, -300, -350, -400, -450, -500, -550, -600 };
 
-	public static class History
-	{
+	public static class History {
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -1541,6 +1455,7 @@ public class Micropolis
 			result = prime * result + resMax;
 			return result;
 		}
+
 		@Override
 		public boolean equals(Object obj) {
 			if (this == obj)
@@ -1550,79 +1465,74 @@ public class Micropolis
 			if (getClass() != obj.getClass())
 				return false;
 			History other = (History) obj;
-//			if (cityTime != other.cityTime)
-//				return false;
+			// if (cityTime != other.cityTime)
+			// return false;
 			if (!Arrays.equals(com, other.com))
 				return false;
-//			if (comMax != other.comMax)
-//				return false;
+			// if (comMax != other.comMax)
+			// return false;
 			if (!Arrays.equals(crime, other.crime))
 				return false;
 			if (!Arrays.equals(ind, other.ind))
 				return false;
-//			if (indMax != other.indMax)
-//				return false;
+			// if (indMax != other.indMax)
+			// return false;
 			if (!Arrays.equals(money, other.money))
 				return false;
 			if (!Arrays.equals(pollution, other.pollution))
 				return false;
 			if (!Arrays.equals(res, other.res))
 				return false;
-//			if (resMax != other.resMax)
-//				return false;
+			// if (resMax != other.resMax)
+			// return false;
 			return true;
 		}
+
 		public int cityTime;
-		public int [] res = new int[240];
-		public int [] com = new int[240];
-		public int [] ind = new int[240];
-		public int [] money = new int[240];
-		public int [] pollution = new int[240];
-		public int [] crime = new int[240];
+		public int[] res = new int[240];
+		public int[] com = new int[240];
+		public int[] ind = new int[240];
+		public int[] money = new int[240];
+		public int[] pollution = new int[240];
+		public int[] crime = new int[240];
 		int resMax;
 		int comMax;
 		int indMax;
 	}
+
 	public History history = new History();
 
-	void setValves()
-	{
-		double normResPop = (double)resPop / 8.0;
+	void setValves() {
+		double normResPop = (double) resPop / 8.0;
 		totalPop = (int) (normResPop + comPop + indPop);
 
 		double employment;
-		if (normResPop != 0.0)
-		{
+		if (normResPop != 0.0) {
 			employment = (history.com[1] + history.ind[1]) / normResPop;
-		}
-		else
-		{
+		} else {
 			employment = 1;
 		}
 
 		double migration = normResPop * (employment - 1);
 		final double BIRTH_RATE = 0.02;
-		double births = (double)normResPop * BIRTH_RATE;
+		double births = (double) normResPop * BIRTH_RATE;
 		double projectedResPop = normResPop + migration + births;
 
 		double temp = (history.com[1] + history.ind[1]);
 		double laborBase;
-		if (temp != 0.0)
-		{
+		if (temp != 0.0) {
 			laborBase = history.res[1] / temp;
-		}
-		else
-		{
+		} else {
 			laborBase = 1;
 		}
 
 		// clamp laborBase to between 0.0 and 1.3
 		laborBase = Math.max(0.0, Math.min(1.3, laborBase));
 
-		double internalMarket = (double)(normResPop + comPop + indPop) / 3.7;
+		double internalMarket = (double) (normResPop + comPop + indPop) / 3.7;
 		double projectedComPop = internalMarket * laborBase;
 
-//		int z = gameLevel;
+		// int z = gameLevel;
 		temp = gameLevel.getLaborBaseMulti();
 
 		double projectedIndPop = indPop * laborBase * temp;
@@ -1630,24 +1540,21 @@ public class Micropolis
 			projectedIndPop = 5.0;
 
 		double resRatio;
-		if (normResPop != 0)
-		{
-			resRatio = (double)projectedResPop / (double)normResPop;
-		}
-		else
-		{
+		if (normResPop != 0) {
+			resRatio = (double) projectedResPop / (double) normResPop;
+		} else {
 			resRatio = 1.3;
 		}
 
 		double comRatio;
 		if (comPop != 0)
-			comRatio = (double)projectedComPop / (double)comPop;
+			comRatio = (double) projectedComPop / (double) comPop;
 		else
 			comRatio = projectedComPop;
 
 		double indRatio;
 		if (indPop != 0)
-			indRatio = (double)projectedIndPop / (double)indPop;
+			indRatio = (double) projectedIndPop / (double) indPop;
 		else
 			indRatio = projectedIndPop;
 
@@ -1684,7 +1591,6 @@ public class Micropolis
 		else if (indValve < -1500)
 			indValve = -1500;
 
-
 		if (resCap && resValve > 0) {
 			// residents demand stadium
 			resValve = 0;
@@ -1703,25 +1609,22 @@ public class Micropolis
 		fireDemandChanged();
 	}
 
-	int [][] smoothTerrain(int [][] qtem)
-	{
+	int[][] smoothTerrain(int[][] qtem) {
 		final int QWX = qtem[0].length;
 		final int QWY = qtem.length;
 
-		int [][] mem = new int[QWY][QWX];
-		for (int y = 0; y < QWY; y++)
-		{
-			for (int x = 0; x < QWX; x++)
-			{
+		int[][] mem = new int[QWY][QWX];
+		for (int y = 0; y < QWY; y++) {
+			for (int x = 0; x < QWX; x++) {
 				int z = 0;
 				if (x > 0)
-					z += qtem[y][x-1];
-				if (x+1 < QWX)
-					z += qtem[y][x+1];
+					z += qtem[y][x - 1];
+				if (x + 1 < QWX)
+					z += qtem[y][x + 1];
 				if (y > 0)
-					z += qtem[y-1][x];
-				if (y+1 < QWY)
-					z += qtem[y+1][x];
+					z += qtem[y - 1][x];
+				if (y + 1 < QWY)
+					z += qtem[y + 1][x];
 				mem[y][x] = z / 4 + qtem[y][x] / 2;
 			}
 		}
@@ -1730,13 +1633,12 @@ public class Micropolis
 
 	// calculate manhatten distance (in 2-units) from center of city
 	// capped at 32
-	int getDisCC(int x, int y)
-	{
-		assert x >= 0 && x <= getWidth()/2;
-		assert y >= 0 && y <= getHeight()/2;
+	int getDisCC(int x, int y) {
+		assert x >= 0 && x <= getWidth() / 2;
+		assert y >= 0 && y <= getHeight() / 2;
 
-		int xdis = Math.abs(x - centerMassX/2);
-		int ydis = Math.abs(y - centerMassY/2);
+		int xdis = Math.abs(x - centerMassX / 2);
+		int ydis = Math.abs(y - centerMassY / 2);
 
 		int z = (xdis + ydis);
 		if (z > 32)
@@ -1745,18 +1647,18 @@ public class Micropolis
 			return z;
 	}
 
-	Map<String,TileBehavior> tileBehaviors;
-	void initTileBehaviors()
-	{
-		HashMap<String,TileBehavior> bb;
-		bb = new HashMap<String,TileBehavior>();
+	Map<String, TileBehavior> tileBehaviors;
+
+	void initTileBehaviors() {
+		HashMap<String, TileBehavior> bb;
+		bb = new HashMap<String, TileBehavior>();
 
 		bb.put("FIRE", new Fire(this));
 		bb.put("FLOOD", new Flood(this));
 		bb.put("RADIOACTIVE", new Radioactive(this));
 		bb.put("ROAD", new Road(this));
 		bb.put("RAIL", new Rail(this));
-		bb.put("EXPLOSION", new Explosion (this));
+		bb.put("EXPLOSION", new Explosion(this));
 		bb.put("RESIDENTIAL", new Residential(this));
 		bb.put("HOSPITAL_CHURCH", new HospitalChurch(this));
 		bb.put("COMMERCIAL", new Commercial(this));
@@ -1771,81 +1673,71 @@ public class Micropolis
 		bb.put("SEAPORT", new Seaport(this));
 		bb.put("ICERINK", new IceRink(this));
 		bb.put("SUBWAY", new Subway(this));
-		
+
 		this.tileBehaviors = bb;
 	}
 
-	void mapScan(int x0, int x1)
-	{
-		for (int x = x0; x < x1; x++)
-		{
-			for (int y = 0; y < getHeight(); y++)
-			{
+	void mapScan(int x0, int x1) {
+		for (int x = x0; x < x1; x++) {
+			for (int y = 0; y < getHeight(); y++) {
 				mapScanTile(x, y);
 			}
 		}
 	}
 
-	void mapScanTile(int xpos, int ypos)
-	{
+	void mapScanTile(int xpos, int ypos) {
 		int tile = getTile(xpos, ypos);
 		String behaviorStr = getTileBehavior(tile);
 		if (behaviorStr == null) {
-			return; //nothing to do
+			return; // nothing to do
 		}
 
 		TileBehavior b = tileBehaviors.get(behaviorStr);
 		if (b != null) {
 			b.processTile(xpos, ypos);
-		}
-		else {
-			throw new Error("Unknown behavior: "+behaviorStr);
+		} else {
+			throw new Error("Unknown behavior: " + behaviorStr);
 		}
 	}
 
-	public void generateShip()
-	{
+	public void generateShip() {
 		if (hasSprite(SpriteKind.SHI)) // maximum one ship
 			return;
-		
+
 		int edge = PRNG.nextInt(4);
 
 		if (edge == 0) {
 			for (int x = 4; x < getWidth() - 2; x++) {
-				if (getTile(x,0) == CHANNEL) {
+				if (getTile(x, 0) == CHANNEL) {
 					makeShipAt(x, 0, ShipSprite.NORTH_EDGE);
 					return;
 				}
 			}
-		}
-		else if (edge == 1) {
+		} else if (edge == 1) {
 			for (int y = 1; y < getHeight() - 2; y++) {
-				if (getTile(0,y) == CHANNEL) {
+				if (getTile(0, y) == CHANNEL) {
 					makeShipAt(0, y, ShipSprite.EAST_EDGE);
 					return;
 				}
 			}
-		}
-		else if (edge == 2) {
+		} else if (edge == 2) {
 			for (int x = 4; x < getWidth() - 2; x++) {
-				if (getTile(x, getHeight()-1) == CHANNEL) {
-					makeShipAt(x, getHeight()-1, ShipSprite.SOUTH_EDGE);
+				if (getTile(x, getHeight() - 1) == CHANNEL) {
+					makeShipAt(x, getHeight() - 1, ShipSprite.SOUTH_EDGE);
 					return;
 				}
 			}
-		}
-		else {
+		} else {
 			for (int y = 1; y < getHeight() - 2; y++) {
-				if (getTile(getWidth()-1, y) == CHANNEL) {
-					makeShipAt(getWidth()-1, y, ShipSprite.EAST_EDGE);
+				if (getTile(getWidth() - 1, y) == CHANNEL) {
+					makeShipAt(getWidth() - 1, y, ShipSprite.EAST_EDGE);
 					return;
 				}
 			}
 		}
 	}
 
-	Sprite getSprite(SpriteKind kind)
-	{
+	Sprite getSprite(SpriteKind kind) {
 		for (Sprite s : sprites) {
 			if (s.kind == kind)
 				return s;
@@ -1853,59 +1745,47 @@ public class Micropolis
 		return null;
 	}
 
-	boolean hasSprite(SpriteKind kind)
-	{
+	boolean hasSprite(SpriteKind kind) {
 		return getSprite(kind) != null;
 	}
 
-	void makeShipAt(int xpos, int ypos, int edge)
-	{
+	void makeShipAt(int xpos, int ypos, int edge) {
 		assert !hasSprite(SpriteKind.SHI);
 
 		sprites.add(new ShipSprite(this, xpos, ypos, edge));
 	}
 
-	public void generateCopter(int xpos, int ypos)
-	{
+	public void generateCopter(int xpos, int ypos) {
 		if (!hasSprite(SpriteKind.COP)) {
 			sprites.add(new HelicopterSprite(this, xpos, ypos));
 		}
 	}
 
-	public void generatePlane(int xpos, int ypos)
-	{
+	public void generatePlane(int xpos, int ypos) {
 		if (!hasSprite(SpriteKind.AIR)) {
 			sprites.add(new AirplaneSprite(this, xpos, ypos));
 		}
 	}
 
-	public void generateTrain(int xpos, int ypos)
-	{
-		if (totalPop > 20 &&
-			!hasSprite(SpriteKind.TRA) &&
-			PRNG.nextInt(26) == 0)
-		{
+	public void generateTrain(int xpos, int ypos) {
+		if (totalPop > 20 && !hasSprite(SpriteKind.TRA) && PRNG.nextInt(26) == 0) {
 			sprites.add(new TrainSprite(this, xpos, ypos));
 		}
 	}
 
-	private Stack<CityLocation> powerPlants = new Stack<CityLocation>();
-	
-	public void addPowerPlant(CityLocation loc) {
-		powerPlants.add(loc);
+	private Stack<MapPosition> powerPlants = new Stack<>();
+
+	public void addPowerPlant(MapPosition pos) {
+		powerPlants.add(pos);
 	}
 
 	// counts the population in a certain type of residential zone
-	public int doFreePop(int xpos, int ypos)
-	{
+	public int doFreePop(int xpos, int ypos) {
 		int count = 0;
 
-		for (int x = xpos - 1; x <= xpos + 1; x++)
-		{
-			for (int y = ypos - 1; y <= ypos + 1; y++)
-			{
-				if (testBounds(x,y))
-				{
+		for (int x = xpos - 1; x <= xpos + 1; x++) {
+			for (int y = ypos - 1; y <= ypos + 1; y++) {
+				if (testBounds(x, y)) {
 					char loc = getTile(x, y);
 					if (loc >= LHTHR && loc <= HHTHR)
 						count++;
@@ -1919,14 +1799,12 @@ public class Micropolis
 	// called every several cycles; this takes the census data collected in this
 	// cycle and records it to the history
 	//
-	void takeCensus()
-	{
+	void takeCensus() {
 		int resMax = 0;
 		int comMax = 0;
 		int indMax = 0;
 
-		for (int i = 118; i >= 0; i--)
-		{
+		for (int i = 118; i >= 0; i--) {
 			if (history.res[i] > resMax)
 				resMax = history.res[i];
 			if (history.com[i] > comMax)
@@ -1946,7 +1824,7 @@ public class Micropolis
 		history.comMax = comMax;
 		history.indMax = indMax;
 
-		//graph10max = Math.max(resMax, Math.max(comMax, indMax));
+		// graph10max = Math.max(resMax, Math.max(comMax, indMax));
 
 		history.res[0] = resPop / 8;
 		history.com[0] = comPop;
@@ -1967,42 +1845,30 @@ public class Micropolis
 
 		history.cityTime = cityTime;
 
-		if (hospitalCount < resPop / 256)
-		{
+		if (hospitalCount < resPop / 256) {
 			needHospital = TypeDemand.increase;
-		}
-		else if (hospitalCount > resPop / 256)
-		{
+		} else if (hospitalCount > resPop / 256) {
 			needHospital = TypeDemand.decrease;
-		}
-		else
-		{
+		} else {
 			needHospital = TypeDemand.dontChange;
 		}
 
-		if (churchCount < resPop / 256)
-		{
+		if (churchCount < resPop / 256) {
 			needChurch = TypeDemand.increase;
-		}
-		else if (churchCount > resPop / 256)
-		{
+		} else if (churchCount > resPop / 256) {
 			needChurch = TypeDemand.decrease;
-		}
-		else
-		{
+		} else {
 			needChurch = TypeDemand.dontChange;
 		}
 	}
 
-	void takeCensus2()
-	{
+	void takeCensus2() {
 		// update long term graphs
 		int resMax = 0;
 		int comMax = 0;
 		int indMax = 0;
 
-		for (int i = 238; i >= 120; i--)
-		{
+		for (int i = 238; i >= 120; i--) {
 			if (history.res[i] > resMax)
 				resMax = history.res[i];
 			if (history.com[i] > comMax)
@@ -2026,16 +1892,17 @@ public class Micropolis
 		history.money[120] = history.money[0];
 	}
 
-	/** Road/rail maintenance cost multiplier, for various difficulty settings.
+	/**
+	 * Road/rail maintenance cost multiplier, for various difficulty settings.
 	 */
-//	static final double [] RLevels = { 0.7, 0.9, 1.2 };
+	// static final double [] RLevels = { 0.7, 0.9, 1.2 };
 
-	/** Tax income multiplier, for various difficulty settings.
+	/**
+	 * Tax income multiplier, for various difficulty settings.
 	 */
-//	static final double [] FLevels = { 1.4, 1.2, 0.8 };
+	// static final double [] FLevels = { 1.4, 1.2, 0.8 };
 
-	void collectTaxPartial()
-	{
+	void collectTaxPartial() {
 		lastRoadTotal = roadTotal;
 		lastRailTotal = railTotal;
 		lastTotalPop = totalPop;
@@ -2050,28 +1917,24 @@ public class Micropolis
 		budget.policeFundEscrow -= b.policeFunded;
 
 		taxEffect = b.taxRate;
-		roadEffect = b.roadRequest != 0 ?
-			(int)Math.floor(32.0 * (double)b.roadFunded / (double)b.roadRequest) :
-			32;
-		policeEffect = b.policeRequest != 0 ?
-			(int)Math.floor(1000.0 * (double)b.policeFunded / (double)b.policeRequest) :
-			1000;
-		fireEffect = b.fireRequest != 0 ?
-			(int)Math.floor(1000.0 * (double)b.fireFunded / (double)b.fireRequest) :
-			1000;
+		roadEffect = b.roadRequest != 0 ? (int) Math.floor(32.0 * (double) b.roadFunded / (double) b.roadRequest) : 32;
+		policeEffect = b.policeRequest != 0
+				? (int) Math.floor(1000.0 * (double) b.policeFunded / (double) b.policeRequest)
+				: 1000;
+		fireEffect = b.fireRequest != 0 ? (int) Math.floor(1000.0 * (double) b.fireFunded / (double) b.fireRequest)
+				: 1000;
 	}
 
-	public static class FinancialHistory
-	{
+	public static class FinancialHistory {
 		public int cityTime;
 		public int totalFunds;
 		public int taxIncome;
 		public int operatingExpenses;
 	}
+
 	public ArrayList<FinancialHistory> financialHistory = new ArrayList<FinancialHistory>();
 
-	void collectTax()
-	{
+	void collectTax() {
 		int revenue = budget.taxFund / TAXFREQ;
 		int expenses = -(budget.roadFundEscrow + budget.fireFundEscrow + budget.policeFundEscrow) / TAXFREQ;
 
@@ -2084,7 +1947,7 @@ public class Micropolis
 		spend(-cashFlow);
 
 		hist.totalFunds = budget.totalFunds;
-		financialHistory.add(0,hist);
+		financialHistory.add(0, hist);
 
 		budget.taxFund = 0;
 		budget.roadFundEscrow = 0;
@@ -2101,8 +1964,7 @@ public class Micropolis
 	/**
 	 * Calculate the current budget numbers.
 	 */
-	public BudgetNumbers generateBudget()
-	{
+	public BudgetNumbers generateBudget() {
 		BudgetNumbers b = new BudgetNumbers();
 		b.taxRate = Math.max(0, cityTax);
 		b.roadPercent = Math.max(0.0, roadPercent);
@@ -2111,74 +1973,66 @@ public class Micropolis
 		b.policePercent = Math.max(0.0, policePercent);
 
 		b.previousBalance = budget.totalFunds;
-		b.taxIncome = (int)Math.round(lastTotalPop * landValueAverage / 120 * b.taxRate * gameLevel.getTaxIncomeMulti());
+		b.taxIncome = (int) Math
+				.round(lastTotalPop * landValueAverage / 120 * b.taxRate * gameLevel.getTaxIncomeMulti());
 		assert b.taxIncome >= 0;
 
-		b.roadRequest = (int)Math.round((lastRoadTotal + lastRailTotal * 2) * gameLevel.getTrafficMaintenanceMulti());
-		//TODO: ConnectionPrice depending on connection length
+		b.roadRequest = (int) Math.round((lastRoadTotal + lastRailTotal * 2) * gameLevel.getTrafficMaintenanceMulti());
+		// TODO: ConnectionPrice depending on connection length
 		b.subRequest = subNet.getMaintenanceCost();
 		System.out.println(subNet);
-		
+
 		b.fireRequest = FIRE_STATION_MAINTENANCE * lastFireStationCount;
 		b.policeRequest = POLICE_STATION_MAINTENANCE * lastPoliceCount;
 
-		b.roadFunded = (int)Math.round(b.roadRequest * b.roadPercent);
-		b.subFunded=(int)Math.round(b.subRequest * b.subPercent);
-		b.fireFunded = (int)Math.round(b.fireRequest * b.firePercent);
-		b.policeFunded = (int)Math.round(b.policeRequest * b.policePercent);
+		b.roadFunded = (int) Math.round(b.roadRequest * b.roadPercent);
+		b.subFunded = (int) Math.round(b.subRequest * b.subPercent);
+		b.fireFunded = (int) Math.round(b.fireRequest * b.firePercent);
+		b.policeFunded = (int) Math.round(b.policeRequest * b.policePercent);
 
 		int yumDuckets = budget.totalFunds + b.taxIncome;
 		assert yumDuckets >= 0;
-		if (yumDuckets >= b.roadFunded)
-		{
+		if (yumDuckets >= b.roadFunded) {
 			yumDuckets -= b.roadFunded;
-			
-			if (yumDuckets>=b.subFunded) {
-				yumDuckets-=b.subFunded;
-				if (yumDuckets >= b.fireFunded)
-				{
+
+			if (yumDuckets >= b.subFunded) {
+				yumDuckets -= b.subFunded;
+				if (yumDuckets >= b.fireFunded) {
 					yumDuckets -= b.fireFunded;
-					if (yumDuckets >= b.policeFunded)
-					{
+					if (yumDuckets >= b.policeFunded) {
 						yumDuckets -= b.policeFunded;
-					}
-					else
-					{
+					} else {
 						assert b.policeRequest != 0;
-	
+
 						b.policeFunded = yumDuckets;
-						b.policePercent = (double)b.policeFunded / (double)b.policeRequest;
+						b.policePercent = (double) b.policeFunded / (double) b.policeRequest;
 						yumDuckets = 0;
 					}
-				}
-				else
-				{
+				} else {
 					assert b.fireRequest != 0;
-	
+
 					b.fireFunded = yumDuckets;
-					b.firePercent = (double)b.fireFunded / (double)b.fireRequest;
+					b.firePercent = (double) b.fireFunded / (double) b.fireRequest;
 					b.policeFunded = 0;
 					b.policePercent = 0.0;
 					yumDuckets = 0;
 				}
 			} else {
-				if (b.subRequest>0) {
-					b.subFunded=yumDuckets;
-					b.subPercent=(double)b.subFunded / (double) b.subRequest;
-					yumDuckets=b.fireFunded=b.policeFunded=0;
-					b.firePercent=b.policePercent=0;
+				if (b.subRequest > 0) {
+					b.subFunded = yumDuckets;
+					b.subPercent = (double) b.subFunded / (double) b.subRequest;
+					yumDuckets = b.fireFunded = b.policeFunded = 0;
+					b.firePercent = b.policePercent = 0;
 				}
 			}
-				
-		}
-		else
-		{
+
+		} else {
 			assert b.roadRequest != 0;
 
 			b.roadFunded = yumDuckets;
-			b.roadPercent = (double)b.roadFunded / (double)b.roadRequest;
-			b.subFunded=0;
-			b.subPercent=0;
+			b.roadPercent = (double) b.roadFunded / (double) b.roadRequest;
+			b.subFunded = 0;
+			b.subPercent = 0;
 			b.fireFunded = 0;
 			b.firePercent = 0.0;
 			b.policeFunded = 0;
@@ -2191,99 +2045,91 @@ public class Micropolis
 		return b;
 	}
 
-	public int getPopulationDensity(int xpos, int ypos)
-	{
-		return popDensity[ypos/2][xpos/2];
+	public int getPopulationDensity(int xpos, int ypos) {
+		return popDensity[ypos / 2][xpos / 2];
 	}
 
-	public void doMeltdown(int xpos, int ypos)
-	{
-		meltdownLocation = new CityLocation(xpos, ypos);
+	/*
+	 * @deprecated
+	 */
+	// TODO refactor to MapPosition
+	public void doMeltdown(int x, int y) {
+		doMeltdown(MapPosition.at(x, y));
+	}
 
-		makeExplosion(xpos - 1, ypos - 1);
-		makeExplosion(xpos - 1, ypos + 2);
-		makeExplosion(xpos + 2, ypos - 1);
-		makeExplosion(xpos + 2, ypos + 2);
+	public void doMeltdown(MapPosition pos) {
+		makeExplosion(pos.getX() - 1, pos.getY() - 1);
+		makeExplosion(pos.getX() - 1, pos.getY() + 2);
+		makeExplosion(pos.getX() + 2, pos.getY() - 1);
+		makeExplosion(pos.getX() + 2, pos.getY() + 2);
 
-		for (int x = xpos - 1; x < xpos + 3; x++) {
-			for (int y = ypos - 1; y < ypos + 3; y++) {
-				setTile(x, y, (char)(FIRE + PRNG.nextInt(4)));
-			}
+		for (MapPosition aPos : pos.plus(-1, -1).getPosForRect(pos.plus(3, 3))) {
+			setTile(aPos, Tiles.get(FIRE + PRNG.nextInt(4)));
 		}
 
 		for (int z = 0; z < 200; z++) {
-			int x = xpos - 20 + PRNG.nextInt(41);
-			int y = ypos - 15 + PRNG.nextInt(31);
-			if (!testBounds(x,y))
+			MapPosition newPos = MapPosition.at(pos.getX() - 20 + PRNG.nextInt(41), pos.getY() - 15 + PRNG.nextInt(31));
+			if (!map.isPosInside(newPos))
 				continue;
 
-			int t = map[y][x];
+			int t = map.getTileNr(newPos);
 			if (isZoneCenter(t)) {
 				continue;
 			}
 			if (isCombustible(t) || t == DIRT) {
-				setTile(x, y, RADTILE);
+				setTile(newPos, Tiles.get(RADTILE));
 			}
 		}
 
 		clearMes();
-		sendMessageAt(MicropolisMessage.MELTDOWN_REPORT, xpos, ypos);
+		sendMessageAt(MicropolisMessage.MELTDOWN_REPORT, pos.getX(), pos.getY());
 	}
 
-	static final int [] MltdwnTab = { 30000, 20000, 10000 };
+	static final int[] MltdwnTab = { 30000, 20000, 10000 };
 
-	void loadHistoryArray(int [] array, DataInputStream dis)
-		throws IOException
-	{
-		for (int i = 0; i < 240; i++)
-		{
+	void loadHistoryArray(int[] array, DataInputStream dis) throws IOException {
+		for (int i = 0; i < 240; i++) {
 			array[i] = dis.readShort();
 		}
 	}
 
-	void writeHistoryArray(int [] array, DataOutputStream out)
-		throws IOException
-	{
-		for (int i = 0; i < 240; i++)
-		{
-//			System.out.println(array[i]);
+	void writeHistoryArray(int[] array, DataOutputStream out) throws IOException {
+		for (int i = 0; i < 240; i++) {
+			// System.out.println(array[i]);
 			out.writeShort(array[i]);
 		}
 	}
 
-	void loadMisc(DataInputStream dis)
-		throws IOException
-	{
-		dis.readShort(); //[0]... ignored?
-		dis.readShort(); //[1] externalMarket, ignored
-		resPop = dis.readShort();  //[2-4] populations
+	void loadMisc(DataInputStream dis) throws IOException {
+		dis.readShort(); // [0]... ignored?
+		dis.readShort(); // [1] externalMarket, ignored
+		resPop = dis.readShort(); // [2-4] populations
 		comPop = dis.readShort();
 		indPop = dis.readShort();
-		resValve = dis.readShort(); //[5-7] valves
+		resValve = dis.readShort(); // [5-7] valves
 		comValve = dis.readShort();
 		indValve = dis.readShort();
-		cityTime = dis.readInt();   //[8-9] city time
-		crimeRamp = dis.readShort(); //[10]
+		cityTime = dis.readInt(); // [8-9] city time
+		crimeRamp = dis.readShort(); // [10]
 		polluteRamp = dis.readShort();
-		landValueAverage = dis.readShort(); //[12]
+		landValueAverage = dis.readShort(); // [12]
 		crimeAverage = dis.readShort();
-		pollutionAverage = dis.readShort(); //[14]
+		pollutionAverage = dis.readShort(); // [14]
 		gameLevel = Levels.getLevelByKey(dis.readShort());
-		evaluation.cityClass = dis.readShort();  //[16]
+		evaluation.cityClass = dis.readShort(); // [16]
 		evaluation.cityScore = dis.readShort();
 
-		for (int i = 18; i < 50; i++)
-		{
+		for (int i = 18; i < 50; i++) {
 			dis.readShort();
 		}
 
-		budget.totalFunds = dis.readInt();   //[50-51] total funds
-		autoBulldoze = dis.readShort() != 0;    //52
+		budget.totalFunds = dis.readInt(); // [50-51] total funds
+		autoBulldoze = dis.readShort() != 0; // 52
 		autoBudget = dis.readShort() != 0;
-		autoGo = dis.readShort() != 0;          //54
-		dis.readShort();  // userSoundOn (this setting not saved to game file
-				// in this edition of the game)
-		cityTax = dis.readShort();              //56
+		autoGo = dis.readShort() != 0; // 54
+		dis.readShort(); // userSoundOn (this setting not saved to game file
+		// in this edition of the game)
+		cityTax = dis.readShort(); // 56
 		taxEffect = cityTax;
 		int simSpeedAsInt = dis.readShort();
 		if (simSpeedAsInt >= 0 && simSpeedAsInt <= 4)
@@ -2293,46 +2139,51 @@ public class Micropolis
 
 		// read budget numbers, convert them to percentages
 		//
-		long n = dis.readInt();	               //58,59... police percent
-		policePercent = (double)n / 65536.0;
-		n = dis.readInt();                     //60,61... fire percent
-		firePercent = (double)n / 65536.0;
-		n = dis.readInt();                     //62,63... road percent
-		roadPercent = (double)n / 65536.0;
+		long n = dis.readInt(); // 58,59... police percent
+		policePercent = (double) n / 65536.0;
+		n = dis.readInt(); // 60,61... fire percent
+		firePercent = (double) n / 65536.0;
+		n = dis.readInt(); // 62,63... road percent
+		roadPercent = (double) n / 65536.0;
 		n = dis.readInt();
-		subPercent = (double)n / 65536.0;
-		
-		short nrStations=dis.readShort();
-		short nrConns=dis.readShort();
-		
-		for (int i=0;i<nrStations;i++) {
-			short x1=dis.readShort();
-			short y1=dis.readShort();
+		subPercent = (double) n / 65536.0;
+
+		short nrStations = dis.readShort();
+		short nrConns = dis.readShort();
+
+		for (int i = 0; i < nrStations; i++) {
+			short x1 = dis.readShort();
+			short y1 = dis.readShort();
 			subNet.addStation(new MapPosition(x1, y1));
 		}
 
-		for (int i=0;i<nrConns;i++) {
-			short x1=dis.readShort();
-			short y1=dis.readShort();
-			short x2=dis.readShort();
-			short y2=dis.readShort();
-			SubwayStation stat1=new SubwayStation(x1,y1);
-			SubwayStation stat2=new SubwayStation(x2, y2);
+		for (int i = 0; i < nrConns; i++) {
+			short x1 = dis.readShort();
+			short y1 = dis.readShort();
+			short x2 = dis.readShort();
+			short y2 = dis.readShort();
+			SubwayStation stat1 = new SubwayStation(x1, y1);
+			SubwayStation stat2 = new SubwayStation(x2, y2);
 			subNet.connect(stat1, stat2);
 		}
-		
-		
-		
-		for (int i = 68+nrStations*2+nrConns*4; i < 120; i++)
-		{
+
+		for (int i = 68 + nrStations * 2 + nrConns * 4; i < 120; i++) {
 			dis.readShort();
 		}
 
-		if (cityTime < 0) { cityTime = 0; }
-		if (cityTax < 0 || cityTax > 20) { cityTax = 7; }
-//		if (gameLevel < 0 || gameLevel > 2) { gameLevel = 0; }
-		if (evaluation.cityClass < 0 || evaluation.cityClass > 5) { evaluation.cityClass = 0; }
-		if (evaluation.cityScore < 1 || evaluation.cityScore > 999) { evaluation.cityScore = 500; }
+		if (cityTime < 0) {
+			cityTime = 0;
+		}
+		if (cityTax < 0 || cityTax > 20) {
+			cityTax = 7;
+		}
+		// if (gameLevel < 0 || gameLevel > 2) { gameLevel = 0; }
+		if (evaluation.cityClass < 0 || evaluation.cityClass > 5) {
+			evaluation.cityClass = 0;
+		}
+		if (evaluation.cityScore < 1 || evaluation.cityScore > 999) {
+			evaluation.cityScore = 500;
+		}
 
 		resCap = false;
 		comCap = false;
@@ -2341,9 +2192,7 @@ public class Micropolis
 		lastCityPop = calcPopulation();
 	}
 
-	void writeMisc(DataOutputStream out)
-		throws IOException
-	{
+	void writeMisc(DataOutputStream out) throws IOException {
 		out.writeShort(0);
 		out.writeShort(0);
 		out.writeShort(resPop);
@@ -2352,41 +2201,41 @@ public class Micropolis
 		out.writeShort(resValve);
 		out.writeShort(comValve);
 		out.writeShort(indValve);
-		//8
+		// 8
 		out.writeInt(cityTime);
 		out.writeShort(crimeRamp);
 		out.writeShort(polluteRamp);
-		//12
+		// 12
 		out.writeShort(landValueAverage);
 		out.writeShort(crimeAverage);
 		out.writeShort(pollutionAverage);
 		out.writeShort(gameLevel.getKey());
-		//16
+		// 16
 		out.writeShort(evaluation.cityClass);
 		out.writeShort(evaluation.cityScore);
-		//18
+		// 18
 		for (int i = 18; i < 50; i++) {
 			out.writeShort(0);
 		}
-		//50
+		// 50
 		out.writeInt(budget.totalFunds);
 		out.writeShort(autoBulldoze ? 1 : 0);
 		out.writeShort(autoBudget ? 1 : 0);
-		//54
+		// 54
 		out.writeShort(autoGo ? 1 : 0);
-		out.writeShort(1); //userSoundOn
+		out.writeShort(1); // userSoundOn
 		out.writeShort(cityTax);
 		out.writeShort(simSpeed.ordinal());
 
-		//58
-		out.writeInt((int)(policePercent * 65536));
-		out.writeInt((int)(firePercent * 65536));
-		out.writeInt((int)(roadPercent * 65536));
-		out.writeInt((int)(subPercent * 65536));
-		//64 <==66
+		// 58
+		out.writeInt((int) (policePercent * 65536));
+		out.writeInt((int) (firePercent * 65536));
+		out.writeInt((int) (roadPercent * 65536));
+		out.writeInt((int) (subPercent * 65536));
+		// 64 <==66
 		out.writeShort(subNet.getSubStationCount());
 		out.writeShort(subNet.getSubConnectionCount());
-		//68
+		// 68
 		for (SubwayStation aStation : subNet.getStations()) {
 			out.writeShort(aStation.getX());
 			out.writeShort(aStation.getY());
@@ -2397,58 +2246,49 @@ public class Micropolis
 			out.writeShort(aConn.getStation2().getX());
 			out.writeShort(aConn.getStation2().getY());
 		}
-		
-		
-		for (int i = 68+subNet.getSubStationCount()*2+subNet.getSubConnectionCount()*4;i < 120; i++) {
+
+		for (int i = 68 + subNet.getSubStationCount() * 2 + subNet.getSubConnectionCount() * 4; i < 120; i++) {
 			out.writeShort(0);
 		}
 	}
 
-	void loadMap(DataInputStream dis)
-		throws IOException
-	{
-		for (int x = 0; x < DEFAULT_WIDTH; x++)
-		{
-			for (int y = 0; y < DEFAULT_HEIGHT; y++)
-			{
+	// TODO fix load / save
+	void loadMap(DataInputStream dis) throws IOException {
+		for (int x = 0; x < DEFAULT_WIDTH; x++) {
+			for (int y = 0; y < DEFAULT_HEIGHT; y++) {
 				int z = dis.readShort();
 				z &= ~(1024 | 2048 | 4096 | 8192 | 16384); // clear ZONEBIT,ANIMBIT,BULLBIT,BURNBIT,CONDBIT on import
-				map[y][x] = (char) z;
+				map.setSpec(MapPosition.at(x, y), Tiles.get(z));
 			}
 		}
 	}
 
-	void writeMap(DataOutputStream out)
-		throws IOException
-	{
-		for (int x = 0; x < DEFAULT_WIDTH; x++)
-		{
-			for (int y = 0; y < DEFAULT_HEIGHT; y++)
-			{
-				int z = map[y][x];
+	// TODO fix load / save
+	void writeMap(DataOutputStream out) throws IOException {
+		for (int x = 0; x < DEFAULT_WIDTH; x++) {
+			for (int y = 0; y < DEFAULT_HEIGHT; y++) {
+				int z = map.getTileNr(MapPosition.at(x, y));
 				if (isConductive(z & LOMASK)) {
-					z |= 16384;  //synthesize CONDBIT on export
+					z |= 16384; // synthesize CONDBIT on export
 				}
 				if (isCombustible(z & LOMASK)) {
-					z |= 8192;   //synthesize BURNBIT on export
+					z |= 8192; // synthesize BURNBIT on export
 				}
 				if (isTileDozeable(x, y)) {
-					z |= 4096;   //synthesize BULLBIT on export
+					z |= 4096; // synthesize BULLBIT on export
 				}
 				if (isAnimated(z & LOMASK)) {
-					z |= 2048;   //synthesize ANIMBIT on export
+					z |= 2048; // synthesize ANIMBIT on export
 				}
 				if (isZoneCenter(z & LOMASK)) {
-					z |= 1024;   //synthesize ZONEBIT
+					z |= 1024; // synthesize ZONEBIT
 				}
 				out.writeShort(z);
 			}
 		}
 	}
 
-	public void load(File filename)
-		throws IOException
-	{
+	public void load(File filename) throws IOException {
 		FileInputStream fis = new FileInputStream(filename);
 		if (fis.getChannel().size() > 27120) {
 			// some editions of the classic Simcity game
@@ -2456,39 +2296,26 @@ public class Micropolis
 			// but otherwise use the same format as us,
 			// so read in that 128-byte header and continue
 			// as before.
-			byte [] bbHeader = new byte[128];
+			byte[] bbHeader = new byte[128];
 			fis.read(bbHeader);
 		}
 		load(fis);
 	}
 
-	void checkPowerMap()
-	{
-		coalCount = 0;
-		nuclearCount = 0;
+	void checkPowerMap() {
+		coalCount = map.getAllBuildingsOfType(BuildingType.coalPower).size();
+		nuclearCount = map.getAllBuildingsOfType(BuildingType.nukePower).size();
 
 		powerPlants.clear();
-		for (int y = 0; y < map.length; y++) {
-			for (int x = 0; x < map[y].length; x++) {
-				int tile = getTile(x,y);
-				if (tile == NUCLEAR) {
-					nuclearCount++;
-					powerPlants.add(new CityLocation(x,y));
-				}
-				else if (tile == POWERPLANT) {
-					coalCount++;
-					powerPlants.add(new CityLocation(x,y));
-				}
-			}
+		for (MapPosition pos : map.getAllPowerPlantMapPos()) {
+			powerPlants.add(pos);
 		}
 
-		powerScan();
+		powerMap=(new PowerScanner(powerPlants,this)).doScan();
 		newPower = true;
 	}
 
-	public void load(InputStream inStream)
-		throws IOException
-	{
+	public void load(InputStream inStream) throws IOException {
 		DataInputStream dis = new DataInputStream(inStream);
 		loadHistoryArray(history.res, dis);
 		loadHistoryArray(history.com, dis);
@@ -2507,15 +2334,11 @@ public class Micropolis
 		fireFundsChanged();
 	}
 
-	public void save(File filename)
-		throws IOException
-	{
+	public void save(File filename) throws IOException {
 		save(new FileOutputStream(filename));
 	}
 
-	public void save(OutputStream outStream)
-		throws IOException
-	{
+	public void save(OutputStream outStream) throws IOException {
 		DataOutputStream out = new DataOutputStream(outStream);
 		writeHistoryArray(history.res, out);
 		writeHistoryArray(history.com, out);
@@ -2528,33 +2351,28 @@ public class Micropolis
 		out.close();
 	}
 
-	public void toggleAutoBudget()
-	{
+	public void toggleAutoBudget() {
 		autoBudget = !autoBudget;
 		fireOptionsChanged();
 	}
 
-	public void toggleAutoBulldoze()
-	{
+	public void toggleAutoBulldoze() {
 		autoBulldoze = !autoBulldoze;
 		fireOptionsChanged();
 	}
 
-	public void toggleDisasters()
-	{
+	public void toggleDisasters() {
 		noDisasters = !noDisasters;
 		fireOptionsChanged();
 	}
 
-	public void setSpeed(Speed newSpeed)
-	{
+	public void setSpeed(Speed newSpeed) {
 		simSpeed = newSpeed;
 		fireOptionsChanged();
 	}
 
-	public void animate()
-	{
-		this.acycle = (this.acycle+1) % 960;
+	public void animate() {
+		this.acycle = (this.acycle + 1) % 960;
 		if (this.acycle % 2 == 0) {
 			step();
 		}
@@ -2562,15 +2380,12 @@ public class Micropolis
 		animateTiles();
 	}
 
-	public Sprite [] allSprites()
-	{
+	public Sprite[] allSprites() {
 		return sprites.toArray(new Sprite[0]);
 	}
 
-	void moveObjects()
-	{
-		for (Sprite sprite : allSprites())
-		{
+	void moveObjects() {
+		for (Sprite sprite : allSprites()) {
 			sprite.move();
 
 			if (sprite.frame == 0) {
@@ -2579,34 +2394,20 @@ public class Micropolis
 		}
 	}
 
-	void animateTiles()
-	{
-		for (int y = 0; y < map.length; y++)
-		{
-			for (int x = 0; x < map[y].length; x++)
-			{
-				char tilevalue = map[y][x];
-				TileSpec spec = Tiles.get(tilevalue & LOMASK);
-				if (spec != null && spec.getAnimNext() != null) {
-					int flags = tilevalue & ALLBITS;
-					setTile(x, y, (char)
-						(spec.getAnimNext().tileNumber | flags)
-						);
-				}
-			}
-		}
+	void animateTiles() {
+		map.animate();
 	}
-	
+
 	public Optional<Sprite> getVisibleBoatSprite() {
 		for (Sprite s : sprites) {
-			if (s.isVisible() && s.kind==SpriteKind.SHI) {
+			if (s.isVisible() && s.kind == SpriteKind.SHI) {
 				return Optional.of(s);
 			}
 		}
-		
+
 		return Optional.empty();
 	}
-	
+
 	public int[][] getComRate() {
 		return comRate;
 	}
@@ -2614,13 +2415,13 @@ public class Micropolis
 	public void setComRate(int[][] comRate) {
 		this.comRate = comRate;
 	}
-	
+
 	public TypeDemand getNeedHospital() {
 		return needHospital;
 	}
-	
+
 	public void resetHospitalDemand() {
-		needHospital=TypeDemand.dontChange;
+		needHospital = TypeDemand.dontChange;
 	}
 
 	public TypeDemand getNeedChurch() {
@@ -2628,9 +2429,9 @@ public class Micropolis
 	}
 
 	public void resetChurchDemand() {
-		needChurch=TypeDemand.dontChange;
+		needChurch = TypeDemand.dontChange;
 	}
-	
+
 	public int getResPop() {
 		return resPop;
 	}
@@ -2654,7 +2455,7 @@ public class Micropolis
 	public void setIndPop(int indPop) {
 		this.indPop = indPop;
 	}
-	
+
 	public void setResValve(int resValve) {
 		this.resValve = resValve;
 	}
@@ -2666,7 +2467,7 @@ public class Micropolis
 	public void setIndValve(int indValve) {
 		this.indValve = indValve;
 	}
-	
+
 	public int getResZoneCount() {
 		return resZoneCount;
 	}
@@ -2674,7 +2475,7 @@ public class Micropolis
 	public void incResZoneCount() {
 		this.resZoneCount++;
 	}
-	
+
 	public int getComZoneCount() {
 		return comZoneCount;
 	}
@@ -2682,7 +2483,7 @@ public class Micropolis
 	public void incComZoneCount() {
 		this.comZoneCount++;
 	}
-	
+
 	public int getIndZoneCount() {
 		return indZoneCount;
 	}
@@ -2690,23 +2491,20 @@ public class Micropolis
 	public void incIndZoneCount() {
 		this.indZoneCount++;
 	}
-	
-	public char[][] getMap() {
+
+	public CityMap getMap() {
 		return map;
 	}
 
-	public int getCityPopulation()
-	{
+	public int getCityPopulation() {
 		return lastCityPop;
 	}
 
-	public void makeSound(int x, int y, Sound sound)
-	{
-		fireCitySound(sound, new CityLocation(x,y));
+	public void makeSound(int x, int y, Sound sound) {
+		fireCitySound(sound, MapPosition.at(x, y));
 	}
 
-	public void makeEarthquake()
-	{
+	public void makeEarthquake() {
 		makeSound(centerMassX, centerMassY, Sound.EXPLOSION_LOW);
 		fireEarthquakeStarted();
 
@@ -2719,39 +2517,34 @@ public class Micropolis
 
 			if (isVulnerable(getTile(x, y))) {
 				if (PRNG.nextInt(4) != 0) {
-					setTile(x, y, (char)(RUBBLE + PRNG.nextInt(4)));
+					setTile(x, y, (char) (RUBBLE + PRNG.nextInt(4)));
 				} else {
-					setTile(x, y, (char)(FIRE + PRNG.nextInt(8)));
+					setTile(x, y, (char) (FIRE + PRNG.nextInt(8)));
 				}
 			}
 		}
 	}
 
-	void setFire()
-	{
+	void setFire() {
 		int x = PRNG.nextInt(getWidth());
 		int y = PRNG.nextInt(getHeight());
 		int t = getTile(x, y);
 
 		if (isArsonable(t)) {
-			setTile(x, y, (char)(FIRE + PRNG.nextInt(8)));
-			crashLocation = new CityLocation(x, y);
+			setTile(x, y, (char) (FIRE + PRNG.nextInt(8)));
 			sendMessageAt(MicropolisMessage.FIRE_REPORT, x, y);
 		}
 	}
 
-	public void makeFire()
-	{
+	public void makeFire() {
 		// forty attempts at finding place to start fire
-		for (int t = 0; t < 40; t++)
-		{
+		for (int t = 0; t < 40; t++) {
 			int x = PRNG.nextInt(getWidth());
 			int y = PRNG.nextInt(getHeight());
 			int tile = getTile(x, y);
-			if (!isZoneCenter(tile) && isCombustible(tile))
-			{
+			if (!isZoneCenter(tile) && isCombustible(tile)) {
 				if (tile > 21 && tile < LASTZONE) {
-					setTile(x, y, (char)(FIRE + PRNG.nextInt(8)));
+					setTile(x, y, (char) (FIRE + PRNG.nextInt(8)));
 					sendMessageAt(MicropolisMessage.FIRE_REPORT, x, y);
 					return;
 				}
@@ -2761,18 +2554,11 @@ public class Micropolis
 
 	/**
 	 * Force a meltdown to occur.
+	 * 
 	 * @return true if a metldown was initiated.
 	 */
-	public boolean makeMeltdown()
-	{
-		ArrayList<CityLocation> candidates = new ArrayList<CityLocation>();
-		for (int y = 0; y < map.length; y++) {
-			for (int x = 0; x < map[y].length; x++) {
-				if (getTile(x, y) == NUCLEAR) {
-					candidates.add(new CityLocation(x,y));
-				}
-			}
-		}
+	public boolean makeMeltdown() {
+		List<MapPosition> candidates = new ArrayList<>(map.getAllMapPosOfType(BuildingType.nukePower));
 
 		if (candidates.isEmpty()) {
 			// tell caller that no nuclear plants were found
@@ -2780,13 +2566,12 @@ public class Micropolis
 		}
 
 		int i = PRNG.nextInt(candidates.size());
-		CityLocation p = candidates.get(i);
-		doMeltdown(p.x, p.y);
+		MapPosition pos = candidates.get(i);
+		doMeltdown(pos);
 		return true;
 	}
 
-	public void makeMonster()
-	{
+	public void makeMonster() {
 		MonsterSprite monster = (MonsterSprite) getSprite(SpriteKind.GOD);
 		if (monster != null) {
 			// already have a monster in town
@@ -2811,18 +2596,16 @@ public class Micropolis
 		}
 
 		// no "nice" location found, just start in center of map then
-		makeMonsterAt(getWidth()/2, getHeight()/2);
+		makeMonsterAt(getWidth() / 2, getHeight() / 2);
 	}
 
-	void makeMonsterAt(int xpos, int ypos)
-	{
+	void makeMonsterAt(int xpos, int ypos) {
 		assert !hasSprite(SpriteKind.GOD);
 		sprites.add(new MonsterSprite(this, xpos, ypos));
 		sendMessageAt(MicropolisMessage.MONSTER_REPORT, xpos, ypos);
 	}
 
-	public void makeTornado()
-	{
+	public void makeTornado() {
 		TornadoSprite tornado = (TornadoSprite) getSprite(SpriteKind.TOR);
 		if (tornado != null) {
 			// already have a tornado, so extend the length of the
@@ -2831,29 +2614,28 @@ public class Micropolis
 			return;
 		}
 
-		//FIXME- this is not exactly like the original code
+		// FIXME- this is not exactly like the original code
 		int xpos = PRNG.nextInt(getWidth() - 19) + 10;
 		int ypos = PRNG.nextInt(getHeight() - 19) + 10;
 		sprites.add(new TornadoSprite(this, xpos, ypos));
 		sendMessageAt(MicropolisMessage.TORNADO_REPORT, xpos, ypos);
 	}
 
-	public void makeFlood()
-	{
-		final int [] DX = { 0, 1, 0, -1 };
-		final int [] DY = { -1, 0, 1, 0 };
+	public void makeFlood() {
+		final int[] DX = { 0, 1, 0, -1 };
+		final int[] DY = { -1, 0, 1, 0 };
 
 		for (int z = 0; z < 300; z++) {
 			int x = PRNG.nextInt(getWidth());
 			int y = PRNG.nextInt(getHeight());
 			int tile = getTile(x, y);
-			if (isRiverEdge(tile))
-			{
+			if (isRiverEdge(tile)) {
 				for (int t = 0; t < 4; t++) {
 					int xx = x + DX[t];
 					int yy = y + DY[t];
-					if (testBounds(xx,yy)) {
-						int c = map[yy][xx];
+					MapPosition newPos = MapPosition.at(xx, yy);
+					if (map.isPosInside(newPos)) {
+						int c = map.getSpec(newPos).getTileNr();
 						if (isFloodable(c)) {
 							setTile(xx, yy, FLOOD);
 							floodCnt = 30;
@@ -2869,19 +2651,18 @@ public class Micropolis
 	}
 
 	public boolean isCurrentlyFlooded() {
-		return floodCnt>0;
+		return floodCnt > 0;
 	}
-	
+
 	/**
-	 * Makes all component tiles of a zone bulldozable.
-	 * Should be called whenever the key zone tile of a zone is destroyed,
-	 * since otherwise the user would no longer have a way of destroying
-	 * the zone.
+	 * Makes all component tiles of a zone bulldozable. Should be called whenever
+	 * the key zone tile of a zone is destroyed, since otherwise the user would no
+	 * longer have a way of destroying the zone.
+	 * 
 	 * @see #shutdownZone
 	 */
-	public void killZone(int xpos, int ypos, int zoneTile)
-	{
-		rateOGMem[ypos/8][xpos/8] -= 20;
+	public void killZone(int xpos, int ypos, int zoneTile) {
+		rateOGMem[ypos / 8][xpos / 8] -= 20;
 
 		assert isZoneCenter(zoneTile);
 		CityDimension dim = getZoneSizeFor(zoneTile);
@@ -2889,21 +2670,20 @@ public class Micropolis
 		assert dim.width >= 3;
 		assert dim.height >= 3;
 
-		int zoneBase = (zoneTile&LOMASK) - 1 - dim.width;
+		int zoneBase = (zoneTile & LOMASK) - 1 - dim.width;
 
 		// this will take care of stopping smoke animations
 		shutdownZone(xpos, ypos, dim);
 	}
 
 	/**
-	 * If a zone has a different image (animation) for when it is
-	 * powered, switch to that different image here.
-	 * Note: pollution is not accumulated here; see ptlScan()
-	 * instead.
+	 * If a zone has a different image (animation) for when it is powered, switch to
+	 * that different image here. Note: pollution is not accumulated here; see
+	 * ptlScan() instead.
+	 * 
 	 * @see #shutdownZone
 	 */
-	public void powerZone(int xpos, int ypos, CityDimension zoneSize)
-	{
+	public void powerZone(int xpos, int ypos, CityDimension zoneSize) {
 		assert zoneSize.width >= 3;
 		assert zoneSize.height >= 3;
 
@@ -2914,22 +2694,20 @@ public class Micropolis
 				int tile = getTileRaw(x, y);
 				TileSpec ts = Tiles.get(tile & LOMASK);
 				if (ts != null && ts.onPower != null) {
-					setTile(x, y,
-					(char) (ts.onPower.tileNumber | (tile & ALLBITS))
-					);
+					setTile(x, y, (char) (ts.onPower.tileNumber | (tile & ALLBITS)));
 				}
 			}
 		}
 	}
 
 	/**
-	 * If a zone has a different image (animation) for when it is
-	 * powered, switch back to the original image.
+	 * If a zone has a different image (animation) for when it is powered, switch
+	 * back to the original image.
+	 * 
 	 * @see #powerZone
 	 * @see #killZone
 	 */
-	public void shutdownZone(int xpos, int ypos, CityDimension zoneSize)
-	{
+	public void shutdownZone(int xpos, int ypos, CityDimension zoneSize) {
 		assert zoneSize.width >= 3;
 		assert zoneSize.height >= 3;
 
@@ -2940,29 +2718,24 @@ public class Micropolis
 				int tile = getTileRaw(x, y);
 				TileSpec ts = Tiles.get(tile & LOMASK);
 				if (ts != null && ts.onShutdown != null) {
-					setTile(x, y,
-					(char) (ts.onShutdown.tileNumber | (tile & ALLBITS))
-					);
+					setTile(x, y, (char) (ts.onShutdown.tileNumber | (tile & ALLBITS)));
 				}
 			}
 		}
 	}
 
-	public void makeExplosion(int xpos, int ypos)
-	{
-		makeExplosionAt(xpos*16+8, ypos*16+8);
+	public void makeExplosion(int xpos, int ypos) {
+		makeExplosionAt(xpos * 16 + 8, ypos * 16 + 8);
 	}
 
 	/**
 	 * Uses x,y coordinates as 1/16th-length tiles.
 	 */
-	void makeExplosionAt(int x, int y)
-	{
+	void makeExplosionAt(int x, int y) {
 		sprites.add(new ExplosionSprite(this, x, y));
 	}
 
-	void checkGrowth()
-	{
+	void checkGrowth() {
 		if (cityTime % 4 == 0) {
 			int newPop = calcPopulation();
 			if (lastCityPop != 0) {
@@ -2986,14 +2759,12 @@ public class Micropolis
 		}
 	}
 
-	int calcPopulation()
-	{
+	int calcPopulation() {
 		return (resPop + comPop * 8 + indPop * 8) * 20;
 	}
 
-	void doMessages()
-	{
-		//MORE (scenario stuff)
+	void doMessages() {
+		// MORE (scenario stuff)
 
 		checkGrowth();
 
@@ -3053,7 +2824,7 @@ public class Micropolis
 		case 32:
 			int TM = unpoweredZoneCount + poweredZoneCount;
 			if (TM != 0) {
-				if ((double)poweredZoneCount / (double)TM < 0.7) {
+				if ((double) poweredZoneCount / (double) TM < 0.7) {
 					sendMessage(MicropolisMessage.BLACKOUTS);
 				}
 			}
@@ -3104,54 +2875,50 @@ public class Micropolis
 			}
 			break;
 		default:
-			//nothing
+			// nothing
 		}
 	}
 
-	void clearMes()
-	{
-		//TODO.
+	void clearMes() {
+		// TODO.
 		// What this does in the original code is clears the 'last message'
 		// properties, ensuring that the next message will be delivered even
 		// if it is a repeat.
 	}
 
-	void sendMessage(MicropolisMessage message)
-	{
+	void sendMessage(MicropolisMessage message) {
 		fireCityMessage(message, null);
 	}
 
-	void sendMessageAt(MicropolisMessage message, int x, int y)
-	{
-		fireCityMessage(message, new CityLocation(x,y));
+	void sendMessageAt(MicropolisMessage message, int x, int y) {
+		fireCityMessage(message, MapPosition.at(x, y));
 	}
 
-	public ZoneStatus queryZoneStatus(int xpos, int ypos)
-	{
+	public ZoneStatus queryZoneStatus(int xpos, int ypos) {
 		ZoneStatus zs = new ZoneStatus();
 		zs.building = getDescriptionNumber(getTile(xpos, ypos));
 
 		int z;
-		z = (popDensity[ypos/2][xpos/2] / 64) % 4;
+		z = (popDensity[ypos / 2][xpos / 2] / 64) % 4;
 		zs.popDensity = z + 1;
 
-		z = landValueMem[ypos/2][xpos/2];
+		z = landValueMem[ypos / 2][xpos / 2];
 		z = z < 30 ? 4 : z < 80 ? 5 : z < 150 ? 6 : 7;
 		zs.landValue = z + 1;
 
-		z = ((crimeMem[ypos/2][xpos/2] / 64) % 4) + 8;
+		z = ((crimeMem[ypos / 2][xpos / 2] / 64) % 4) + 8;
 		zs.crimeLevel = z + 1;
 
-		z = Math.max(13,((pollutionMem[ypos/2][xpos/2] / 64) % 4) + 12);
+		z = Math.max(13, ((pollutionMem[ypos / 2][xpos / 2] / 64) % 4) + 12);
 		zs.pollution = z + 1;
 
-		z = rateOGMem[ypos/8][xpos/8];
+		z = rateOGMem[ypos / 8][xpos / 8];
 		z = z < 0 ? 16 : z == 0 ? 17 : z <= 100 ? 18 : 19;
 		zs.growthRate = z + 1;
 
 		return zs;
 	}
-	
+
 	public int getPoweredZoneCount() {
 		return poweredZoneCount;
 	}
@@ -3159,32 +2926,31 @@ public class Micropolis
 	public void incPoweredZoneCount() {
 		this.poweredZoneCount++;
 	}
-	
+
 	public int getUnpoweredZoneCount() {
 		return unpoweredZoneCount;
 	}
-	
+
 	public void incUnpoweredZoneCount() {
 		unpoweredZoneCount++;
 	}
 
-	public int getResValve()
-	{
+	public int getResValve() {
 		return resValve;
 	}
-	
+
 	public int getRoadEffect() {
 		return roadEffect;
 	}
-	
+
 	public int getRailTotal() {
 		return railTotal;
 	}
-	
+
 	public void incRailCounter() {
 		railTotal++;
 	}
-	
+
 	public int getRoadTotal() {
 		return roadTotal;
 	}
@@ -3194,34 +2960,30 @@ public class Micropolis
 	}
 
 	public void incRoadCounter(int inc) {
-		this.roadTotal+=inc;
+		this.roadTotal += inc;
 	}
-	
-	public int getComValve()
-	{
+
+	public int getComValve() {
 		return comValve;
 	}
 
-	public int getIndValve()
-	{
+	public int getIndValve() {
 		return indValve;
 	}
 
-	public void setGameLevel(Levels newLevel)
-	{
+	public void setGameLevel(Levels newLevel) {
 		gameLevel = newLevel;
 		fireOptionsChanged();
 	}
 
-	public void setFunds(int totalFunds)
-	{
+	public void setFunds(int totalFunds) {
 		budget.totalFunds = totalFunds;
 	}
-	
-	public List<SubwayStation> getSubways(){
-		ArrayList<SubwayStation> stations=new ArrayList<>();
-		for (int x=0;x<getWidth();x++) {
-			for (int y=0;y<getHeight();y++) {
+
+	public List<SubwayStation> getSubways() {
+		ArrayList<SubwayStation> stations = new ArrayList<>();
+		for (int x = 0; x < getWidth(); x++) {
+			for (int y = 0; y < getHeight(); y++) {
 				if (TileConstants.isSubway(getTile(x, y))) {
 					stations.add(new SubwayStation(x, y));
 				}
@@ -3230,366 +2992,8 @@ public class Micropolis
 		return stations;
 	}
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + acycle;
-		result = prime * result + airportCount;
-		result = prime * result + (autoBudget ? 1231 : 1237);
-		result = prime * result + (autoBulldoze ? 1231 : 1237);
-		result = prime * result + (autoGo ? 1231 : 1237);
-		result = prime * result + ((budget == null) ? 0 : budget.hashCode());
-		result = prime * result + cashFlow;
-		result = prime * result + centerMassX;
-		result = prime * result + centerMassY;
-		result = prime * result + churchCount;
-		result = prime * result + cityTax;
-		result = prime * result + cityTime;
-		result = prime * result + coalCount;
-		result = prime * result + (comCap ? 1231 : 1237);
-		result = prime * result + comPop;
-		result = prime * result + Arrays.deepHashCode(comRate);
-		result = prime * result + comValve;
-		result = prime * result + comZoneCount;
-		result = prime * result + ((crashLocation == null) ? 0 : crashLocation.hashCode());
-		result = prime * result + crimeAverage;
-		result = prime * result + crimeMaxLocationX;
-		result = prime * result + crimeMaxLocationY;
-		result = prime * result + Arrays.deepHashCode(crimeMem);
-		result = prime * result + crimeRamp;
-		result = prime * result + ((earthquakeListeners == null) ? 0 : earthquakeListeners.hashCode());
-		result = prime * result + ((evaluation == null) ? 0 : evaluation.hashCode());
-		result = prime * result + fcycle;
-		result = prime * result + ((financialHistory == null) ? 0 : financialHistory.hashCode());
-		result = prime * result + fireCounter;
-		result = prime * result + fireEffect;
-		long temp;
-		temp = Double.doubleToLongBits(firePercent);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + Arrays.deepHashCode(fireRate);
-		result = prime * result + Arrays.deepHashCode(fireStMap);
-		result = prime * result + fireStationCount;
-		result = prime * result + floodCnt;
-		result = prime * result + floodX;
-		result = prime * result + floodY;
-		result = prime * result + ((gameLevel == null) ? 0 : gameLevel.hashCode());
-		result = prime * result + ((history == null) ? 0 : history.hashCode());
-		result = prime * result + hospitalCount;
-		result = prime * result + (indCap ? 1231 : 1237);
-		result = prime * result + indPop;
-		result = prime * result + indValve;
-		result = prime * result + indZoneCount;
-		result = prime * result + landValueAverage;
-		result = prime * result + Arrays.deepHashCode(landValueMem);
-		result = prime * result + lastCityPop;
-		result = prime * result + lastFireStationCount;
-		result = prime * result + lastPoliceCount;
-		result = prime * result + lastRailTotal;
-		result = prime * result + lastRoadTotal;
-		result = prime * result + lastTotalPop;
-		result = prime * result + ((listeners == null) ? 0 : listeners.hashCode());
-		result = prime * result + Arrays.deepHashCode(map);
-		result = prime * result + ((mapListeners == null) ? 0 : mapListeners.hashCode());
-		result = prime * result + ((meltdownLocation == null) ? 0 : meltdownLocation.hashCode());
-		result = prime * result + ((needChurch == null) ? 0 : needChurch.hashCode());
-		result = prime * result + ((needHospital == null) ? 0 : needHospital.hashCode());
-		result = prime * result + (newPower ? 1231 : 1237);
-		result = prime * result + (noDisasters ? 1231 : 1237);
-		result = prime * result + nuclearCount;
-		result = prime * result + policeCount;
-		result = prime * result + policeEffect;
-		result = prime * result + Arrays.deepHashCode(policeMap);
-		result = prime * result + Arrays.deepHashCode(policeMapEffect);
-		temp = Double.doubleToLongBits(policePercent);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + polluteRamp;
-		result = prime * result + pollutionAverage;
-		result = prime * result + pollutionMaxLocationX;
-		result = prime * result + pollutionMaxLocationY;
-		result = prime * result + Arrays.deepHashCode(pollutionMem);
-		result = prime * result + Arrays.deepHashCode(popDensity);
-		result = prime * result + Arrays.deepHashCode(powerMap);
-		result = prime * result + ((powerPlants == null) ? 0 : powerPlants.hashCode());
-		result = prime * result + poweredZoneCount;
-		result = prime * result + railTotal;
-		result = prime * result + Arrays.deepHashCode(rateOGMem);
-		result = prime * result + (resCap ? 1231 : 1237);
-		result = prime * result + resPop;
-		result = prime * result + resValve;
-		result = prime * result + resZoneCount;
-		result = prime * result + roadEffect;
-		temp = Double.doubleToLongBits(roadPercent);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + roadTotal;
-		result = prime * result + scycle;
-		result = prime * result + seaportCount;
-		result = prime * result + ((simSpeed == null) ? 0 : simSpeed.hashCode());
-		result = prime * result + ((sprites == null) ? 0 : sprites.hashCode());
-		result = prime * result + stadiumCount;
-		result = prime * result + taxEffect;
-		result = prime * result + Arrays.deepHashCode(terrainMem);
-		result = prime * result + ((tileBehaviors == null) ? 0 : tileBehaviors.hashCode());
-		result = prime * result + totalPop;
-		result = prime * result + trafficAverage;
-		result = prime * result + trafficMaxLocationX;
-		result = prime * result + trafficMaxLocationY;
-		result = prime * result + Arrays.deepHashCode(trfDensity);
-		result = prime * result + unpoweredZoneCount;
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Micropolis other = (Micropolis) obj;
-//		if (acycle != other.acycle)
-//			return false;
-//		if (airportCount != other.airportCount)
-//			return false;
-		if (autoBudget != other.autoBudget)
-			return false;
-		if (autoBulldoze != other.autoBulldoze)
-			return false;
-		if (autoGo != other.autoGo)
-			return false;
-		if (budget == null) {
-			if (other.budget != null)
-				return false;
-		} else if (!budget.equals(other.budget))
-			return false;
-//		if (cashFlow != other.cashFlow)
-//			return false;
-//		if (centerMassX != other.centerMassX)
-//			return false;
-//		if (centerMassY != other.centerMassY)
-//			return false;
-//		if (churchCount != other.churchCount)
-//			return false;
-		if (cityTax != other.cityTax)
-			return false;
-		if (cityTime != other.cityTime)
-			return false;
-//		if (coalCount != other.coalCount)
-//			return false;
-//		if (comCap != other.comCap)
-//			return false;
-		if (comPop != other.comPop)
-			return false;
-//		if (!Arrays.deepEquals(comRate, other.comRate))
-//			return false;
-		if (comValve != other.comValve)
-			return false;
-//		if (comZoneCount != other.comZoneCount)
-//			return false;
-//		if (crashLocation == null) {
-//			if (other.crashLocation != null)
-//				return false;
-//		} else if (!crashLocation.equals(other.crashLocation))
-//			return false;
-		if (crimeAverage != other.crimeAverage)
-			return false;
-//		if (crimeMaxLocationX != other.crimeMaxLocationX)
-//			return false;
-//		if (crimeMaxLocationY != other.crimeMaxLocationY)
-//			return false;
-//		if (!Arrays.deepEquals(crimeMem, other.crimeMem))
-//			return false;
-		if (crimeRamp != other.crimeRamp)
-			return false;
-//		if (earthquakeListeners == null) {
-//			if (other.earthquakeListeners != null)
-//				return false;
-//		} else if (!earthquakeListeners.equals(other.earthquakeListeners))
-//			return false;
-		if (evaluation == null) {
-			if (other.evaluation != null)
-				return false;
-		} else if (!evaluation.equals(other.evaluation))
-			return false;
-//		if (fcycle != other.fcycle)
-//			return false;
-//		if (financialHistory == null) {
-//			if (other.financialHistory != null)
-//				return false;
-//		} else if (!financialHistory.equals(other.financialHistory))
-//			return false;
-//		if (fireCounter != other.fireCounter)
-//			return false;
-//		if (fireEffect != other.fireEffect)
-//			return false;
-		if (Double.doubleToLongBits(firePercent) != Double.doubleToLongBits(other.firePercent))
-			return false;
-//		if (!Arrays.deepEquals(fireRate, other.fireRate))
-//			return false;
-//		if (!Arrays.deepEquals(fireStMap, other.fireStMap))
-//			return false;
-//		if (fireStationCount != other.fireStationCount)
-//			return false;
-//		if (floodCnt != other.floodCnt)
-//			return false;
-//		if (floodX != other.floodX)
-//			return false;
-//		if (floodY != other.floodY)
-//			return false;
-		if (gameLevel != other.gameLevel)
-			return false;
-		if (history == null) {
-			if (other.history != null)
-				return false;
-		} else if (!history.equals(other.history))
-			return false;
-//		if (hospitalCount != other.hospitalCount)
-//			return false;
-//		if (indCap != other.indCap)
-//			return false;
-		if (indPop != other.indPop)
-			return false;
-		if (indValve != other.indValve)
-			return false;
-//		if (indZoneCount != other.indZoneCount)
-//			return false;
-		if (landValueAverage != other.landValueAverage)
-			return false;
-//		if (!Arrays.deepEquals(landValueMem, other.landValueMem))
-//			return false;
-//		if (lastCityPop != other.lastCityPop)
-//			return false;
-//		if (lastFireStationCount != other.lastFireStationCount)
-//			return false;
-//		if (lastPoliceCount != other.lastPoliceCount)
-//			return false;
-//		if (lastRailTotal != other.lastRailTotal)
-//			return false;
-//		if (lastRoadTotal != other.lastRoadTotal)
-//			return false;
-//		if (lastTotalPop != other.lastTotalPop)
-//			return false;
-//		if (listeners == null) {
-//			if (other.listeners != null)
-//				return false;
-//		} else if (!listeners.equals(other.listeners))
-//			return false;
-		for (int y=0; y<getHeight();y++) {
-			for (int x=0; x<getWidth();x++) {
-				if(map[y][x]!=other.map[y][x]) {
-					System.out.println("x: "+x+", y: "+y+" "+map[y][x]+" <-> "+other.map[y][x]+" "+(int)map[y][x]+" <-> "+(int)other.map[y][x]);
-				}
-			}
-		}
-//		if (mapListeners == null) {
-//			if (other.mapListeners != null)
-//				return false;
-//		} else if (!mapListeners.equals(other.mapListeners))
-//			return false;
-//		if (meltdownLocation == null) {
-//			if (other.meltdownLocation != null)
-//				return false;
-//		} else if (!meltdownLocation.equals(other.meltdownLocation))
-//			return false;
-//		if (needChurch != other.needChurch)
-//			return false;
-//		if (needHospital != other.needHospital)
-//			return false;
-//		if (newPower != other.newPower)
-//			return false;
-//		if (noDisasters != other.noDisasters)
-//			return false;
-//		if (nuclearCount != other.nuclearCount)
-//			return false;
-//		if (policeCount != other.policeCount)
-//			return false;
-//		if (policeEffect != other.policeEffect)
-//			return false;
-//		if (!Arrays.deepEquals(policeMap, other.policeMap))
-//			return false;
-//		if (!Arrays.deepEquals(policeMapEffect, other.policeMapEffect))
-//			return false;
-		if (Double.doubleToLongBits(policePercent) != Double.doubleToLongBits(other.policePercent))
-			return false;
-		if (polluteRamp != other.polluteRamp)
-			return false;
-		if (pollutionAverage != other.pollutionAverage)
-			return false;
-//		if (pollutionMaxLocationX != other.pollutionMaxLocationX)
-//			return false;
-//		if (pollutionMaxLocationY != other.pollutionMaxLocationY)
-//			return false;
-//		if (!Arrays.deepEquals(pollutionMem, other.pollutionMem))
-//			return false;
-//		if (!Arrays.deepEquals(popDensity, other.popDensity))
-//			return false;
-//		if (!Arrays.deepEquals(powerMap, other.powerMap))
-//			return false;
-//		if (powerPlants == null) {
-//			if (other.powerPlants != null)
-//				return false;
-//		} else if (!powerPlants.equals(other.powerPlants))
-//			return false;
-//		if (poweredZoneCount != other.poweredZoneCount)
-//			return false;
-//		if (railTotal != other.railTotal)
-//			return false;
-//		if (!Arrays.deepEquals(rateOGMem, other.rateOGMem))
-//			return false;
-//		if (resCap != other.resCap)
-//			return false;
-		if (resPop != other.resPop)
-			return false;
-		if (resValve != other.resValve)
-			return false;
-//		if (resZoneCount != other.resZoneCount)
-//			return false;
-//		if (roadEffect != other.roadEffect)
-//			return false;
-		if (Double.doubleToLongBits(roadPercent) != Double.doubleToLongBits(other.roadPercent))
-			return false;
-//		if (roadTotal != other.roadTotal)
-//			return false;
-//		if (scycle != other.scycle)
-//			return false;
-//		if (seaportCount != other.seaportCount)
-//			return false;
-		if (simSpeed != other.simSpeed)
-			return false;
-//		if (sprites == null) {
-//			if (other.sprites != null)
-//				return false;
-//		} else if (!sprites.equals(other.sprites))
-//			return false;
-//		if (stadiumCount != other.stadiumCount)
-//			return false;
-//		if (taxEffect != other.taxEffect)
-//			return false;
-//		if (!Arrays.deepEquals(terrainMem, other.terrainMem))
-//			return false;
-//		if (tileBehaviors == null) {
-//			if (other.tileBehaviors != null)
-//				return false;
-//		} else if (!tileBehaviors.equals(other.tileBehaviors))
-//			return false;
-//		if (totalPop != other.totalPop)
-//			return false;
-//		if (trafficAverage != other.trafficAverage)
-//			return false;
-//		if (trafficMaxLocationX != other.trafficMaxLocationX)
-//			return false;
-//		if (trafficMaxLocationY != other.trafficMaxLocationY)
-//			return false;
-//		if (!Arrays.deepEquals(trfDensity, other.trfDensity))
-//			return false;
-//		if (unpoweredZoneCount != other.unpoweredZoneCount)
-//			return false;
-		return true;
-	}
-
 	public SubwayNetwork getSubNet() {
 		return subNet;
 	}
-	
+
 }

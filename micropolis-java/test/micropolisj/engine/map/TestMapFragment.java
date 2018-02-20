@@ -12,7 +12,7 @@ public class TestMapFragment {
 	public void testAddTile() {
 		MapFragment frag=new MapFragment(MapPosition.at(3, 3));
 		
-		frag.addTile(MapPosition.at(0, 0), new SingleMapTile(null, MapPosition.at(0, 0), null));
+		frag.addTile(MapPosition.at(0, 0), MapTile.getRubble());
 		Assert.assertEquals(1, frag.getNrOfTiles());
 	}
 	
@@ -20,18 +20,18 @@ public class TestMapFragment {
 	public void testAddOutOfBounds() {
 		MapFragment frag=new MapFragment(MapPosition.at(3, 3));
 		
-		frag.addTile(MapPosition.at(5, 5), new SingleMapTile(null, MapPosition.at(0, 0), null));
+		frag.addTile(MapPosition.at(5, 5), MapTile.getRubble());
 	}
 	
 	@Test
 	public void testTransposeAndSetTo() {
 		MapFragment frag=new MapFragment(MapPosition.at(3, 3));
 		Map<MapPosition,MapTile> origMap=new HashMap<>();
-		origMap.put(MapPosition.at(0, 0), new SingleMapTile(null, MapPosition.at(0, 0), null));
-		origMap.put(MapPosition.at(1, 0), new SingleMapTile(null, MapPosition.at(0, 0), null));
-		origMap.put(MapPosition.at(2, 0), new SingleMapTile(null, MapPosition.at(0, 0), null));
+		origMap.put(MapPosition.at(0, 0), MapTile.getRubble());
+		origMap.put(MapPosition.at(1, 0), MapTile.getRubble());
+		origMap.put(MapPosition.at(2, 0), MapTile.getRubble());
 		
-		frag.addTile(MapPosition.at(0, 0), new SingleMapTile(null, MapPosition.at(0, 0), null));
+		frag.addTile(MapPosition.at(0, 0), MapTile.getRubble());
 		Map<MapPosition,MapTile>newMap=frag.transposeAndSetTo(origMap, (MapPosition.at(3,0)));
 		Assert.assertNotNull(newMap.get(MapPosition.at(3,0)));
 	}

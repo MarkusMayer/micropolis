@@ -16,6 +16,8 @@ import java.util.*;
 import javax.swing.*;
 
 import micropolisj.engine.*;
+import micropolisj.engine.map.MapPosition;
+
 import static micropolisj.gui.ColorParser.parseColor;
 
 public class GraphsPane extends JPanel
@@ -143,8 +145,8 @@ public class GraphsPane extends JPanel
 	}
 
 	//implements Micropolis.Listener
-	public void cityMessage(MicropolisMessage message, CityLocation loc) {}
-	public void citySound(Sound sound, CityLocation loc) {}
+	public void cityMessage(MicropolisMessage message, MapPosition loc) {}
+	public void citySound(Sound sound, MapPosition loc) {}
 	public void demandChanged() {}
 	public void evaluationChanged() {}
 	public void fundsChanged() {}

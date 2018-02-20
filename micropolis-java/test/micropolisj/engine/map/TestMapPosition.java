@@ -59,4 +59,9 @@ public class TestMapPosition {
 	public void testGreaterOrEqualForSmaller() {
 		Assert.assertFalse(MapPosition.at(0, 2).greaterOrEqualThan(MapPosition.at(1, 1)));
 	}
+	
+	@Test
+	public void testStepDir() {
+		Assert.assertEquals(MapPosition.at(0, 0), MapPosition.at(1, 1).step(StepDir.upleft));
+	}
 }

@@ -1,8 +1,10 @@
 package micropolisj.engine.map;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -11,15 +13,24 @@ import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
 
 public class CityMap {
+	// TODO implement read only view
+	// TODO generalize Map to <MapPosition, Object> with scale property for various
+	// maps (power map,...)
 
 	private Map<MapPosition, MapTile> map;
+	private Map<MapPosition, Building> buildMap;
 	MapPosition dim;
 
 	public CityMap(int xDim, int yDim) {
 		dim = MapPosition.at(xDim, yDim);
 		map = new HashMap<>();
-		MapFragment frag = MapFragment.rectOf(dim, new SingleMapTile(Tiles.get(0), null, this));
+		buildMap = new HashMap<>();
+		MapFragment frag = MapFragment.rectOfSingleMapTile(dim, Tiles.get(TileConstants.DIRT));
 		map = frag.transposeAndSetTo(map, MapPosition.at(0, 0));
+	}
+
+	public MapPosition getDimension() {
+		return dim;
 	}
 
 	MapTile getTile(MapPosition pos) {
@@ -31,16 +42,31 @@ public class CityMap {
 		return MapPosition.at(0, 0).getPosForRect(dim);
 	}
 
-	private List<MapTile> getAllTiles() {
+	List<MapTile> getAllTiles() {
 		return getAllPos().stream().map(aPos -> getTile(aPos)).collect(Collectors.toList());
 	}
 
 	public TileSpec getSpec(MapPosition pos) {
+		checkPosInside(pos);
 		return getTile(pos).getTileSpec();
 	}
 
-	public boolean build(MapPosition pos, Building aBuilding) {
+	public int getTileNr(MapPosition pos) {
+		return getSpec(pos).getTileNr();
+	}
+
+	public boolean setSpec(MapPosition pos, TileSpec newSpec) {
 		checkPosInside(pos);
+		// System.out.println(pos+" ==> "+newSpec);
+		boolean res = getTile(pos).setTileSpec(newSpec);
+		// System.out.println("after: "+pos+" ==> "+getTileNr(pos));
+		return res;
+	}
+
+	public boolean build(MapPosition pos, BuildingType type) {
+		checkPosInside(pos);
+		Building aBuilding = new Building(type, pos);
+		buildMap.put(pos.plus(aBuilding.getCenterOffset()), aBuilding);
 		MapFragment frag = aBuilding.getFragment();
 		if (!isRectBuildable(pos, pos.plus(frag.getDim())))
 			return false;
@@ -49,8 +75,26 @@ public class CityMap {
 		return true;
 	}
 
+	public void bulldoze(MapPosition pos) {
+		checkPosInside(pos);
+		MapFragment bulldozeFrag = MapFragment.empty();
+		if (buildMap.containsKey(pos)) {
+			bulldozeFrag = buildMap.get(pos).getBulldozeFragment();
+		} else if (getBuilding(pos).isPresent()) {
+			// TODO fix this
+			Building building = getBuilding(pos).get();
+			if (!building.isCenterIntact())
+				bulldozeFrag = getTile(pos).getBulldozeFragment();
+		} else {
+			if (getTile(pos).isBulldozable())
+				bulldozeFrag = getTile(pos).getBulldozeFragment();
+		}
+
+		map = bulldozeFrag.transposeAndSetTo(map, pos);
+	}
+
 	void buildRubble(MapPosition pos) {
-		putTile(pos, new SingleMapTile(Tiles.get(0), pos, this));
+		putTile(pos, MapTile.getRubble());
 	}
 
 	private void putTile(MapPosition pos, MapTile tile) {
@@ -58,25 +102,20 @@ public class CityMap {
 		map.put(pos, tile);
 	}
 
-	public void bulldoze(MapPosition pos) {
-		checkPosInside(pos);
-		if (getTile(pos).isBulldozable()) {
-			MapFragment bulldozeFrag = getTile(pos).getBulldozeFragment();
-			map = bulldozeFrag.transposeAndSetTo(map, pos);
-		}
-	}
-
 	private void checkPosInside(MapPosition pos) {
-		if (!posInside(pos))
-			throw new IllegalArgumentException("position outside city bounds. pos: "+pos+", city-dimmension: "+dim);
+		if (!isPosInside(pos))
+			throw new IllegalArgumentException(
+					"position outside city bounds. pos: " + pos + ", city-dimmension: " + dim);
 	}
 
-	private boolean posInside(MapPosition pos) {
+	public boolean isPosInside(MapPosition pos) {
 		return (pos.greaterOrEqualThan(MapPosition.at(0, 0)) && pos.lessThan(dim));
 	}
 
 	private boolean isRectBuildable(MapPosition leftTop, MapPosition rightBottom) {
 		for (MapPosition aPos : leftTop.getPosForRect(rightBottom)) {
+			if (!isPosInside(aPos))
+				return false;
 			char tileNr = (char) getSpec(aPos).getTileNr();
 			if (!(TileConstants.canAutoBulldozeZ(tileNr) || tileNr == TileConstants.DIRT))
 				return false;
@@ -85,34 +124,70 @@ public class CityMap {
 	}
 
 	public void animate() {
-		// TODO:
-		for (MapPosition pos : getAllPos()) {
-			MapTile aTile = getTile(pos);
-			aTile.animate();
+		for (MapTile tile : getAllTiles()) {
+			tile.animate();
 		}
 	}
 
 	public void power(MapPosition pos) {
-		// TODO:
+		getBuilding(pos).ifPresent(building -> building.setPower(true));
+		getTile(pos).power();
 	}
 
 	public void unpower(MapPosition pos) {
-		// TODO:
+		getBuilding(pos).ifPresent(building -> building.setPower(false));
+		getTile(pos).unpower();
 	}
 
-	public boolean getPower(MapPosition pos) {
-		// TODO:
-		return false;
+	public boolean isPowered(MapPosition pos) {
+		return getBuilding(pos)
+				.map(building -> building.getPower())
+				.orElse(getTile(pos).isPowered());
 	}
 
 	Set<Building> getAllBuildings() {
-		return getAllTiles().stream().filter(aTile -> aTile.hasBuilding()).map(aTile -> aTile.getBuilding())
+		return new HashSet<>(buildMap.values());
+	}
+
+	// TODO change signature to TilePos or new class BuildingPos
+	public Set<MapPosition> getAllMapPosOfType(BuildingType searchType) {
+		return buildMap.values().stream().filter(aBuilding -> aBuilding.getType() == searchType)
+				.map(aBuilding -> aBuilding.getPos()).collect(Collectors.toSet());
+	}
+
+	public Set<MapPosition> getAllMapPosOfType(Set<BuildingType> searchTypes) {
+		Set<MapPosition> result = new HashSet<>();
+		for (BuildingType type : searchTypes) {
+			result.addAll(getAllMapPosOfType(type));
+		}
+		return result;
+	}
+
+	public Set<Building> getAllBuildingsOfType(BuildingType searchType) {
+		return getAllBuildings().stream().filter(aBuilding -> aBuilding.getType() == searchType)
 				.collect(Collectors.toSet());
 	}
 
-	Set<Building> getAllBuildingsOfType(BuildingType searchType) {
-		return getAllBuildings().stream().filter(aBuilding -> aBuilding.getType() == searchType)
-				.collect(Collectors.toSet());
+	public Set<MapPosition> getAllPowerPlantMapPos() {
+		return getAllMapPosOfType(BuildingType.getPowerPlantTypes());
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder res = new StringBuilder("=================================================================\n");
+		for (MapPosition pos : getAllPos()) {
+			res.append(getTile(pos) + ", ");
+		}
+		return res.toString();
+	}
+
+	private Optional<Building> getBuilding(MapPosition pos) {
+		for (MapPosition centerPos : buildMap.keySet()) {
+			Building building = buildMap.get(centerPos);
+			if (building.isInside(pos))
+				return Optional.of(building);
+		}
+		return Optional.empty();
 	}
 
 }

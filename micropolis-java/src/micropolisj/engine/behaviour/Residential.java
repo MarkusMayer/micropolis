@@ -258,7 +258,7 @@ public class Residential extends BuildingBehaviour {
 			for (int x = xpos - 1; x <= xpos + 1; x++) {
 				for (int y = ypos - 1; y <= ypos + 1; y++) {
 					if (city.testBounds(x, y)) {
-						int loc = city.getMap()[y][x] & LOMASK;
+						int loc = city.getTile(x,y);
 						if (loc >= LHTHR && loc <= HHTHR) { // little house
 							city.setTile(x, y, (char) (Brdr[z] + RESCLR - 4));
 							return;

@@ -18,6 +18,7 @@ import javax.swing.event.*;
 import javax.swing.Timer;
 
 import micropolisj.engine.*;
+import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.tool.MicropolisTool;
 import micropolisj.engine.tool.ToolPreview;
 
@@ -116,9 +117,9 @@ public class MicropolisDrawingArea extends JComponent
 		return TILE_WIDTH;
 	}
 
-	public CityLocation getCityLocation(int x, int y)
+	public MapPosition getCityLocation(int x, int y)
 	{
-		return new CityLocation(x / TILE_WIDTH, y / TILE_HEIGHT);
+		return MapPosition.at(x / TILE_WIDTH, y / TILE_HEIGHT);
 	}
 
 	@Override

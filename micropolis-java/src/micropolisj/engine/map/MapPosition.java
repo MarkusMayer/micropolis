@@ -16,7 +16,7 @@ public class MapPosition {
 	}
 	
 	public MapPosition step(StepDir dir) {
-		return MapPosition.at(x+dir.getXVal(), y+dir.getYVal());
+		return plus(dir.getPos());
 	}
 	
 	public MapPosition plus(int xAdd, int yAdd) {
@@ -60,6 +60,10 @@ public class MapPosition {
 	public int getDistanceToPos(int x, int y) {
 		return Math.abs(getX()-x)+Math.abs(getY()-y);
 	}
+	
+	public MapPosition reverse() {
+		return MapPosition.at(getX()*-1, getY()*-1);
+	}
 
 	@Override
 	public int hashCode() {
@@ -91,13 +95,11 @@ public class MapPosition {
 		return "MapPosition [x=" + x + ", y=" + y + "]";
 	}
 
-	public boolean lessThan(MapPosition dim) {
-		return (x<dim.getX() && y<dim.getY());
+	public boolean lessThan(MapPosition pos) {
+		return (x<pos.getX() && y<pos.getY());
 	}
 	
-	public boolean greaterOrEqualThan(MapPosition dim) {
-		return (x>=dim.getX() && y>=dim.getY());
+	public boolean greaterOrEqualThan(MapPosition pos) {
+		return (x>=pos.getX() && y>=pos.getY());
 	}
-	
-	
 }

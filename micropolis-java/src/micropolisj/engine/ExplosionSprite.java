@@ -10,6 +10,9 @@ package micropolisj.engine;
 
 import static micropolisj.engine.TileConstants.*;
 
+import micropolisj.engine.map.MapPosition;
+import micropolisj.engine.map.StepDir;
+
 /**
  * Implements an explosion.
  * An explosion occurs when certain sprites collide,
@@ -43,25 +46,26 @@ public class ExplosionSprite extends Sprite
 		if (this.frame > 6) {
 			this.frame = 0;
 
-			startFire(x/16, y/16);
-			startFire(x/16-1, y/16-1);
-			startFire(x/16+1, y/16-1);
-			startFire(x/16-1, y/16+1);
-			startFire(x/16+1, y/16+1);
+			MapPosition pos=MapPosition.at(x/16, y/16);
+			startFire(pos);
+			startFire(pos.step(StepDir.upleft));
+			startFire(pos.step(StepDir.upright));
+			startFire(pos.step(StepDir.downleft));
+			startFire(pos.step(StepDir.downright));
 			return;
 		}
 	}
 
-	void startFire(int xpos, int ypos)
+	void startFire(MapPosition pos)
 	{
-		if (!city.testBounds(xpos, ypos))
+		if (!city.testBounds(pos))
 			return;
 
-		int t = city.getTile(xpos, ypos);
+		int t = city.getTile(pos);
 		if (!isCombustible(t) && t != DIRT)
 			return;
 		if (isZoneCenter(t))
 			return;
-		city.setTile(xpos, ypos, (char)(FIRE + city.PRNG.nextInt(4)));
+		city.setTile(pos, (char)(FIRE + city.PRNG.nextInt(4)));
 	}
 }

@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import micropolisj.engine.PowerScanner.PowerScanResult;
 import micropolisj.engine.map.BuildingType;
 import micropolisj.engine.map.MapPosition;
 
@@ -42,16 +43,18 @@ public class TestPowerScan {
 		engine.getMap().setSpec(MapPosition.at(7, 4), Tiles.get(208));
 		engine.getMap().build(MapPosition.at(6, 1), BuildingType.residential);
 		engine.getMap().build(MapPosition.at(6, 7), BuildingType.firestation);
-		boolean[][] powerMap = (new PowerScanner(
-				new ArrayList<>(engine.getMap().getAllMapPosOfType(BuildingType.nukePower)), engine)).doScan();
-		for (int i = 0; i < engine.powerMap.length; i++) {
-			for (int j = 0; j < engine.powerMap[0].length; j++) {
-				System.out.print(engine.powerMap[i][j] ? "T " : "F ");
+		PowerScanResult scanResult = (new PowerScanner(
+				new ArrayList<>(engine.getMap().getAllMapPosOfType(BuildingType.nukePower)),
+				engine.getMap().getReadOnlyMap())).doScan();
+		for (int i = 0; i < scanResult.getPowerMap().getDimension().getY(); i++) {
+			for (int j = 0; j < scanResult.getPowerMap().getDimension().getX(); j++) {
+				System.out.print(scanResult.getPowerMap().getAt(MapPosition.at(i, j)) ? "T " : "F ");
 			}
 			System.out.println("");
 		}
-
-		Assert.assertArrayEquals(expectedPowerMap, engine.powerMap);
+		Boolean[][] res=scanResult.getPowerMap().asArray(new Boolean(true).getClass());
+//		Assert.assertArrayEquals(expectedPowerMap, scanResult.getPowerMap());
+		Assert.assertArrayEquals(expectedPowerMap, res);
 
 	}
 

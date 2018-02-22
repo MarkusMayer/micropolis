@@ -1,9 +1,7 @@
 package micropolisj.engine.map;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import micropolisj.engine.TileSpec;
 
@@ -58,10 +56,10 @@ class MapFragment {
 		return offset;
 	}
 
-	Map<MapPosition, MapTile> transposeAndSetTo(Map<MapPosition, MapTile> map, MapPosition leftTop) {
-		Map<MapPosition, MapTile> result = new HashMap<>(map);
+	MapBase<MapTile> transposeAndSetTo(MapBase<MapTile> map, MapPosition leftTop) {
+		MapBase<MapTile> result = new MapBase<MapTile>(map);
 		for (TilePos tilePos : fragment) {
-			result.put(tilePos.transpose(leftTop.plus(offset)).getPos(), tilePos.getTile());
+			result.putAt(tilePos.transpose(leftTop.plus(offset)).getPos(), tilePos.getTile());
 		}
 		return result;
 	}

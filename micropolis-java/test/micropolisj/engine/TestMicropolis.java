@@ -15,7 +15,6 @@ import micropolisj.engine.tool.ToolStroke;
 
 public class TestMicropolis {
 
-	@Test
 	public void testMicropolisIntIntRandom() throws IOException {
 		Micropolis city = new Micropolis(120, 100, new Random(100));
 		File fIn = new File("C:\\Users\\markus\\git\\micropolis\\micropolis-java\\test-resources\\testIn.cty");

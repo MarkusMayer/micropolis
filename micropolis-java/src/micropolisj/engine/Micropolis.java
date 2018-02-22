@@ -60,6 +60,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
 
+import micropolisj.engine.PowerScanner.PowerScanResult;
 import micropolisj.engine.behaviour.Airport;
 import micropolisj.engine.behaviour.CoalPower;
 import micropolisj.engine.behaviour.Commercial;
@@ -82,6 +83,7 @@ import micropolisj.engine.behaviour.StadiumFull;
 import micropolisj.engine.behaviour.TileBehavior;
 import micropolisj.engine.map.BuildingType;
 import micropolisj.engine.map.CityMap;
+import micropolisj.engine.map.MapBase;
 import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.map.StepDir;
 import micropolisj.engine.subway.SubwayConnection;
@@ -101,7 +103,7 @@ public class Micropolis {
 
 	// full size arrays
 	private CityMap map;
-	boolean[][] powerMap;
+	MapBase<Boolean> powerMap;
 
 	// half-size arrays
 
@@ -300,7 +302,7 @@ public class Micropolis {
 
 	protected void init(int width, int height) {
 		map = new CityMap(width, height);
-		powerMap = new boolean[height][width];
+		powerMap = new MapBase<>(MapPosition.at(width, height), ()->false);
 		CityMap m = new CityMap(1, 1);
 
 		int hX = (width + 1) / 2;
@@ -635,16 +637,16 @@ public class Micropolis {
 		return map.isPosInside(pos);
 	}
 
-	public final void setPower(MapPosition pos,boolean hasPower) {
-		powerMap[pos.getY()][pos.getX()]=hasPower;
+	public final void setPower(MapPosition pos, boolean hasPower) {
+		powerMap.putAt(pos, hasPower);
 	}
-	
+
 	public final boolean hasPower(int x, int y) {
 		return hasPower(MapPosition.at(x, y));
 	}
-	
+
 	public final boolean hasPower(MapPosition pos) {
-		return powerMap[pos.getY()][pos.getX()];
+		return powerMap.getAt(pos);
 	}
 
 	/**
@@ -771,9 +773,8 @@ public class Micropolis {
 			break;
 
 		case 11:
-			powerMap=(new PowerScanner(powerPlants,this)).doScan();
-			fireMapOverlayDataChanged(MapState.POWER_OVERLAY);
-			newPower = true;
+			doPowerScan();
+
 			break;
 
 		case 12:
@@ -796,6 +797,15 @@ public class Micropolis {
 		default:
 			throw new Error("unreachable");
 		}
+	}
+
+	private void doPowerScan() {
+		PowerScanResult result = (new PowerScanner(powerPlants, this.getMap().getReadOnlyMap())).doScan();
+		powerMap = result.getPowerMap();
+		if (result.isHasBrownout())
+			sendMessage(MicropolisMessage.BROWNOUTS_REPORT);
+		fireMapOverlayDataChanged(MapState.POWER_OVERLAY);
+		newPower = true;
 	}
 
 	private int computePopDen(int x, int y, char tile) {
@@ -1174,103 +1184,104 @@ public class Micropolis {
 		fireMapOverlayDataChanged(MapState.FIRE_OVERLAY);
 	}
 
-//	private boolean testForCond(MapPosition pos, StepDir dir) {
-//		boolean rv = false;
-//		MapPosition stepPos = pos.step(dir);
-//		if (map.isPosInside(stepPos)){
-////		if (movePowerLocation(pos, dir)) {
-//			char t = getTile(stepPos);
-//			rv = (isConductive(t) && t != NUCLEAR && t != POWERPLANT && !hasPower(stepPos));
-//		}
-//
-//		return rv;
-//	}
-//
-//	private boolean movePowerLocation(CityLocation loc, int dir) {
-//		switch (dir) {
-//		case 0:
-//			if (loc.y > 0) {
-//				loc.y--;
-//				return true;
-//			} else
-//				return false;
-//		case 1:
-//			if (loc.x + 1 < getWidth()) {
-//				loc.x++;
-//				return true;
-//			} else
-//				return false;
-//		case 2:
-//			if (loc.y + 1 < getHeight()) {
-//				loc.y++;
-//				return true;
-//			} else
-//				return false;
-//		case 3:
-//			if (loc.x > 0) {
-//				loc.x--;
-//				return true;
-//			} else
-//				return false;
-//		case 4:
-//			return true;
-//		}
-//		return false;
-//	}
+	// private boolean testForCond(MapPosition pos, StepDir dir) {
+	// boolean rv = false;
+	// MapPosition stepPos = pos.step(dir);
+	// if (map.isPosInside(stepPos)){
+	//// if (movePowerLocation(pos, dir)) {
+	// char t = getTile(stepPos);
+	// rv = (isConductive(t) && t != NUCLEAR && t != POWERPLANT &&
+	// !hasPower(stepPos));
+	// }
+	//
+	// return rv;
+	// }
+	//
+	// private boolean movePowerLocation(CityLocation loc, int dir) {
+	// switch (dir) {
+	// case 0:
+	// if (loc.y > 0) {
+	// loc.y--;
+	// return true;
+	// } else
+	// return false;
+	// case 1:
+	// if (loc.x + 1 < getWidth()) {
+	// loc.x++;
+	// return true;
+	// } else
+	// return false;
+	// case 2:
+	// if (loc.y + 1 < getHeight()) {
+	// loc.y++;
+	// return true;
+	// } else
+	// return false;
+	// case 3:
+	// if (loc.x > 0) {
+	// loc.x--;
+	// return true;
+	// } else
+	// return false;
+	// case 4:
+	// return true;
+	// }
+	// return false;
+	// }
 
-//	void powerScan() {
-//		// clear powerMap
-//		for (boolean[] bb : powerMap) {
-//			Arrays.fill(bb, false);
-//		}
-//		System.out.println("power Scan");
-//		//
-//		// Note: brownouts are based on total number of power plants, not the number
-//		// of powerplants connected to your city.
-//		//
-//
-//		int maxPower = coalCount * 700 + nuclearCount * 2000;
-//		int numPower = 0;
-//
-//		// This is kind of odd algorithm, but I haven't the heart to rewrite it at
-//		// this time.
-//
-//		while (!powerPlants.isEmpty()) {
-//			MapPosition pos = powerPlants.pop();
-//
-//			StepDir aDir = StepDir.none;
-//			int conNum;
-//			do {
-//				if (++numPower > maxPower) {
-//					// trigger notification
-//					sendMessage(MicropolisMessage.BROWNOUTS_REPORT);
-//					return;
-//				}
-////				System.out.print("Step from " + loc + " in dir " + aDir);
-//				pos=pos.step(aDir);
-//				System.out.println("stepped to " + pos);
-//				setPower(pos, true);
-//
-//				conNum = 0;
-//				List<StepDir> dirsToCheck=StepDir.majorDirsAndNone();
-//				while (!dirsToCheck.isEmpty() && conNum < 2) {
-////					System.out.println("currently at " + loc + " checking dir: " + dir);
-//					if (testForCond(pos, dirsToCheck.get(0))) {
-////						System.out.println("dir ok");
-//						conNum++;
-//						aDir = dirsToCheck.get(0);
-//					} else {
-////						System.out.println("dir not ok");
-//					}
-//					dirsToCheck.remove(0);
-//				}
-//				if (conNum > 1) {
-//					System.out.println("power plant add at " + pos + " " + powerPlants);
-//					powerPlants.add(pos);
-//				}
-//			} while (conNum != 0);
-//		}
-//	}
+	// void powerScan() {
+	// // clear powerMap
+	// for (boolean[] bb : powerMap) {
+	// Arrays.fill(bb, false);
+	// }
+	// System.out.println("power Scan");
+	// //
+	// // Note: brownouts are based on total number of power plants, not the number
+	// // of powerplants connected to your city.
+	// //
+	//
+	// int maxPower = coalCount * 700 + nuclearCount * 2000;
+	// int numPower = 0;
+	//
+	// // This is kind of odd algorithm, but I haven't the heart to rewrite it at
+	// // this time.
+	//
+	// while (!powerPlants.isEmpty()) {
+	// MapPosition pos = powerPlants.pop();
+	//
+	// StepDir aDir = StepDir.none;
+	// int conNum;
+	// do {
+	// if (++numPower > maxPower) {
+	// // trigger notification
+	// sendMessage(MicropolisMessage.BROWNOUTS_REPORT);
+	// return;
+	// }
+	//// System.out.print("Step from " + loc + " in dir " + aDir);
+	// pos=pos.step(aDir);
+	// System.out.println("stepped to " + pos);
+	// setPower(pos, true);
+	//
+	// conNum = 0;
+	// List<StepDir> dirsToCheck=StepDir.majorDirsAndNone();
+	// while (!dirsToCheck.isEmpty() && conNum < 2) {
+	//// System.out.println("currently at " + loc + " checking dir: " + dir);
+	// if (testForCond(pos, dirsToCheck.get(0))) {
+	//// System.out.println("dir ok");
+	// conNum++;
+	// aDir = dirsToCheck.get(0);
+	// } else {
+	//// System.out.println("dir not ok");
+	// }
+	// dirsToCheck.remove(0);
+	// }
+	// if (conNum > 1) {
+	// System.out.println("power plant add at " + pos + " " + powerPlants);
+	// powerPlants.add(pos);
+	// }
+	// } while (conNum != 0);
+	// }
+	// }
 
 	/**
 	 * Increase the traffic-density measurement at a particular spot.
@@ -2311,8 +2322,7 @@ public class Micropolis {
 			powerPlants.add(pos);
 		}
 
-		powerMap=(new PowerScanner(powerPlants,this)).doScan();
-		newPower = true;
+		doPowerScan();
 	}
 
 	public void load(InputStream inStream) throws IOException {

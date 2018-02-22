@@ -12,21 +12,21 @@ import micropolisj.engine.TileConstants;
 import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
 
-public class CityMap {
+public class CityMap implements ReadOnlyCityMap{
 	// TODO implement read only view
 	// TODO generalize Map to <MapPosition, Object> with scale property for various
 	// maps (power map,...)
 
-	private Map<MapPosition, MapTile> map;
-	private Map<MapPosition, Building> buildMap;
+	private MapBase<MapTile> map;
+	private MapBase<Building> buildMap;
 	MapPosition dim;
 
 	public CityMap(int xDim, int yDim) {
 		dim = MapPosition.at(xDim, yDim);
-		map = new HashMap<>();
-		buildMap = new HashMap<>();
-		MapFragment frag = MapFragment.rectOfSingleMapTile(dim, Tiles.get(TileConstants.DIRT));
-		map = frag.transposeAndSetTo(map, MapPosition.at(0, 0));
+		map = new MapBase<>(dim, ()->new MapTile(Tiles.get(TileConstants.DIRT)));
+		buildMap = new MapBase<>(dim);
+//		MapFragment frag = MapFragment.rectOfSingleMapTile(dim, Tiles.get(TileConstants.DIRT));
+//		map = frag.transposeAndSetTo(map, MapPosition.at(0, 0));
 	}
 
 	public MapPosition getDimension() {
@@ -35,7 +35,7 @@ public class CityMap {
 
 	MapTile getTile(MapPosition pos) {
 		checkPosInside(pos);
-		return map.get(pos);
+		return map.getAt(pos);
 	}
 
 	private List<MapPosition> getAllPos() {
@@ -66,7 +66,7 @@ public class CityMap {
 	public boolean build(MapPosition pos, BuildingType type) {
 		checkPosInside(pos);
 		Building aBuilding = new Building(type, pos);
-		buildMap.put(pos.plus(aBuilding.getCenterOffset()), aBuilding);
+		buildMap.putAt(pos.plus(aBuilding.getCenterOffset()), aBuilding);
 		MapFragment frag = aBuilding.getFragment();
 		if (!isRectBuildable(pos, pos.plus(frag.getDim())))
 			return false;
@@ -79,7 +79,7 @@ public class CityMap {
 		checkPosInside(pos);
 		MapFragment bulldozeFrag = MapFragment.empty();
 		if (buildMap.containsKey(pos)) {
-			bulldozeFrag = buildMap.get(pos).getBulldozeFragment();
+			bulldozeFrag = buildMap.getAt(pos).getBulldozeFragment();
 		} else if (getBuilding(pos).isPresent()) {
 			// TODO fix this
 			Building building = getBuilding(pos).get();
@@ -99,7 +99,7 @@ public class CityMap {
 
 	private void putTile(MapPosition pos, MapTile tile) {
 		checkPosInside(pos);
-		map.put(pos, tile);
+		map.putAt(pos, tile);
 	}
 
 	private void checkPosInside(MapPosition pos) {
@@ -151,8 +151,10 @@ public class CityMap {
 
 	// TODO change signature to TilePos or new class BuildingPos
 	public Set<MapPosition> getAllMapPosOfType(BuildingType searchType) {
-		return buildMap.values().stream().filter(aBuilding -> aBuilding.getType() == searchType)
-				.map(aBuilding -> aBuilding.getPos()).collect(Collectors.toSet());
+		return buildMap.values().stream()
+				.filter(aBuilding -> aBuilding.getType() == searchType)
+				.map(aBuilding -> aBuilding.getPos())
+				.collect(Collectors.toSet());
 	}
 
 	public Set<MapPosition> getAllMapPosOfType(Set<BuildingType> searchTypes) {
@@ -183,11 +185,14 @@ public class CityMap {
 
 	private Optional<Building> getBuilding(MapPosition pos) {
 		for (MapPosition centerPos : buildMap.keySet()) {
-			Building building = buildMap.get(centerPos);
+			Building building = buildMap.getAt(centerPos);
 			if (building.isInside(pos))
 				return Optional.of(building);
 		}
 		return Optional.empty();
 	}
-
+	
+	public ReadOnlyCityMap getReadOnlyMap() {
+		return this;
+	}
 }

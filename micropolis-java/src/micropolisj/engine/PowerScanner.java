@@ -54,7 +54,7 @@ public class PowerScanner {
 				}
 				// System.out.print("Step from " + loc + " in dir " + aDir);
 				pos = pos.step(aDir);
-				System.out.println("stepped to " + pos);
+//				System.out.println("stepped to " + pos);
 				result.putAt(pos, true);
 
 				conNum = 0;
@@ -71,7 +71,7 @@ public class PowerScanner {
 					dirsToCheck.remove(0);
 				}
 				if (conNum > 1) {
-					System.out.println("power plant add at " + pos + " " + powerPlants);
+//					System.out.println("power plant add at " + pos + " " + powerPlants);
 					powerPlants.add(pos);
 				}
 			} while (conNum != 0);

@@ -11,45 +11,37 @@ package micropolisj.engine;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Provides global methods for loading tile specifications.
  */
-public class Tiles
-{
+public class Tiles {
 	static final Charset UTF8 = Charset.forName("UTF-8");
-	static TileSpec [] tiles;
-	static Map<String,TileSpec> tilesByName = new HashMap<String,TileSpec>();
+	static TileSpec[] tiles;
+	static Map<String, TileSpec> tilesByName = new HashMap<String, TileSpec>();
 	static {
 		try {
 			readTiles();
 			checkTiles();
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	static void readTiles()
-		throws IOException
-	{
+	static void readTiles() throws IOException {
 		ArrayList<TileSpec> tilesList = new ArrayList<TileSpec>();
 
 		Properties tilesRc = new Properties();
-		tilesRc.load(
-			new InputStreamReader(
-				Tiles.class.getResourceAsStream("/tiles.rc"),
-				UTF8
-				)
-			);
+		tilesRc.load(new InputStreamReader(Tiles.class.getResourceAsStream("/tiles.rc"), UTF8));
 
-		String [] tileNames = TileSpec.generateTileNames(tilesRc);
+		String[] tileNames = TileSpec.generateTileNames(tilesRc);
 		tiles = new TileSpec[tileNames.length];
 
 		for (int i = 0; i < tileNames.length; i++) {
 			String tileName = tileNames[i];
 			String rawSpec = tilesRc.getProperty(tileName);
-//			System.out.println("Nr. "+i+": "+tileNames[i]+" ,Spec: "+rawSpec);
+			// System.out.println("Nr. "+i+": "+tileNames[i]+" ,Spec: "+rawSpec);
 
 			if (rawSpec == null) {
 				break;
@@ -70,10 +62,7 @@ public class Tiles
 					int offx = (bi.width >= 3 ? -1 : 0) + j % bi.width;
 					int offy = (bi.height >= 3 ? -1 : 0) + j / bi.width;
 
-					if (tiles[tid].owner == null &&
-						(offx != 0 || offy != 0)
-						)
-					{
+					if (tiles[tid].owner == null && (offx != 0 || offy != 0)) {
 						tiles[tid].owner = tiles[i];
 						tiles[tid].ownerOffsetX = offx;
 						tiles[tid].ownerOffsetY = offy;
@@ -83,31 +72,42 @@ public class Tiles
 		}
 	}
 
-	public static TileSpec load(String tileName)
-	{
+	public static TileSpec load(String tileName) {
 		return tilesByName.get(tileName);
 	}
 
 	/**
 	 * Access a tile specification by index number.
 	 *
-	 * @return a tile specification, or null if there is no tile
-	 * with the given number
+	 * @return a tile specification, or null if there is no tile with the given
+	 *         number
 	 */
-	public static TileSpec get(int tileNumber)
-	{
+	public static TileSpec get(int tileNumber) {
 		if (tileNumber >= 0 && tileNumber < tiles.length) {
 			return tiles[tileNumber];
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
 
-	static void checkTiles()
-	{
+	static void checkTiles() {
 		for (int i = 0; i < tiles.length; i++) {
 			// do something here
 		}
+	}
+
+	public static List<TileSpec> getAllResZones() {
+		return Arrays.stream(tiles).filter(aSpec -> aSpec.isResZoneCenter())
+				.collect(Collectors.toList());
+	}
+	
+	public static List<TileSpec> getAllComZones() {
+		return Arrays.stream(tiles).filter(aSpec -> aSpec.isComZoneCenter())
+				.collect(Collectors.toList());
+	}
+	
+	public static List<TileSpec> getAllIndZones() {
+		return Arrays.stream(tiles).filter(aSpec -> aSpec.isIndZoneCenter())
+				.collect(Collectors.toList());
 	}
 }

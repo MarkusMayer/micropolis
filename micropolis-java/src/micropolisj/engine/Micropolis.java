@@ -2337,6 +2337,7 @@ public class Micropolis {
 		loadMap(dis);
 		dis.close();
 
+		map.rebuildFromTiles();
 		checkPowerMap();
 
 		fireWholeMapChanged();

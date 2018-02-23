@@ -364,4 +364,16 @@ public class TileSpec {
 		assert ntiles == tileNames.length;
 		return tileNames;
 	}
+	
+	public boolean isResZoneCenter() {
+		return getBooleanAttribute("residential-zone");
+	}
+
+	public boolean isComZoneCenter() {
+		return getBooleanAttribute("commercial-zone");
+	}
+	
+	public boolean isIndZoneCenter() {
+		return getBooleanAttribute("industrial-zone");
+	}
 }

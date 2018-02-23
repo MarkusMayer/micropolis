@@ -12,7 +12,7 @@ import micropolisj.engine.TileConstants;
 import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
 
-public class CityMap implements ReadOnlyCityMap{
+public class CityMap implements ReadOnlyCityMap {
 	// TODO implement read only view
 	// TODO generalize Map to <MapPosition, Object> with scale property for various
 	// maps (power map,...)
@@ -23,10 +23,11 @@ public class CityMap implements ReadOnlyCityMap{
 
 	public CityMap(int xDim, int yDim) {
 		dim = MapPosition.at(xDim, yDim);
-		map = new MapBase<>(dim, ()->new MapTile(Tiles.get(TileConstants.DIRT)));
+		map = new MapBase<>(dim, () -> new MapTile(Tiles.get(TileConstants.DIRT)));
 		buildMap = new MapBase<>(dim);
-//		MapFragment frag = MapFragment.rectOfSingleMapTile(dim, Tiles.get(TileConstants.DIRT));
-//		map = frag.transposeAndSetTo(map, MapPosition.at(0, 0));
+		// MapFragment frag = MapFragment.rectOfSingleMapTile(dim,
+		// Tiles.get(TileConstants.DIRT));
+		// map = frag.transposeAndSetTo(map, MapPosition.at(0, 0));
 	}
 
 	public MapPosition getDimension() {
@@ -59,11 +60,13 @@ public class CityMap implements ReadOnlyCityMap{
 		checkPosInside(pos);
 		// System.out.println(pos+" ==> "+newSpec);
 		boolean res = getTile(pos).setTileSpec(newSpec);
+		BuildingType.getTypeFromSpec(newSpec).map(aType -> build(pos, aType));
 		// System.out.println("after: "+pos+" ==> "+getTileNr(pos));
 		return res;
 	}
 
 	public boolean build(MapPosition pos, BuildingType type) {
+		System.out.println("build(pos, type): "+pos+" ,"+type);
 		checkPosInside(pos);
 		Building aBuilding = new Building(type, pos);
 		buildMap.putAt(pos.plus(aBuilding.getCenterOffset()), aBuilding);
@@ -140,9 +143,7 @@ public class CityMap implements ReadOnlyCityMap{
 	}
 
 	public boolean isPowered(MapPosition pos) {
-		return getBuilding(pos)
-				.map(building -> building.getPower())
-				.orElse(getTile(pos).isPowered());
+		return getBuilding(pos).map(building -> building.getPower()).orElse(getTile(pos).isPowered());
 	}
 
 	Set<Building> getAllBuildings() {
@@ -151,10 +152,8 @@ public class CityMap implements ReadOnlyCityMap{
 
 	// TODO change signature to TilePos or new class BuildingPos
 	public Set<MapPosition> getAllMapPosOfType(BuildingType searchType) {
-		return buildMap.values().stream()
-				.filter(aBuilding -> aBuilding.getType() == searchType)
-				.map(aBuilding -> aBuilding.getPos())
-				.collect(Collectors.toSet());
+		return buildMap.values().stream().filter(aBuilding -> aBuilding.getType() == searchType)
+				.map(aBuilding -> aBuilding.getPos()).collect(Collectors.toSet());
 	}
 
 	public Set<MapPosition> getAllMapPosOfType(Set<BuildingType> searchTypes) {
@@ -191,8 +190,15 @@ public class CityMap implements ReadOnlyCityMap{
 		}
 		return Optional.empty();
 	}
-	
+
 	public ReadOnlyCityMap getReadOnlyMap() {
 		return this;
+	}
+
+	public void rebuildFromTiles() {
+		for (MapPosition aPos : getAllPos()) {
+			boolean x = BuildingType.getTypeFromSpec(getSpec(aPos)).map(aType -> build(aPos, aType)).orElse(false);
+		}
+		System.out.println("rebuildFromTiles: buildMap.size():  "+buildMap.keySet().size());
 	}
 }

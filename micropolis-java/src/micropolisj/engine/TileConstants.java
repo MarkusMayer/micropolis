@@ -601,7 +601,7 @@ public class TileConstants
 			if (ts.owner != null) {
 				ts = ts.owner;
 			}
-			return ts.getBooleanAttribute("commercial-zone");
+			return ts.isComZoneCenter();
 		}
 		return false;
 	}
@@ -628,7 +628,7 @@ public class TileConstants
 			if (ts.owner != null) {
 				ts = ts.owner;
 			}
-			return ts.getBooleanAttribute("industrial-zone");
+			return ts.isIndZoneCenter();
 		}
 		return false;
 	}
@@ -661,7 +661,7 @@ public class TileConstants
 			if (ts.owner != null) {
 				ts = ts.owner;
 			}
-			return ts.getBooleanAttribute("residential-zone");
+			return ts.isResZoneCenter();
 		}
 		return false;
 	}

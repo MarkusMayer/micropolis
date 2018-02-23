@@ -1,9 +1,7 @@
 package micropolisj.engine.map;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,7 +11,6 @@ import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
 
 public class CityMap implements ReadOnlyCityMap {
-	// TODO implement read only view
 	// TODO generalize Map to <MapPosition, Object> with scale property for various
 	// maps (power map,...)
 

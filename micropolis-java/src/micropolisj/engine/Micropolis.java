@@ -2263,7 +2263,6 @@ public class Micropolis {
 		}
 	}
 
-	// TODO fix load / save
 	void loadMap(DataInputStream dis) throws IOException {
 		for (int x = 0; x < DEFAULT_WIDTH; x++) {
 			for (int y = 0; y < DEFAULT_HEIGHT; y++) {
@@ -2274,7 +2273,6 @@ public class Micropolis {
 		}
 	}
 
-	// TODO fix load / save
 	void writeMap(DataOutputStream out) throws IOException {
 		for (int x = 0; x < DEFAULT_WIDTH; x++) {
 			for (int y = 0; y < DEFAULT_HEIGHT; y++) {

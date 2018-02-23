@@ -1078,7 +1078,6 @@ public class MainWindow extends JFrame
 		gridBox.add(b0,c);
 		
 		
-		//TODO: Toolbar for new Building Type
 		b0.add(makeToolBtn(MicropolisTool.BULLDOZER));
 		b0.add(makeToolBtn(MicropolisTool.WIRE));
 		b0.add(makeToolBtn(MicropolisTool.PARK));

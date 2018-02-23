@@ -24,8 +24,6 @@ public class PowerScanner {
 	}
 
 	public PowerScanResult doScan() {
-		//TODO change type to Map<MapPosition,boolean>
-//		boolean[][] result = new boolean[cityMap.getDimension().getY()][cityMap.getDimension().getX()];
 		MapBase<Boolean> result=new MapBase<>(cityMap.getDimension(), ()->false);
 		
 		System.out.println("power Scan");

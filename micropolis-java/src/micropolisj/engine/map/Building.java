@@ -1,5 +1,7 @@
 package micropolisj.engine.map;
 
+import java.util.Objects;
+
 import micropolisj.engine.TileConstants;
 import micropolisj.engine.TileSpec;
 import micropolisj.engine.TileSpec.BuildingInfo;
@@ -15,9 +17,9 @@ class Building {
 	private boolean centerIntact;
 
 	protected Building(BuildingType type,MapPosition pos) {
-		this.type = type;
+		this.type = Objects.requireNonNull(type);
 		this.base = type.getBase();
-		this.pos=pos;
+		this.pos=Objects.requireNonNull(pos);
 		this.area=getArea();
 		this.isPowered = false;
 		this.centerIntact=true;

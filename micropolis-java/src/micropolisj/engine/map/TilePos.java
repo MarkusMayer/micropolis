@@ -1,13 +1,15 @@
 package micropolisj.engine.map;
 
+import java.util.Objects;
+
 class TilePos {
 
 	private final MapPosition pos;
 	private final MapTile tile;
 	
 	TilePos(MapPosition pos,MapTile tile) {
-		this.pos=pos;
-		this.tile=tile;
+		this.pos=Objects.requireNonNull(pos);
+		this.tile=Objects.requireNonNull(tile);
 	}
 	
 	MapTile getTile() {

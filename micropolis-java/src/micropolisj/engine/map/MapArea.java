@@ -1,12 +1,14 @@
 package micropolisj.engine.map;
 
+import java.util.Objects;
+
 final class MapArea {
 	
 	private final MapPosition upperLeft,lowerRight;
 	
 	MapArea(MapPosition upperLeft, MapPosition lowerRight) {
-		this.upperLeft=upperLeft;
-		this.lowerRight=lowerRight;
+		this.upperLeft=Objects.requireNonNull(upperLeft);
+		this.lowerRight=Objects.requireNonNull(lowerRight);
 	}
 	
 	boolean isInside(MapPosition pos) {

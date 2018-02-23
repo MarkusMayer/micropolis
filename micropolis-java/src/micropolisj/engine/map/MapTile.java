@@ -1,5 +1,7 @@
 package micropolisj.engine.map;
 
+import java.util.Objects;
+
 import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
 
@@ -9,7 +11,7 @@ class MapTile {
 	protected boolean powered;
 	
 	MapTile(TileSpec spec){
-		this.spec=spec;
+		this.spec=Objects.requireNonNull(spec);
 		this.powered=false;
 	}
 	

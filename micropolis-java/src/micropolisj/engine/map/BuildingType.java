@@ -3,6 +3,7 @@ package micropolisj.engine.map;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import micropolisj.engine.TileConstants;
@@ -28,7 +29,7 @@ public enum BuildingType {
 
 	private BuildingType(int cost, TileSpec base) {
 		this.cost = cost;
-		this.base=base;
+		this.base=Objects.requireNonNull(base);
 	}
 
 	public int getCost() {

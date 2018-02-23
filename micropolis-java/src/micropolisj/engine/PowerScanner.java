@@ -5,6 +5,7 @@ import static micropolisj.engine.TileConstants.POWERPLANT;
 import static micropolisj.engine.TileConstants.isConductive;
 
 import java.util.List;
+import java.util.Objects;
 
 import micropolisj.engine.map.BuildingType;
 import micropolisj.engine.map.MapBase;
@@ -18,8 +19,8 @@ public class PowerScanner {
 	private final ReadOnlyCityMap cityMap;
 
 	public PowerScanner(List<MapPosition> powerPlants, ReadOnlyCityMap cityMap) {
-		this.powerPlants = powerPlants;
-		this.cityMap = cityMap;
+		this.powerPlants = Objects.requireNonNull(powerPlants);
+		this.cityMap = Objects.requireNonNull(cityMap);
 	}
 
 	public PowerScanResult doScan() {
@@ -96,8 +97,8 @@ public class PowerScanner {
 		final private boolean hasBrownout;
 		
 		PowerScanResult(MapBase<Boolean> powerMap, boolean hasBrownout) {
-			this.powerMap=powerMap;
-			this.hasBrownout=hasBrownout;
+			this.powerMap=Objects.requireNonNull(powerMap);
+			this.hasBrownout=Objects.requireNonNull(hasBrownout);
 		}
 
 		public MapBase<Boolean> getPowerMap() {

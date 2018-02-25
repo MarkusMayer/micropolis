@@ -14,6 +14,11 @@ public class SubwayRide {
 	}
 
 	@Override
+	public String toString() {
+		return "SubwayRide [start=" + start + ", finish=" + finish + ", route=" + route + "]";
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;

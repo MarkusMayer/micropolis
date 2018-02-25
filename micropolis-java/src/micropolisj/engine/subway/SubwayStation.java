@@ -1,22 +1,22 @@
 package micropolisj.engine.subway;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
+import java.util.stream.Collectors;
 
 import micropolisj.engine.map.MapPosition;
 
 public class SubwayStation {
 
 	private final MapPosition pos;
-	
+
 	public SubwayStation(MapPosition pos) {
 		super();
 		this.pos = pos;
 	}
-	
+
 	public SubwayStation(int x, int y) {
 		this(new MapPosition(x, y));
 	}
@@ -28,62 +28,49 @@ public class SubwayStation {
 	public int getY() {
 		return pos.getY();
 	}
-	
+
 	public MapPosition getPos() {
 		return pos;
 	}
-	
-	public Set<SubwayStation> getReachableStations(List<SubwayConnection> conns){
-		Set<SubwayStation> step1=this.getConnectedStations(conns);
-		Set<SubwayStation> allReachableStations=new HashSet<>(step1);
-		
-		for (SubwayStation subwayStation : step1) {
-			allReachableStations.addAll(subwayStation.getConnectedStations(conns));
-		}
-		
-		allReachableStations.remove(this);
-		
-		return allReachableStations;
+
+	public Set<SubwayStation> getReachableStationsWithOneStop(List<SubwayConnection> conns) {
+		Set<SubwayRide> rides = getPossibleRides(conns);
+		return rides.stream().map(aRide -> aRide.getFinish()).collect(Collectors.toSet());
 	}
-	
-	//TODO:Make recursive
+
 	public Set<SubwayRide> getPossibleRides(List<SubwayConnection> conns) {
-		Set<SubwayRide> rides=new HashSet<>(),step1=new HashSet<>();
-		for (SubwayConnection aConn : conns) {
-			SubwayStation target=aConn.connectsTo(this);
-			if (target!=null) {
-				step1.add(new SubwayRide(this, target, Arrays.asList(aConn)));
-			}
+		return lookForRides(new Stack<SubwayStation>(), new HashSet<SubwayStation>(), conns);
+	}
+
+	private Set<SubwayRide> lookForRides(Stack<SubwayStation> curRide, Set<SubwayStation> visited,
+			List<SubwayConnection> conns) {
+		Set<SubwayRide> rides = new HashSet<>();
+		Set<SubwayStation> candidates = this.getConnectedStations(conns);
+		candidates.removeAll(visited);
+
+		curRide.push(this);
+		visited.add(this);
+		for (SubwayStation aCandidate : candidates) {
+			rides.addAll(aCandidate.lookForRides(curRide, visited, conns));
 		}
-		rides.addAll(step1);
-		for (SubwayRide subwayRide : step1) {
-			for (SubwayConnection aConn : conns) {
-				SubwayStation target=aConn.connectsTo(subwayRide.getFinish());
-				if (target!=null && !target.equals(this)) {
-					ArrayList<SubwayConnection> newConns=new ArrayList<>(subwayRide.getRoute());
-					newConns.add(aConn);
- 					step1.add(new SubwayRide(this, target, newConns));
-				}
-			}
-		}
-		
+		if (curRide.size() >= 2)
+			rides.add(new SubwayRide(curRide.firstElement(), this, SubwayConnection.asConnectionList(curRide)));
+		curRide.pop();
 		return rides;
 	}
 
-	public Set<SubwayStation> getConnectedStations(List<SubwayConnection> conns){
-		Set<SubwayStation> res=new HashSet<>();
-		
+	public Set<SubwayStation> getConnectedStations(List<SubwayConnection> conns) {
+		Set<SubwayStation> res = new HashSet<>();
+
 		for (SubwayConnection aConn : conns) {
-			SubwayStation target=aConn.connectsTo(this);
-			if (target!=null)
-				res.add(target);
+			aConn.connectsTo(this).map(target -> res.add(target));
 		}
-		
+
 		return res;
 	}
 
 	public String toString() {
-		return "Station "+pos.getX()+"/"+pos.getY();
+		return "Station " + pos.getX() + "/" + pos.getY();
 	}
 
 	@Override

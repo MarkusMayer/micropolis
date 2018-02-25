@@ -64,4 +64,12 @@ public class TestMapPosition {
 	public void testStepDir() {
 		Assert.assertEquals(MapPosition.at(0, 0), MapPosition.at(1, 1).step(StepDir.upleft));
 	}
+	
+	@Test
+	public void testDistanceTo() {
+		Assert.assertEquals(0, MapPosition.at(0, 0).getDistanceToPos(MapPosition.at(0, 0)));
+		Assert.assertEquals(2, MapPosition.at(0, 0).getDistanceToPos(MapPosition.at(2, 0)));
+		Assert.assertEquals(5, MapPosition.at(0, 0).getDistanceToPos(MapPosition.at(2, 3)));
+		Assert.assertEquals(4, MapPosition.at(3, 3).getDistanceToPos(MapPosition.at(1, 1)));
+	}
 }

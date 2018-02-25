@@ -8,7 +8,10 @@
 
 package micropolisj.engine;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.LASTRAIL;
+import static micropolisj.engine.TileConstants.RAILBASE;
+import static micropolisj.engine.TileConstants.RAILHPOWERV;
+import static micropolisj.engine.TileConstants.RAILVPOWERH;
 
 /**
  * Implements the commuter train.

@@ -8,7 +8,10 @@
 
 package micropolisj.engine;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.DIRT;
+import static micropolisj.engine.TileConstants.FIRE;
+import static micropolisj.engine.TileConstants.isCombustible;
+import static micropolisj.engine.TileConstants.isZoneCenter;
 
 import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.map.StepDir;

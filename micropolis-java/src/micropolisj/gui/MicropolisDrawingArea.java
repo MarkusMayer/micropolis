@@ -8,22 +8,41 @@
 
 package micropolisj.gui;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.*;
-import java.net.URL;
-import java.util.*;
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.Timer;
+import static micropolisj.engine.TileConstants.CLEAR;
+import static micropolisj.engine.TileConstants.LIGHTNINGBOLT;
+import static micropolisj.engine.TileConstants.isZoneCenter;
+import static micropolisj.gui.ColorParser.parseColor;
 
-import micropolisj.engine.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.util.HashSet;
+import java.util.ResourceBundle;
+
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
+
+import micropolisj.engine.CityRect;
+import micropolisj.engine.MapListener;
+import micropolisj.engine.MapState;
+import micropolisj.engine.Micropolis;
+import micropolisj.engine.Sprite;
 import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.tool.MicropolisTool;
 import micropolisj.engine.tool.ToolPreview;
-
-import static micropolisj.engine.TileConstants.*;
-import static micropolisj.gui.ColorParser.parseColor;
 
 public class MicropolisDrawingArea extends JComponent
 	implements Scrollable, MapListener

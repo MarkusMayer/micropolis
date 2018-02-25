@@ -8,7 +8,7 @@
 
 package micropolisj.engine;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.RIVER;
 
 import micropolisj.engine.map.MapPosition;
 

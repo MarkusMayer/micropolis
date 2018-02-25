@@ -8,7 +8,14 @@
 
 package micropolisj.engine;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.RIVER;
+import static micropolisj.engine.TileConstants.RZB;
+import static micropolisj.engine.TileConstants.TINYEXP;
+import static micropolisj.engine.TileConstants.TREEBASE;
+import static micropolisj.engine.TileConstants.checkWet;
+import static micropolisj.engine.TileConstants.isBridge;
+import static micropolisj.engine.TileConstants.isCombustible;
+import static micropolisj.engine.TileConstants.isZoneCenter;
 
 /**
  * Represents a mobile entity on the city map, such as a tornado
@@ -101,7 +108,7 @@ public abstract class Sprite
 
 		dispX = Math.abs(dispX);
 		dispY = Math.abs(dispY);
-		int absDist = dispX + dispY;
+//		int absDist = dispX + dispY;
 
 		if (dispX * 2 < dispY)      z++;
 		else if (dispY * 2 < dispX) z--;
@@ -148,7 +155,11 @@ public abstract class Sprite
 		case COP:
 			city.sendMessageAt(MicropolisMessage.COPTER_CRASH_REPORT, xpos, ypos);
 			break;
-		}
+		case TOR:
+		case GOD:
+		case EXP:
+			break;
+		} 
 
 		city.makeSound(xpos, ypos, Sound.EXPLOSION_HIGH);
 	}

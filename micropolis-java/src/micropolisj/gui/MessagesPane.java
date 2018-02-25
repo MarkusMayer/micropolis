@@ -8,11 +8,13 @@
 
 package micropolisj.gui;
 
-import java.util.*;
-import javax.swing.*;
-import javax.swing.text.*;
+import java.util.ResourceBundle;
 
-import micropolisj.engine.*;
+import javax.swing.JTextPane;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.StyledDocument;
+
+import micropolisj.engine.MicropolisMessage;
 
 public class MessagesPane extends JTextPane
 {

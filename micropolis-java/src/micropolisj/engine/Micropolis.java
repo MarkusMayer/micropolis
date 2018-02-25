@@ -19,9 +19,7 @@ import static micropolisj.engine.TileConstants.INDBASE;
 import static micropolisj.engine.TileConstants.LASTZONE;
 import static micropolisj.engine.TileConstants.LHTHR;
 import static micropolisj.engine.TileConstants.LOMASK;
-import static micropolisj.engine.TileConstants.NUCLEAR;
 import static micropolisj.engine.TileConstants.PORTBASE;
-import static micropolisj.engine.TileConstants.POWERPLANT;
 import static micropolisj.engine.TileConstants.RADTILE;
 import static micropolisj.engine.TileConstants.RESCLR;
 import static micropolisj.engine.TileConstants.RIVER;
@@ -85,7 +83,6 @@ import micropolisj.engine.map.BuildingType;
 import micropolisj.engine.map.CityMap;
 import micropolisj.engine.map.MapBase;
 import micropolisj.engine.map.MapPosition;
-import micropolisj.engine.map.StepDir;
 import micropolisj.engine.subway.SubwayConnection;
 import micropolisj.engine.subway.SubwayNetwork;
 import micropolisj.engine.subway.SubwayStation;
@@ -303,7 +300,6 @@ public class Micropolis {
 	protected void init(int width, int height) {
 		map = new CityMap(width, height);
 		powerMap = new MapBase<>(MapPosition.at(width, height), ()->false);
-		CityMap m = new CityMap(1, 1);
 
 		int hX = (width + 1) / 2;
 		int hY = (height + 1) / 2;
@@ -2679,7 +2675,7 @@ public class Micropolis {
 		assert dim.width >= 3;
 		assert dim.height >= 3;
 
-		int zoneBase = (zoneTile & LOMASK) - 1 - dim.width;
+//		int zoneBase = (zoneTile & LOMASK) - 1 - dim.width;
 
 		// this will take care of stopping smoke animations
 		shutdownZone(xpos, ypos, dim);

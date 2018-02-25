@@ -8,8 +8,6 @@
 
 package micropolisj.engine;
 
-import java.util.Arrays;
-
 /**
  * Contains symbolic names of certain tile values,
  * and helper functions to test tile attributes.

@@ -30,8 +30,6 @@ public class Tiles {
 	}
 
 	static void readTiles() throws IOException {
-		ArrayList<TileSpec> tilesList = new ArrayList<TileSpec>();
-
 		Properties tilesRc = new Properties();
 		tilesRc.load(new InputStreamReader(Tiles.class.getResourceAsStream("/tiles.rc"), UTF8));
 
@@ -97,17 +95,14 @@ public class Tiles {
 	}
 
 	public static List<TileSpec> getAllResZones() {
-		return Arrays.stream(tiles).filter(aSpec -> aSpec.isResZoneCenter())
-				.collect(Collectors.toList());
+		return Arrays.stream(tiles).filter(aSpec -> aSpec.isResZoneCenter()).collect(Collectors.toList());
 	}
-	
+
 	public static List<TileSpec> getAllComZones() {
-		return Arrays.stream(tiles).filter(aSpec -> aSpec.isComZoneCenter())
-				.collect(Collectors.toList());
+		return Arrays.stream(tiles).filter(aSpec -> aSpec.isComZoneCenter()).collect(Collectors.toList());
 	}
-	
+
 	public static List<TileSpec> getAllIndZones() {
-		return Arrays.stream(tiles).filter(aSpec -> aSpec.isIndZoneCenter())
-				.collect(Collectors.toList());
+		return Arrays.stream(tiles).filter(aSpec -> aSpec.isIndZoneCenter()).collect(Collectors.toList());
 	}
 }

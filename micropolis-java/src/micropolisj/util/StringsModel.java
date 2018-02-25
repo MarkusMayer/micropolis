@@ -8,9 +8,17 @@
 
 package micropolisj.util;
 
-import java.io.*;
-import java.util.*;
-import javax.swing.table.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Properties;
+
+import javax.swing.table.AbstractTableModel;
 
 class StringsModel extends AbstractTableModel
 {
@@ -103,7 +111,7 @@ class StringsModel extends AbstractTableModel
 	}
 
 	@Override
-	public Class getColumnClass(int col)
+	public Class<?> getColumnClass(int col)
 	{
 		return String.class;
 	}

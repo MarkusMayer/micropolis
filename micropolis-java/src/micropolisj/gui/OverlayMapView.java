@@ -326,6 +326,7 @@ public class OverlayMapView extends JComponent implements Scrollable, MapListene
 		return CLEAR;
 	}
 
+	@SuppressWarnings("unused")
 	private boolean isSelectedPos(int x, int y) {
 		for (MapPosition mapPosition : selectedPosList) {
 			if (mapPosition.isSamePos(x, y))

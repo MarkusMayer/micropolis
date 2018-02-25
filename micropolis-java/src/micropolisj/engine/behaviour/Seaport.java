@@ -3,7 +3,6 @@ package micropolisj.engine.behaviour;
 import static micropolisj.engine.TileConstants.PORT;
 
 import micropolisj.engine.Micropolis;
-import micropolisj.engine.SpriteKind;
 
 public class Seaport extends BuildingBehaviour {
 

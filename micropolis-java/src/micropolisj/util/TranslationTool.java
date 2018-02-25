@@ -8,12 +8,26 @@
 
 package micropolisj.util;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.util.*;
-import javax.swing.*;
-import javax.swing.table.*;
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.Locale;
+
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.WindowConstants;
 
 public class TranslationTool extends JFrame
 {
@@ -98,7 +112,7 @@ public class TranslationTool extends JFrame
 	{
 		try{
 
-		Class mclass = micropolisj.engine.Micropolis.class;
+		Class<?> mclass = micropolisj.engine.Micropolis.class;
 		return new File(
 			mclass.getProtectionDomain()
 				.getCodeSource().getLocation().toURI().getPath()
@@ -301,9 +315,9 @@ public class TranslationTool extends JFrame
 		msg = msg + "Your translated strings have been saved to\n";
 		msg = msg + new File(stringsModel.workingDirectory, "micropolisj").toString() + "\n";
 		msg = msg + "as:\n";
-		for (int i = 0; i < stringsModel.FILES.length; i++) {
+		for (int i = 0; i < StringsModel.FILES.length; i++) {
 			msg = msg + " * "
-				+ stringsModel.FILES[i]+"_"+code+".properties"
+				+ StringsModel.FILES[i]+"_"+code+".properties"
 				+ "\n";
 		}
 		msg = msg + "\n";

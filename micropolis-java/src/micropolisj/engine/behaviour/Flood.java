@@ -1,6 +1,10 @@
 package micropolisj.engine.behaviour;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.DIRT;
+import static micropolisj.engine.TileConstants.FLOOD;
+import static micropolisj.engine.TileConstants.WOODS5;
+import static micropolisj.engine.TileConstants.isCombustible;
+import static micropolisj.engine.TileConstants.isZoneCenter;
 
 import micropolisj.engine.Micropolis;
 

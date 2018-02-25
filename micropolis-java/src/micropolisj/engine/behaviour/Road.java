@@ -26,7 +26,6 @@ import java.util.Optional;
 
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.Sprite;
-import micropolisj.engine.SpriteKind;
 
 public class Road extends TileBehavior {
 	

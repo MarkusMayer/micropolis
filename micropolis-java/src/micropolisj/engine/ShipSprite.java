@@ -8,7 +8,12 @@
 
 package micropolisj.engine;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.BRWH;
+import static micropolisj.engine.TileConstants.BRWV;
+import static micropolisj.engine.TileConstants.CHANNEL;
+import static micropolisj.engine.TileConstants.POWERBASE;
+import static micropolisj.engine.TileConstants.RAILBASE;
+import static micropolisj.engine.TileConstants.RIVER;
 
 /**
  * Implements the cargo ship.

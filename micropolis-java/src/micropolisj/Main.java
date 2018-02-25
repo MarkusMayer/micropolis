@@ -8,7 +8,7 @@
 
 package micropolisj;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 import micropolisj.gui.MainWindow;
 

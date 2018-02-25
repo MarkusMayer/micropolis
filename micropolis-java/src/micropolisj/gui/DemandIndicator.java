@@ -8,12 +8,21 @@
 
 package micropolisj.gui;
 
-import java.awt.*;
-import java.awt.image.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.net.URL;
-import javax.swing.*;
 
-import micropolisj.engine.*;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+
+import micropolisj.engine.Micropolis;
+import micropolisj.engine.MicropolisMessage;
+import micropolisj.engine.Sound;
 import micropolisj.engine.map.MapPosition;
 
 public class DemandIndicator extends JComponent

@@ -12,8 +12,6 @@ import java.util.Random;
 
 import micropolisj.engine.Micropolis;
 
-import static micropolisj.engine.TileConstants.*;
-
 public abstract class TileBehavior
 {
 	protected final Micropolis city;

@@ -8,7 +8,31 @@
 
 package micropolisj.engine.tool;
 
-import static micropolisj.engine.TileConstants.*;
+import static micropolisj.engine.TileConstants.CHANNEL;
+import static micropolisj.engine.TileConstants.DIRT;
+import static micropolisj.engine.TileConstants.HBRIDGE;
+import static micropolisj.engine.TileConstants.HPOWER;
+import static micropolisj.engine.TileConstants.HRAIL;
+import static micropolisj.engine.TileConstants.HRAILROAD;
+import static micropolisj.engine.TileConstants.HROADPOWER;
+import static micropolisj.engine.TileConstants.INTERSECTION;
+import static micropolisj.engine.TileConstants.LHPOWER;
+import static micropolisj.engine.TileConstants.LHRAIL;
+import static micropolisj.engine.TileConstants.LVPOWER;
+import static micropolisj.engine.TileConstants.LVRAIL;
+import static micropolisj.engine.TileConstants.RAILHPOWERV;
+import static micropolisj.engine.TileConstants.RAILVPOWERH;
+import static micropolisj.engine.TileConstants.REDGE;
+import static micropolisj.engine.TileConstants.RIVER;
+import static micropolisj.engine.TileConstants.ROADS2;
+import static micropolisj.engine.TileConstants.VBRIDGE;
+import static micropolisj.engine.TileConstants.VPOWER;
+import static micropolisj.engine.TileConstants.VRAIL;
+import static micropolisj.engine.TileConstants.VRAILROAD;
+import static micropolisj.engine.TileConstants.VROADPOWER;
+import static micropolisj.engine.TileConstants.canAutoBulldozeRRW;
+import static micropolisj.engine.TileConstants.isConductive;
+import static micropolisj.engine.TileConstants.neutralizeRoad;
 
 import micropolisj.engine.CityRect;
 import micropolisj.engine.Micropolis;

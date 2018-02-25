@@ -8,12 +8,21 @@
 
 package micropolisj.engine;
 
-import java.util.*;
+import static micropolisj.engine.TileConstants.CHANNEL;
+import static micropolisj.engine.TileConstants.DIRT;
+import static micropolisj.engine.TileConstants.LOMASK;
+import static micropolisj.engine.TileConstants.REDGE;
+import static micropolisj.engine.TileConstants.RIVEDGE;
+import static micropolisj.engine.TileConstants.RIVER;
+import static micropolisj.engine.TileConstants.WOODS;
+import static micropolisj.engine.TileConstants.WOODS_HIGH;
+import static micropolisj.engine.TileConstants.WOODS_LOW;
+import static micropolisj.engine.TileConstants.isTree;
+
+import java.util.Random;
 
 import micropolisj.engine.map.CityMap;
 import micropolisj.engine.map.MapPosition;
-
-import static micropolisj.engine.TileConstants.*;
 
 /**
  * Contains the code for generating a random map terrain.

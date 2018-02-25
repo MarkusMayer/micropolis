@@ -30,8 +30,6 @@ import micropolisj.engine.subway.SubwayNetwork;
 import micropolisj.engine.subway.SubwayStation;
 
 public class SubwayDialog extends JDialog {
-	private Micropolis engine;
-	private SubwayNetwork subNet;
 	private JButton jbAddConnection;
 	private JPanel panel;
 	private JDialog dlg;
@@ -42,8 +40,6 @@ public class SubwayDialog extends JDialog {
 
 	public SubwayDialog(Window owner, Micropolis engine, SubwayNetwork subNet) {
 		super(owner);
-		this.engine = engine;
-		this.subNet = subNet;
 		dlg = this;
 		panel = new JPanel(true);
 		getContentPane().add(panel);
@@ -83,7 +79,7 @@ public class SubwayDialog extends JDialog {
 		});
 
 		Vector<SubwayStation> vStations = new Vector<SubwayStation>(engine.getSubways());
-		stationList = new JList(vStations);
+		stationList = new JList<SubwayStation>(vStations);
 		panelStations.add(stationList);
 		stationList.addListSelectionListener(new ListSelectionListener() {
 

@@ -6,7 +6,6 @@ import static micropolisj.engine.TileConstants.HHTHR;
 import static micropolisj.engine.TileConstants.HOSPITAL;
 import static micropolisj.engine.TileConstants.HOUSE;
 import static micropolisj.engine.TileConstants.LHTHR;
-import static micropolisj.engine.TileConstants.LOMASK;
 import static micropolisj.engine.TileConstants.RESCLR;
 import static micropolisj.engine.TileConstants.RZB;
 import static micropolisj.engine.TileConstants.isRail;
@@ -14,15 +13,10 @@ import static micropolisj.engine.TileConstants.isResidentialClear;
 import static micropolisj.engine.TileConstants.isRoadAny;
 import static micropolisj.engine.TileConstants.residentialZonePop;
 
-import java.util.List;
-import java.util.Set;
-
 import micropolisj.engine.Micropolis;
-import micropolisj.engine.TileConstants;
 import micropolisj.engine.TypeDemand;
 import micropolisj.engine.ZoneType;
 import micropolisj.engine.map.MapPosition;
-import micropolisj.engine.subway.SubwayStation;
 
 public class Residential extends BuildingBehaviour {
 

@@ -8,8 +8,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Random;
 
-import org.junit.Test;
-
 import micropolisj.engine.tool.MicropolisTool;
 import micropolisj.engine.tool.ToolStroke;
 

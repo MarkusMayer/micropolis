@@ -8,14 +8,23 @@
 
 package micropolisj.gui;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.net.URL;
-import java.util.*;
-import javax.swing.*;
+import static micropolisj.engine.TileConstants.LOMASK;
 
-import micropolisj.engine.*;
-import static micropolisj.engine.TileConstants.*;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Image;
+import java.awt.Transparency;
+import java.awt.image.BufferedImage;
+import java.net.URL;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.swing.ImageIcon;
+
+import micropolisj.engine.SpriteKind;
 
 public class TileImages
 {

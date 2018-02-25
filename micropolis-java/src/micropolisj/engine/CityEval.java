@@ -8,7 +8,11 @@
 
 package micropolisj.engine;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Contains the code for performing a city evaluation.

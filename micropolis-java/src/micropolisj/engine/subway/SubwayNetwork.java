@@ -76,13 +76,11 @@ public class SubwayNetwork {
 		// Basis Wert * U-Bahn Budget Faktor * subPopFactor
 		int baseAttraction = (int) Math.round(10 * city.getSubwayPercent() * (1 + subPopFactor / 10));
 
-		SubwayStation maxAttractStation = null;
 		int maxAttract = 0;
 		SubwayRide bestRide=null;
 		for (SubwayStation subwayStation : nearStations) {
 			SubwayRide shortestRide=null;
 			attractiveness = baseAttraction - subwayStation.getPos().getDistanceToPos(pos);
-			Set<SubwayStation> reachableStations = subwayStation.getReachableStations(getConnections());
 			Set<SubwayRide> newRides = subwayStation.getPossibleRides(getConnections());
 			int shortestDistance = 999;
 			for (SubwayRide aRide : newRides) {

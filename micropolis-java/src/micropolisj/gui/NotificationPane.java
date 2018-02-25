@@ -8,13 +8,31 @@
 
 package micropolisj.gui;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import javax.swing.*;
-
-import micropolisj.engine.*;
 import static micropolisj.gui.ColorParser.parseColor;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ResourceBundle;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JViewport;
+import javax.swing.SwingConstants;
+
+import micropolisj.engine.Micropolis;
+import micropolisj.engine.MicropolisMessage;
+import micropolisj.engine.ZoneStatus;
 
 public class NotificationPane extends JPanel
 {

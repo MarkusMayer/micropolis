@@ -1,15 +1,24 @@
 package micropolisj.build_tool;
 
-import micropolisj.engine.TileSpec;
-import java.awt.*;
+import static micropolisj.engine.TileSpec.generateTileNames;
+
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
-import java.util.*;
-import javax.imageio.*;
+import java.util.HashMap;
+import java.util.Properties;
+
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
-import static micropolisj.engine.TileSpec.generateTileNames;
+import micropolisj.engine.TileSpec;
 
 public class MakeTiles
 {

@@ -26,6 +26,7 @@ public class ToolPreview implements ToolEffectIfc
 	public int cost;
 	public ToolResult toolResult;
 	public List<SoundInfo> sounds;
+	@SuppressWarnings("unused")
 	private CityToolEffect cityEff;
 
 	public static class SoundInfo

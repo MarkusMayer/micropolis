@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import micropolisj.engine.map.MapPosition;
 
+// TODO mit Building Map integrieren
 public class SubwayStation {
 
 	private final MapPosition pos;

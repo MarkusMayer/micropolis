@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.TileConstants;
@@ -12,26 +14,28 @@ import micropolisj.engine.map.MapPosition;
 
 public class SubwayNetwork {
 
-	private static final int SUBNET_CONNECTION_ASSETVALUE = 1000;
+	private static final int SUBNET_STATION_ASSETVALUE = 1000;
+	private static final int SUBNET_CON_STEP_ASSETVALUE = 100;
 
-	static final int SUB_STATION_MAINTENANCE = 70;
+	static final int SUB_STATION_MAINTENANCE = 30;
+	static final int SUB_CON_STEP_MAINTENANCE = 5;
 
 	private final Micropolis city;
 	private Set<SubwayConnection> connections;
 	private Set<SubwayStation> stations;
 	private List<SubwayRide> rides;
-	private int nrRides=0, nrRequests=0;
+	private int nrRides = 0, nrRequests = 0;
 
 	public SubwayNetwork(Micropolis city) {
 		this.city = city;
 		connections = new HashSet<>();
 		stations = new HashSet<>();
-		rides=new ArrayList<>();
+		rides = new ArrayList<>();
 	}
 
 	// TODO: Remove station when bulldozed
-	public void addStation(MapPosition pos) {
-		stations.add(new SubwayStation(pos));
+	public boolean addStation(MapPosition pos) {
+		return city.testBounds(Objects.requireNonNull(pos)) && stations.add(new SubwayStation(pos));
 	}
 
 	public SubwayConnection connect(SubwayStation station1, SubwayStation station2) {
@@ -77,9 +81,9 @@ public class SubwayNetwork {
 		int baseAttraction = (int) Math.round(10 * city.getSubwayPercent() * (1 + subPopFactor / 10));
 
 		int maxAttract = 0;
-		SubwayRide bestRide=null;
+		SubwayRide bestRide = null;
 		for (SubwayStation subwayStation : nearStations) {
-			SubwayRide shortestRide=null;
+			SubwayRide shortestRide = null;
 			attractiveness = baseAttraction - subwayStation.getPos().getDistanceToPos(pos);
 			Set<SubwayRide> newRides = subwayStation.getPossibleRides(getConnections());
 			int shortestDistance = 999;
@@ -112,7 +116,7 @@ public class SubwayNetwork {
 	public boolean removeConnection(SubwayConnection aConn) {
 		return connections.remove(aConn);
 	}
-	
+
 	public List<SubwayStation> getStations() {
 		return Collections.unmodifiableList(new ArrayList<>(stations));
 	}
@@ -120,7 +124,7 @@ public class SubwayNetwork {
 	public List<SubwayConnection> getConnections() {
 		return Collections.unmodifiableList(new ArrayList<>(connections));
 	}
-	
+
 	public int getSubStationCount() {
 		return stations.size();
 	}
@@ -140,32 +144,35 @@ public class SubwayNetwork {
 	}
 
 	public int getMaintenanceCost() {
-		int maintCost = stations.size() * SUB_STATION_MAINTENANCE;
-		for (SubwayConnection aConn : getConnections()) {
-			maintCost += aConn.getAnnualMaintenance();
-		}
+		int maintCost = stations.size() * SUB_STATION_MAINTENANCE + getNetworkLength() * SUB_CON_STEP_MAINTENANCE;
+
 		return maintCost;
 	}
 
+	private int getNetworkLength() {
+		return getConnections().stream().collect(Collectors.summingInt(SubwayConnection::getLength));
+	}
+
 	public int getAssetValue() {
-		return connections.size() * SUBNET_CONNECTION_ASSETVALUE;
+		return stations.size() * SUBNET_STATION_ASSETVALUE+getNetworkLength()*SUBNET_CON_STEP_ASSETVALUE;
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder sb=new StringBuilder("SubwayNetwork [city=" + city + ", connections=" + connections + ", stations=" + stations + "]\r\n");
-		
+		StringBuilder sb = new StringBuilder(
+				"SubwayNetwork [city=" + city + ", connections=" + connections + ", stations=" + stations + "]\r\n");
+
 		for (SubwayConnection subwayConnection : connections) {
-			int useCount=0;
+			int useCount = 0;
 			for (SubwayRide aRide : rides) {
 				if (aRide.getRoute().contains(subwayConnection))
 					useCount++;
 			}
-			sb.append("Connection: "+subwayConnection+" ==> used "+useCount+" times.\r\n");
+			sb.append("Connection: " + subwayConnection + " ==> used " + useCount + " times.\r\n");
 		}
-		
-		sb.append("ride/request ratio: "+(nrRequests>0 ? nrRides/nrRequests : -1));
-		
+
+		sb.append("ride/request ratio: " + (nrRequests > 0 ? nrRides / nrRequests : -1));
+
 		return sb.toString();
 	}
 

@@ -628,7 +628,6 @@ public class Micropolis {
 		return testBounds(MapPosition.at(xpos, ypos));
 	}
 
-	// TODO refactor to MapPosition and map.isInside()
 	final public boolean testBounds(MapPosition pos) {
 		return map.isPosInside(pos);
 	}
@@ -1985,7 +1984,6 @@ public class Micropolis {
 		assert b.taxIncome >= 0;
 
 		b.roadRequest = (int) Math.round((lastRoadTotal + lastRailTotal * 2) * gameLevel.getTrafficMaintenanceMulti());
-		// TODO: ConnectionPrice depending on connection length
 		b.subRequest = subNet.getMaintenanceCost();
 		System.out.println(subNet);
 

@@ -5,12 +5,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import micropolisj.engine.Micropolis;
 import micropolisj.engine.TileConstants;
+import micropolisj.engine.map.BuildingType;
 import micropolisj.engine.map.MapPosition;
+import micropolisj.engine.map.ReadOnlyCityMap;
 
 public class SubwayNetwork {
 
@@ -20,14 +22,14 @@ public class SubwayNetwork {
 	static final int SUB_STATION_MAINTENANCE = 30;
 	static final int SUB_CON_STEP_MAINTENANCE = 5;
 
-	private final Micropolis city;
+	private final ReadOnlyCityMap map;
 	private Set<SubwayConnection> connections;
 	private Set<SubwayStation> stations;
 	private List<SubwayRide> rides;
 	private int nrRides = 0, nrRequests = 0;
 
-	public SubwayNetwork(Micropolis city) {
-		this.city = city;
+	public SubwayNetwork(ReadOnlyCityMap map) {
+		this.map = map;
 		connections = new HashSet<>();
 		stations = new HashSet<>();
 		rides = new ArrayList<>();
@@ -35,7 +37,7 @@ public class SubwayNetwork {
 
 	// TODO: Remove station when bulldozed
 	public boolean addStation(MapPosition pos) {
-		return city.testBounds(Objects.requireNonNull(pos)) && stations.add(new SubwayStation(pos));
+		return map.isPosInside(Objects.requireNonNull(pos)) && stations.add(new SubwayStation(pos));
 	}
 
 	public SubwayConnection connect(SubwayStation station1, SubwayStation station2) {
@@ -48,14 +50,14 @@ public class SubwayNetwork {
 		return con;
 	}
 
-	public int checkRide(int trafficGood, MapPosition pos) {
+	public int checkRide(int trafficGood, MapPosition pos, double subwayPercent, int cityPop, Random rndGen) {
 		// isAttractedBySubway() ==> distance + stationAttractivness
 		// (=walkingDistanceToRelevantTarget+nrOfConnectionsToRelevantTarget)
 		// Zufallselement
 		List<SubwayStation> nearStations = getStationsNearPos(pos, 10);
 		int attractiveness = 0;
 		nrRequests++;
-		int targetTile = city.PRNG.nextInt(TileConstants.NUCLEARBASE - TileConstants.COMBASE - 1)
+		int targetTile = rndGen.nextInt(TileConstants.NUCLEARBASE - TileConstants.COMBASE - 1)
 				+ TileConstants.COMBASE;
 		int[] ranges = new int[9];
 		ranges[0] = TileConstants.COMBASE;
@@ -76,9 +78,9 @@ public class SubwayNetwork {
 		// TODO: Route für Anzahl Benützungen
 
 		// Soll-Wert eine Station pro 50k Einwohner
-		double subPopFactor = city.getSubways().size() / Math.max(1, (city.getCityPopulation() / 50000));
+		double subPopFactor = map.getAllBuildingsOfType(BuildingType.subway).size() / Math.max(1, (cityPop / 50000));
 		// Basis Wert * U-Bahn Budget Faktor * subPopFactor
-		int baseAttraction = (int) Math.round(10 * city.getSubwayPercent() * (1 + subPopFactor / 10));
+		int baseAttraction = (int) Math.round(10 * subwayPercent * (1 + subPopFactor / 10));
 
 		int maxAttract = 0;
 		SubwayRide bestRide = null;
@@ -88,7 +90,7 @@ public class SubwayNetwork {
 			Set<SubwayRide> newRides = subwayStation.getPossibleRides(getConnections());
 			int shortestDistance = 999;
 			for (SubwayRide aRide : newRides) {
-				int dis = city.findNearestTileFromRange(aRide.getFinish().getPos(), ranges[i - 1], ranges[i]);
+				int dis = map.findNearestTileFromRange(aRide.getFinish().getPos(), ranges[i - 1], ranges[i]);
 				if (dis < shortestDistance) {
 					shortestDistance = dis;
 					shortestRide = aRide;
@@ -101,7 +103,7 @@ public class SubwayNetwork {
 				bestRide = shortestRide;
 			}
 		}
-		int rand = city.PRNG.nextInt(10);
+		int rand = rndGen.nextInt(10);
 		if (maxAttract > rand) {
 			System.out.println("Took subway: " + maxAttract + " / " + rand + " / " + i);
 			rides.add(bestRide);
@@ -160,7 +162,7 @@ public class SubwayNetwork {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(
-				"SubwayNetwork [city=" + city + ", connections=" + connections + ", stations=" + stations + "]\r\n");
+				"SubwayNetwork [city=" + map + ", connections=" + connections + ", stations=" + stations + "]\r\n");
 
 		for (SubwayConnection subwayConnection : connections) {
 			int useCount = 0;

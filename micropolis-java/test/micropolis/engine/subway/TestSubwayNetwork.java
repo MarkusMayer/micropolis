@@ -22,7 +22,7 @@ public class TestSubwayNetwork {
 
 	@Before
 	public void before() {
-		net = new SubwayNetwork(new Micropolis(10, 10));
+		net = new SubwayNetwork(new Micropolis(10, 10).getMap());
 		pos1 = MapPosition.at(1, 1);
 		pos2 = MapPosition.at(2, 2);
 		pos3 = MapPosition.at(3, 3);

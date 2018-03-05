@@ -16,7 +16,7 @@ class Building {
 	private final BuildingType type;
 	private boolean centerIntact;
 
-	protected Building(BuildingType type,MapPosition pos) {
+	Building(BuildingType type,MapPosition pos) {
 		this.type = Objects.requireNonNull(type);
 		this.base = type.getBase();
 		this.pos=Objects.requireNonNull(pos);

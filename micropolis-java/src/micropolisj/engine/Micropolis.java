@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 import micropolisj.engine.PowerScanner.PowerScanResult;
 import micropolisj.engine.behaviour.Airport;
@@ -292,14 +293,14 @@ public class Micropolis {
 	public Micropolis(int width, int height) {
 		PRNG = DEFAULT_PRNG;
 		evaluation = new CityEval(this);
-		subNet = new SubwayNetwork(this);
+		subNet = new SubwayNetwork(this.getMap());
 		init(width, height);
 		initTileBehaviors();
 	}
 
 	protected void init(int width, int height) {
 		map = new CityMap(width, height);
-		powerMap = new MapBase<>(MapPosition.at(width, height), ()->false);
+		powerMap = new MapBase<>(MapPosition.at(width, height), () -> false);
 
 		int hX = (width + 1) / 2;
 		int hY = (height + 1) / 2;
@@ -2673,7 +2674,7 @@ public class Micropolis {
 		assert dim.width >= 3;
 		assert dim.height >= 3;
 
-//		int zoneBase = (zoneTile & LOMASK) - 1 - dim.width;
+		// int zoneBase = (zoneTile & LOMASK) - 1 - dim.width;
 
 		// this will take care of stopping smoke animations
 		shutdownZone(xpos, ypos, dim);
@@ -2983,16 +2984,10 @@ public class Micropolis {
 		budget.totalFunds = totalFunds;
 	}
 
+	// TODO move to map, TODO subway ass Building
 	public List<SubwayStation> getSubways() {
-		ArrayList<SubwayStation> stations = new ArrayList<>();
-		for (int x = 0; x < getWidth(); x++) {
-			for (int y = 0; y < getHeight(); y++) {
-				if (TileConstants.isSubway(getTile(x, y))) {
-					stations.add(new SubwayStation(x, y));
-				}
-			}
-		}
-		return stations;
+		return map.getAllMapPosOfType(BuildingType.subway).stream().map(aPos -> new SubwayStation(aPos))
+				.collect(Collectors.toList());
 	}
 
 	public SubwayNetwork getSubNet() {

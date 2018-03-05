@@ -143,11 +143,14 @@ public class CityMap implements ReadOnlyCityMap {
 		return getBuilding(pos).map(building -> building.getPower()).orElse(getTile(pos).isPowered());
 	}
 
-	Set<Building> getAllBuildings() {
+	Set<Building> getBuildings() {
 		return new HashSet<>(buildMap.values());
 	}
+	
+	public int getNrOfBuildings() {
+		return buildMap.keySet().size();
+	}
 
-	// TODO change signature to TilePos or new class BuildingPos
 	public Set<MapPosition> getAllMapPosOfType(BuildingType searchType) {
 		return buildMap.values().stream().filter(aBuilding -> aBuilding.getType() == searchType)
 				.map(aBuilding -> aBuilding.getPos()).collect(Collectors.toSet());
@@ -162,7 +165,7 @@ public class CityMap implements ReadOnlyCityMap {
 	}
 
 	public Set<Building> getAllBuildingsOfType(BuildingType searchType) {
-		return getAllBuildings().stream().filter(aBuilding -> aBuilding.getType() == searchType)
+		return getBuildings().stream().filter(aBuilding -> aBuilding.getType() == searchType)
 				.collect(Collectors.toSet());
 	}
 

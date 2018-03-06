@@ -13,27 +13,29 @@ import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
 
 public enum BuildingType {
-	police(500, Tiles.get(TileConstants.POLICESTATION),Arrays.asList()), 
-	firestation(500,Tiles.get(TileConstants.FIRESTATION),Arrays.asList()), 
-	stadium(5000, Tiles.get(TileConstants.STADIUM),Arrays.asList()), 
-	coalPower(3000, Tiles.get(TileConstants.POWERPLANT),Arrays.asList()), 
-	nukePower(5000, Tiles.get(TileConstants.NUCLEAR),Arrays.asList()), 
-	subway(500, Tiles.get(TileConstants.SUBWAY),Arrays.asList()), 
-	icerink(500, Tiles.get(TileConstants.ICERINK),Arrays.asList()), 
-	residential(100, Tiles.get(TileConstants.RZB),Tiles.getAllResZones()), 
-	commercial(100, Tiles.get(TileConstants.CZB),Tiles.getAllComZones()), 
-	industrial(100, Tiles.get(TileConstants.IZB),Tiles.getAllIndZones()), 
-	seaport(3000, Tiles.get(TileConstants.PORT),Arrays.asList()), 
-	airport(10000, Tiles.get(TileConstants.AIRPORT),Arrays.asList());
+	police(500, Tiles.get(TileConstants.POLICESTATION),Arrays.asList(),2), 
+	firestation(500,Tiles.get(TileConstants.FIRESTATION),Arrays.asList(),2), 
+	stadium(5000, Tiles.get(TileConstants.STADIUM),Arrays.asList(),8), 
+	coalPower(3000, Tiles.get(TileConstants.POWERPLANT),Arrays.asList(),1), 
+	nukePower(5000, Tiles.get(TileConstants.NUCLEAR),Arrays.asList(),1), 
+	subway(500, Tiles.get(TileConstants.SUBWAY),Arrays.asList(),0), 
+	icerink(500, Tiles.get(TileConstants.ICERINK),Arrays.asList(),8), 
+	residential(100, Tiles.get(TileConstants.RZB),Tiles.getAllResZones(),2), 
+	commercial(100, Tiles.get(TileConstants.CZB),Tiles.getAllComZones(),2), 
+	industrial(100, Tiles.get(TileConstants.IZB),Tiles.getAllIndZones(),2), 
+	seaport(3000, Tiles.get(TileConstants.PORT),Arrays.asList(),5), 
+	airport(10000, Tiles.get(TileConstants.AIRPORT),Arrays.asList(),20);
 
 	private int cost;
 	private TileSpec base;
 	private List<TileSpec>lookupSpecs;
+	private int subwayWeight;
 
-	private BuildingType(int cost, TileSpec base,List<TileSpec> lookupSpecs) {
+	private BuildingType(int cost, TileSpec base,List<TileSpec> lookupSpecs, int subwayWeight) {
 		this.cost = cost;
 		this.base=Objects.requireNonNull(base);
 		this.lookupSpecs=lookupSpecs;
+		this.subwayWeight=subwayWeight;
 	}
 
 	public int getCost() {
@@ -46,6 +48,10 @@ public enum BuildingType {
 	
 	public int getTileNr() {
 		return base.getTileNr();
+	}
+	
+	public int getSubwayWeight() {
+		return subwayWeight;
 	}
 
 	public static Set<BuildingType> getPowerPlantTypes() {

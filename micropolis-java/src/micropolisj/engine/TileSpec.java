@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import micropolisj.engine.map.MapPosition;
+
 public class TileSpec {
 	int tileNumber;
 	String name;
@@ -88,6 +90,20 @@ public class TileSpec {
 
 		public short getCenterTile() {
 			return (short) centerTile;
+		}
+
+		public MapPosition getCenterOffset() {
+			for (int yIdx = 0; yIdx < getHeight(); yIdx++) {
+				for (int xIdx = 0; xIdx < getWidth(); xIdx++) {
+					short curTileNumber = getMembers()[yIdx * getWidth() + xIdx];
+					if (curTileNumber == getCenterTile()) {
+						return new MapPosition(xIdx, yIdx);
+					}
+				}
+			}
+
+			throw new IllegalArgumentException("Missing center tile for: " + this);
+
 		}
 	}
 
@@ -364,7 +380,7 @@ public class TileSpec {
 		assert ntiles == tileNames.length;
 		return tileNames;
 	}
-	
+
 	public boolean isResZoneCenter() {
 		return getBooleanAttribute("residential-zone");
 	}
@@ -372,7 +388,7 @@ public class TileSpec {
 	public boolean isComZoneCenter() {
 		return getBooleanAttribute("commercial-zone");
 	}
-	
+
 	public boolean isIndZoneCenter() {
 		return getBooleanAttribute("industrial-zone");
 	}

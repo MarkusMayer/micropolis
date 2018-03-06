@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
@@ -11,6 +13,7 @@ import java.util.stream.Collectors;
 
 import micropolisj.engine.TileConstants;
 import micropolisj.engine.map.BuildingType;
+import micropolisj.engine.map.MapArea;
 import micropolisj.engine.map.MapPosition;
 import micropolisj.engine.map.ReadOnlyCityMap;
 
@@ -29,7 +32,7 @@ public class SubwayNetwork {
 	private int nrRides = 0, nrRequests = 0;
 
 	public SubwayNetwork(ReadOnlyCityMap map) {
-		this.map = map;
+		this.map = Objects.requireNonNull(map);
 		connections = new HashSet<>();
 		stations = new HashSet<>();
 		rides = new ArrayList<>();
@@ -50,6 +53,16 @@ public class SubwayNetwork {
 		return con;
 	}
 
+	private List<MapPosition> getWeightAdjustedMapPos(Map<BuildingType, List<MapPosition>> buildingPosMap) {
+		List<MapPosition> result = new ArrayList<>();
+		for (Entry<BuildingType, List<MapPosition>> entry : buildingPosMap.entrySet()) {
+			for (MapPosition aPos : entry.getValue()) {
+				result.addAll(Collections.nCopies(entry.getKey().getSubwayWeight(),aPos));
+			}
+		}
+		return result;
+	}
+
 	public int checkRide(int trafficGood, MapPosition pos, double subwayPercent, int cityPop, Random rndGen) {
 		// isAttractedBySubway() ==> distance + stationAttractivness
 		// (=walkingDistanceToRelevantTarget+nrOfConnectionsToRelevantTarget)
@@ -57,25 +70,12 @@ public class SubwayNetwork {
 		List<SubwayStation> nearStations = getStationsNearPos(pos, 10);
 		int attractiveness = 0;
 		nrRequests++;
-		int targetTile = rndGen.nextInt(TileConstants.NUCLEARBASE - TileConstants.COMBASE - 1)
-				+ TileConstants.COMBASE;
-		int[] ranges = new int[9];
-		ranges[0] = TileConstants.COMBASE;
-		ranges[1] = TileConstants.INDBASE;
-		ranges[2] = TileConstants.PORTBASE;
-		ranges[3] = TileConstants.AIRPORTBASE;
-		ranges[4] = TileConstants.POWERPLANTBASE;
-		ranges[5] = TileConstants.FIRESTATIONBASE;
-		ranges[6] = TileConstants.POLICESTATIONBASE;
-		ranges[7] = TileConstants.STADIUMBASE;
-		ranges[8] = TileConstants.NUCLEARBASE;
-		int i = 0;
-		for (; i < ranges.length; i++) {
-			if (ranges[i] > targetTile)
-				break;
-		}
+		List<MapPosition> potentialTargets = getWeightAdjustedMapPos(map.getAllMapPosOfAllBuildingTypes());
+		MapPosition target=potentialTargets.get(rndGen.nextInt(potentialTargets.size()));
+		MapArea targetArea=map.getOccupiedArea(target);
+		
 		// TODO: subway isPowered
-		// TODO: Route für Anzahl Benützungen
+		// TODO: Route fÃ¼r Anzahl BenÃ¼tzungen
 
 		// Soll-Wert eine Station pro 50k Einwohner
 		double subPopFactor = map.getAllBuildingsOfType(BuildingType.subway).size() / Math.max(1, (cityPop / 50000));
@@ -90,7 +90,7 @@ public class SubwayNetwork {
 			Set<SubwayRide> newRides = subwayStation.getPossibleRides(getConnections());
 			int shortestDistance = 999;
 			for (SubwayRide aRide : newRides) {
-				int dis = map.findNearestTileFromRange(aRide.getFinish().getPos(), ranges[i - 1], ranges[i]);
+				int dis = aRide.getFinish().getPos().getDistanceToArea(targetArea);
 				if (dis < shortestDistance) {
 					shortestDistance = dis;
 					shortestRide = aRide;
@@ -105,12 +105,12 @@ public class SubwayNetwork {
 		}
 		int rand = rndGen.nextInt(10);
 		if (maxAttract > rand) {
-			System.out.println("Took subway: " + maxAttract + " / " + rand + " / " + i);
+			System.out.println("Took subway: " + maxAttract + " / " + rand +" / "+ bestRide);
 			rides.add(bestRide);
 			nrRides++;
 			trafficGood = 1;
 		} else {
-			System.out.println("Try to use road instead... " + maxAttract + " / " + rand + " / " + i);
+			System.out.println("Try to use road instead... " + maxAttract + " / " + rand);
 		}
 		return trafficGood;
 	}
@@ -156,7 +156,7 @@ public class SubwayNetwork {
 	}
 
 	public int getAssetValue() {
-		return stations.size() * SUBNET_STATION_ASSETVALUE+getNetworkLength()*SUBNET_CON_STEP_ASSETVALUE;
+		return stations.size() * SUBNET_STATION_ASSETVALUE + getNetworkLength() * SUBNET_CON_STEP_ASSETVALUE;
 	}
 
 	@Override

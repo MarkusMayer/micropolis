@@ -10,12 +10,12 @@ public class TestBuilding {
 	
 	@Before
 	public void setup() {
-		building=new Building(BuildingType.coalPower, MapPosition.at(1, 1));
+		building=Building.fromCenter(BuildingType.coalPower, MapPosition.at(1, 1));
 	}
 
 	@Test
 	public void testIsInside() {
-		Assert.assertTrue(building.isInside(MapPosition.at(0, 0)));
+		Assert.assertTrue(building.isInside(MapPosition.at(1, 1)));
 	}
 
 	@Test

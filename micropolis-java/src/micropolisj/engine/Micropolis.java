@@ -293,9 +293,9 @@ public class Micropolis {
 	public Micropolis(int width, int height) {
 		PRNG = DEFAULT_PRNG;
 		evaluation = new CityEval(this);
-		subNet = new SubwayNetwork(this.getMap());
 		init(width, height);
 		initTileBehaviors();
+		subNet = new SubwayNetwork(this.getMap());
 	}
 
 	protected void init(int width, int height) {
@@ -372,20 +372,6 @@ public class Micropolis {
 
 	public void setCityTax(int cityTax) {
 		this.cityTax = cityTax;
-	}
-
-	public int findNearestTileFromRange(MapPosition pos, int lowTile, int highTile) {
-		int distance = 999;
-
-		for (int xInd = Math.max(0, pos.getX() - 5); xInd <= Math.min(getWidth() - 1, pos.getX() + 5); xInd++) {
-			for (int yInd = Math.max(0, pos.getY() - 5); yInd <= Math.min(getHeight() - 1, pos.getY() + 5); yInd++) {
-				int tile = getTile(xInd, yInd);
-				if (lowTile <= tile && tile < highTile) {
-					distance = Math.min(distance, pos.getDistanceToPos(xInd, yInd));
-				}
-			}
-		}
-		return distance;
 	}
 
 	public void spend(int amount) {

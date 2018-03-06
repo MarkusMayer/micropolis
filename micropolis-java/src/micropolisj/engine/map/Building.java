@@ -10,16 +10,25 @@ import micropolisj.engine.Tiles;
 class Building {
 
 	private final TileSpec base;
-	private final MapPosition pos;
+	private final MapPosition topLeft,center;
 	private final MapArea area;
 	private boolean isPowered;
 	private final BuildingType type;
 	private boolean centerIntact;
 
-	Building(BuildingType type,MapPosition pos) {
+	static Building fromTopLeft(BuildingType type,MapPosition topLeft) {
+		return new Building(type,topLeft);
+	}
+
+	static Building fromCenter(BuildingType type,MapPosition center) {
+		return new Building(type,center.plus(type.getBase().getBuildingInfo().getCenterOffset().reverse()));
+	}
+	
+	private Building(BuildingType type,MapPosition topLeft) {
 		this.type = Objects.requireNonNull(type);
 		this.base = type.getBase();
-		this.pos=Objects.requireNonNull(pos);
+		this.topLeft=Objects.requireNonNull(topLeft);
+		this.center=topLeft.plus(getCenterOffset());
 		this.area=getArea();
 		this.isPowered = false;
 		this.centerIntact=true;
@@ -33,8 +42,8 @@ class Building {
 		return type;
 	}
 	
-	public MapPosition getPos() {
-		return pos;
+	public MapPosition getTopLeftPos() {
+		return topLeft;
 	}
 
 	void setPower(boolean newPower) {
@@ -77,25 +86,14 @@ class Building {
 
 	}
 	
-	private MapArea getArea() {
-		MapPosition upperLeft=pos.plus(getCenterOffset().reverse());
+	public MapArea getArea() {
+		MapPosition upperLeft=topLeft;
 		MapPosition lowerRight=upperLeft.plus(MapPosition.at(getBuildingInfo().getWidth(), getBuildingInfo().getHeight()));
-		return new MapArea(upperLeft, lowerRight);
+		return MapArea.of(upperLeft, lowerRight);
 	}
 
 	MapPosition getCenterOffset() {
-		BuildingInfo bi = getBuildingInfo();
-
-		for (int yIdx = 0; yIdx < bi.getHeight(); yIdx++) {
-			for (int xIdx = 0; xIdx < bi.getWidth(); xIdx++) {
-				short curTileNumber = bi.getMembers()[yIdx * bi.getWidth() + xIdx];
-				if (curTileNumber == bi.getCenterTile()) {
-					return new MapPosition(xIdx, yIdx);
-				}
-			}
-		}
-
-		throw new IllegalArgumentException("Missing center tile for: " + bi);
+		return getBuildingInfo().getCenterOffset();
 	}
 	
 	BuildingType getBuildingType() {
@@ -104,5 +102,9 @@ class Building {
 	
 	boolean isInside(MapPosition pos) {
 		return area.isInside(pos);
+	}
+
+	public MapPosition getCenter() {
+		return center;
 	}
 }

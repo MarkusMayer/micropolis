@@ -1,7 +1,12 @@
 package micropolisj.engine.map;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,6 +36,22 @@ public class CityMap implements ReadOnlyCityMap {
 		return dim;
 	}
 
+	public int findNearestTileFromRange(MapPosition pos, int lowTile, int highTile) {
+		int distance = 999;
+
+		for (int xInd = Math.max(0, pos.getX() - 5); xInd <= Math.min(getDimension().getX() - 1,
+				pos.getX() + 5); xInd++) {
+			for (int yInd = Math.max(0, pos.getY() - 5); yInd <= Math.min(getDimension().getY() - 1,
+					pos.getY() + 5); yInd++) {
+				int tile = getTile(MapPosition.at(xInd, yInd)).getTileSpec().getTileNr();
+				if (lowTile <= tile && tile < highTile) {
+					distance = Math.min(distance, pos.getDistanceToPos(xInd, yInd));
+				}
+			}
+		}
+		return distance;
+	}
+
 	MapTile getTile(MapPosition pos) {
 		checkPosInside(pos);
 		return map.getAt(pos);
@@ -57,21 +78,29 @@ public class CityMap implements ReadOnlyCityMap {
 		checkPosInside(pos);
 		// System.out.println(pos+" ==> "+newSpec);
 		boolean res = getTile(pos).setTileSpec(newSpec);
-		BuildingType.getTypeFromSpec(newSpec).map(aType -> build(pos, aType));
+		BuildingType.getTypeFromSpec(newSpec).map(aType -> buildTopLeft(pos, aType));
 		// System.out.println("after: "+pos+" ==> "+getTileNr(pos));
 		return res;
 	}
 
-	public boolean build(MapPosition pos, BuildingType type) {
-		System.out.println("build(pos, type): "+pos+" ,"+type);
+	public boolean buildTopLeft(MapPosition pos, BuildingType type) {
+		return build(pos, type, false);
+	}
+
+	public boolean buildCenter(MapPosition pos, BuildingType type) {
+		return build(pos, type, true);
+	}
+
+	private boolean build(MapPosition pos, BuildingType type, boolean isCenter) {
+		System.out.println("build(pos, type): " + pos + " ," + type);
 		checkPosInside(pos);
-		Building aBuilding = new Building(type, pos);
-		buildMap.putAt(pos.plus(aBuilding.getCenterOffset()), aBuilding);
+		Building aBuilding = isCenter ? Building.fromCenter(type, pos) : Building.fromTopLeft(type, pos);
+		buildMap.putAt(aBuilding.getCenter(), aBuilding);
 		MapFragment frag = aBuilding.getFragment();
-		if (!isRectBuildable(pos, pos.plus(frag.getDim())))
+		if (!isRectBuildable(aBuilding.getTopLeftPos(), aBuilding.getTopLeftPos().plus(frag.getDim())))
 			return false;
 
-		map = frag.transposeAndSetTo(map, pos);
+		map = frag.transposeAndSetTo(map, aBuilding.getTopLeftPos());
 		return true;
 	}
 
@@ -146,20 +175,32 @@ public class CityMap implements ReadOnlyCityMap {
 	Set<Building> getBuildings() {
 		return new HashSet<>(buildMap.values());
 	}
-	
+
 	public int getNrOfBuildings() {
 		return buildMap.keySet().size();
 	}
 
 	public Set<MapPosition> getAllMapPosOfType(BuildingType searchType) {
 		return buildMap.values().stream().filter(aBuilding -> aBuilding.getType() == searchType)
-				.map(aBuilding -> aBuilding.getPos()).collect(Collectors.toSet());
+				.map(aBuilding -> aBuilding.getCenter()).collect(Collectors.toSet());
 	}
 
 	public Set<MapPosition> getAllMapPosOfType(Set<BuildingType> searchTypes) {
 		Set<MapPosition> result = new HashSet<>();
 		for (BuildingType type : searchTypes) {
 			result.addAll(getAllMapPosOfType(type));
+		}
+		return result;
+	}
+
+	public Map<BuildingType, List<MapPosition>> getAllMapPosOfAllBuildingTypes() {
+		Map<BuildingType, List<MapPosition>> result = new HashMap<>();
+		for (Building aBuilding : buildMap.values()) {
+
+			if (result.containsKey(aBuilding.getBuildingType()))
+				result.get(aBuilding.getBuildingType()).add(aBuilding.getCenter());
+			else
+				result.put(aBuilding.getBuildingType(), new ArrayList<>(Arrays.asList(aBuilding.getCenter())));
 		}
 		return result;
 	}
@@ -197,8 +238,18 @@ public class CityMap implements ReadOnlyCityMap {
 
 	public void rebuildFromTiles() {
 		for (MapPosition aPos : getAllPos()) {
-			boolean x = BuildingType.getTypeFromSpec(getSpec(aPos)).map(aType -> build(aPos, aType)).orElse(false);
+			// TODO Map Offset is wrong!!! build expects topLeft but will get centerPos
+			// here!!!
+			boolean x = BuildingType.getTypeFromSpec(getSpec(aPos)).map(aType -> buildCenter(aPos, aType)).orElse(false);
 		}
-		System.out.println("rebuildFromTiles: buildMap.size():  "+buildMap.keySet().size());
+		System.out.println("rebuildFromTiles: buildMap.size():  " + buildMap.keySet().size());
+	}
+
+	@Override
+	public MapArea getOccupiedArea(MapPosition target) {
+		if (buildMap.containsKey(target))
+			return buildMap.getAt(Objects.requireNonNull(target)).getArea();
+		else
+			return MapArea.ofEmpty();
 	}
 }

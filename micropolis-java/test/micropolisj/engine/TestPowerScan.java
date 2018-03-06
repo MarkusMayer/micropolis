@@ -21,11 +21,12 @@ public class TestPowerScan {
 
 	@Test
 	public void testPowerScan() {
-		boolean[][] expectedPowerMap = { { false, false, false, false, false, false, false, false, false, false },
+		boolean[][] expectedPowerMap = { 
+				{ false, false, false, false, false, false, false, false, false, false },
 				{ false, false, false, false, false, false, true, true, true, false },
 				{ false, false, false, false, false, false, true, true, true, false },
 				{ false, true, true, true, true, false, true, true, true, false },
-				{ false, true, false, true, true, false, false, true, false, false },
+				{ false, true, true, true, true, false, false, true, false, false },
 				{ false, true, true, true, true, true, true, true, false, false },
 				{ false, true, true, true, true, false, false, true, false, false },
 				{ false, false, false, false, false, false, true, true, true, false },
@@ -33,7 +34,7 @@ public class TestPowerScan {
 				{ false, false, false, false, false, false, true, true, true, false } };
 
 		// TODO inc coal count fehlt beim builden
-		engine.getMap().build(MapPosition.at(1, 3), BuildingType.nukePower);
+		engine.getMap().buildTopLeft(MapPosition.at(1, 3), BuildingType.nukePower);
 		engine.addPowerPlant(MapPosition.at(1, 3));
 		engine.incCoalCount();
 		engine.getMap().setSpec(MapPosition.at(5, 5), Tiles.get(208));
@@ -41,8 +42,8 @@ public class TestPowerScan {
 		engine.getMap().setSpec(MapPosition.at(7, 5), Tiles.get(208));
 		engine.getMap().setSpec(MapPosition.at(7, 6), Tiles.get(208));
 		engine.getMap().setSpec(MapPosition.at(7, 4), Tiles.get(208));
-		engine.getMap().build(MapPosition.at(6, 1), BuildingType.residential);
-		engine.getMap().build(MapPosition.at(6, 7), BuildingType.firestation);
+		engine.getMap().buildTopLeft(MapPosition.at(6, 1), BuildingType.residential);
+		engine.getMap().buildTopLeft(MapPosition.at(6, 7), BuildingType.firestation);
 		PowerScanResult scanResult = (new PowerScanner(
 				new ArrayList<>(engine.getMap().getAllMapPosOfType(BuildingType.nukePower)),
 				engine.getMap().getReadOnlyMap())).doScan();

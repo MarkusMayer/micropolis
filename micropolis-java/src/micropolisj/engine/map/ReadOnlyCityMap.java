@@ -1,5 +1,7 @@
 package micropolisj.engine.map;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface ReadOnlyCityMap {
@@ -10,4 +12,11 @@ public interface ReadOnlyCityMap {
 	public MapPosition getDimension();
 	
 	public Set<Building> getAllBuildingsOfType(BuildingType searchType);
+	
+	// TODO remove code
+	public int findNearestTileFromRange(MapPosition pos, int lowTile, int highTile);
+	
+	public Map<BuildingType, List<MapPosition>> getAllMapPosOfAllBuildingTypes();
+
+	public MapArea getOccupiedArea(MapPosition target);
 }

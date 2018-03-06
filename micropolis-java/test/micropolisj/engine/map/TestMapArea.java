@@ -10,7 +10,7 @@ public class TestMapArea {
 	
 	@Before
 	public void setup() {
-		area=new MapArea(MapPosition.at(0, 0), MapPosition.at(5, 5));
+		area=MapArea.of(MapPosition.at(0, 0), MapPosition.at(5, 5));
 	}
 	
 	@Test

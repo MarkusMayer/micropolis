@@ -59,17 +59,32 @@ public class TestMapPosition {
 	public void testGreaterOrEqualForSmaller() {
 		Assert.assertFalse(MapPosition.at(0, 2).greaterOrEqualThan(MapPosition.at(1, 1)));
 	}
-	
+
 	@Test
 	public void testStepDir() {
 		Assert.assertEquals(MapPosition.at(0, 0), MapPosition.at(1, 1).step(StepDir.upleft));
 	}
-	
+
 	@Test
 	public void testDistanceTo() {
 		Assert.assertEquals(0, MapPosition.at(0, 0).getDistanceToPos(MapPosition.at(0, 0)));
 		Assert.assertEquals(2, MapPosition.at(0, 0).getDistanceToPos(MapPosition.at(2, 0)));
 		Assert.assertEquals(5, MapPosition.at(0, 0).getDistanceToPos(MapPosition.at(2, 3)));
 		Assert.assertEquals(4, MapPosition.at(3, 3).getDistanceToPos(MapPosition.at(1, 1)));
+	}
+
+	@Test
+	public void testGetDistanceToArea() {
+		final MapArea area22_44 = MapArea.of(MapPosition.at(2, 2), MapPosition.at(4,4));
+		Assert.assertEquals(4,
+				MapPosition.at(0, 0).getDistanceToArea(area22_44));
+		Assert.assertEquals(8,
+				MapPosition.at(8, 8).getDistanceToArea(area22_44));
+		Assert.assertEquals(2,
+				MapPosition.at(3, 0).getDistanceToArea(area22_44));
+		Assert.assertEquals(2,
+				MapPosition.at(0, 3).getDistanceToArea(area22_44));
+		Assert.assertEquals(0, MapPosition.at(2, 2).getDistanceToArea(MapArea.of(MapPosition.at(1, 1), MapPosition.at(3, 3))));
+		Assert.assertEquals(-1, MapPosition.at(0, 0).getDistanceToArea(MapArea.ofEmpty()));
 	}
 }

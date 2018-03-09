@@ -2146,7 +2146,7 @@ public class Micropolis {
 		for (int i = 0; i < nrStations; i++) {
 			short x1 = dis.readShort();
 			short y1 = dis.readShort();
-			subNet.addStation(new MapPosition(x1, y1));
+			subNet.addStation(MapPosition.at(x1, y1));
 		}
 
 		for (int i = 0; i < nrConns; i++) {

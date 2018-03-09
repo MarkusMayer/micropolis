@@ -35,6 +35,7 @@ import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -60,23 +61,21 @@ public class OverlayMapView extends JComponent implements Scrollable, MapListene
 	int zoomFactor;
 	private List<? extends MapPosition> selectedPosList;
 	private List<SubwayConnection> selectedSubConnectionsList;
-	
+
 	public List<SubwayConnection> getSelectedSubConnections() {
 		return selectedSubConnectionsList;
 	}
-	
+
 	public void setSelectedSubConnections(List<SubwayConnection> selConns) {
-		if (selConns==null)
-			throw new IllegalArgumentException("selConns must not be null.");
-		selectedSubConnectionsList=selConns;
+		selectedSubConnectionsList = Objects.requireNonNull(selConns);
 	}
-	
+
 	public List<? extends MapPosition> getSelectedPosList() {
 		return selectedPosList;
 	}
 
 	public void setSelectedPosList(List<? extends MapPosition> selectedPosList) {
-		if (selectedPosList==null)
+		if (selectedPosList == null)
 			throw new IllegalArgumentException("selectedPosList must not be null.");
 		this.selectedPosList = selectedPosList;
 	}
@@ -85,8 +84,8 @@ public class OverlayMapView extends JComponent implements Scrollable, MapListene
 		assert _engine != null;
 		this.zoomFactor = zoomFactor;
 		selectedPosList = new ArrayList<>();
-		selectedSubConnectionsList=new ArrayList<>();
-		
+		selectedSubConnectionsList = new ArrayList<>();
+
 		MouseAdapter mouse = new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent ev) {
@@ -410,7 +409,7 @@ public class OverlayMapView extends JComponent implements Scrollable, MapListene
 
 		if (mapState == MapState.SUBWAY) {
 			for (SubwayConnection aConn : engine.getSubNet().getConnections()) {
-				paintConnection(img, aConn,selectedSubConnectionsList.contains(aConn));
+				paintConnection(img, aConn, selectedSubConnectionsList.contains(aConn));
 			}
 		}
 		gr.drawImage(img, INSETS.left, INSETS.top, null);
@@ -455,7 +454,7 @@ public class OverlayMapView extends JComponent implements Scrollable, MapListene
 	}
 
 	void paintConnection(BufferedImage img, SubwayConnection aConn, boolean isSelected) {
-		final int color=isSelected ? new Color(0,0,255).getRGB() : new Color(255,255,255).getRGB();
+		final int color = isSelected ? new Color(0, 0, 255).getRGB() : new Color(255, 255, 255).getRGB();
 		SubwayStation station1 = aConn.getStation1();
 		SubwayStation station2 = aConn.getStation2();
 		final int station1X = station1.getX() * TILE_WIDTH * zoomFactor;
@@ -465,37 +464,47 @@ public class OverlayMapView extends JComponent implements Scrollable, MapListene
 
 		for (int x = station1X; x <= station2X; x++) {
 			img.setRGB(x, station1Y, color);
-			img.setRGB(x, station1Y-1, color);
+			img.setRGB(x, station1Y - 1, color);
 		}
 		for (int y = Math.min(station1Y, station2Y); y < Math.max(station1Y, station2Y); y++) {
 			img.setRGB(station2X, y, color);
-			img.setRGB(station2X+1, y, color);
+			img.setRGB(station2X + 1, y, color);
 		}
 	}
 
 	void highlightMapPosition(BufferedImage img, MapPosition mapPosition) {
 		for (int yy = -TILE_HEIGHT * zoomFactor; yy < 0; yy++) {
 			for (int xx = -TILE_WIDTH * zoomFactor; xx < TILE_WIDTH * zoomFactor * 2; xx++) {
-				img.setRGB(mapPosition.getX() * TILE_WIDTH * zoomFactor + xx,
-						mapPosition.getY() * TILE_HEIGHT * zoomFactor + yy, 0);
+
+				int xPos = mapPosition.getX() * TILE_WIDTH * zoomFactor + xx;
+				int yPos = mapPosition.getY() * TILE_HEIGHT * zoomFactor + yy;
+				if (xPos >= 0 && yPos >= 0)
+					img.setRGB(xPos, yPos, 0);
 			}
 		}
 		for (int yy = 0; yy < TILE_HEIGHT * zoomFactor; yy++) {
 			for (int xx = -TILE_WIDTH * zoomFactor; xx < 0; xx++) {
-				img.setRGB(mapPosition.getX() * TILE_WIDTH * zoomFactor + xx,
-						mapPosition.getY() * TILE_HEIGHT * zoomFactor + yy, 0);
+				int xPos = mapPosition.getX() * TILE_WIDTH * zoomFactor + xx;
+				int yPos = mapPosition.getY() * TILE_HEIGHT * zoomFactor + yy;
+				if (xPos >= 0 && yPos >= 0)
+					img.setRGB(xPos, yPos, 0);
 			}
 		}
 		for (int yy = 0; yy < TILE_HEIGHT * zoomFactor; yy++) {
 			for (int xx = TILE_WIDTH * zoomFactor; xx < TILE_WIDTH * zoomFactor * 2; xx++) {
-				img.setRGB(mapPosition.getX() * TILE_WIDTH * zoomFactor + xx,
-						mapPosition.getY() * TILE_HEIGHT * zoomFactor + yy, 0);
+				int xPos = mapPosition.getX() * TILE_WIDTH * zoomFactor + xx;
+				int yPos = mapPosition.getY() * TILE_HEIGHT * zoomFactor + yy;
+				if (xPos >= 0 && yPos >= 0)
+					img.setRGB(xPos, yPos, 0);
+
 			}
 		}
 		for (int yy = TILE_HEIGHT * zoomFactor; yy < TILE_HEIGHT * zoomFactor * 2; yy++) {
 			for (int xx = -TILE_WIDTH * zoomFactor; xx < TILE_WIDTH * zoomFactor * 2; xx++) {
-				img.setRGB(mapPosition.getX() * TILE_WIDTH * zoomFactor + xx,
-						mapPosition.getY() * TILE_HEIGHT * zoomFactor + yy, 0);
+				int xPos = mapPosition.getX() * TILE_WIDTH * zoomFactor + xx;
+				int yPos = mapPosition.getY() * TILE_HEIGHT * zoomFactor + yy;
+				if (xPos >= 0 && yPos >= 0)
+					img.setRGB(xPos, yPos, 0);
 			}
 		}
 	}

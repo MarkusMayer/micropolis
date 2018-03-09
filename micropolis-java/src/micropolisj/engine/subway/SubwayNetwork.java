@@ -70,9 +70,11 @@ public class SubwayNetwork {
 		List<SubwayStation> nearStations = getStationsNearPos(pos, 10);
 		int attractiveness = 0;
 		nrRequests++;
+		// TODO ensure target != pos
 		List<MapPosition> potentialTargets = getWeightAdjustedMapPos(map.getAllMapPosOfAllBuildingTypes());
 		MapPosition target=potentialTargets.get(rndGen.nextInt(potentialTargets.size()));
 		MapArea targetArea=map.getOccupiedArea(target);
+		System.out.println("CXXXheck Rides: "+target);
 		
 		// TODO: subway isPowered
 		// TODO: Route für Anzahl Benützungen
@@ -105,12 +107,12 @@ public class SubwayNetwork {
 		}
 		int rand = rndGen.nextInt(10);
 		if (maxAttract > rand) {
-			System.out.println("Took subway: " + maxAttract + " / " + rand +" / "+ bestRide);
+			System.out.println("Took subway (maxAttract / rand / target / nrRequests / nrRides / bestRide ): " + maxAttract + " / " + rand +" / "+ target +" / "+ nrRequests+" / "+nrRides + " / "+ bestRide );
 			rides.add(bestRide);
 			nrRides++;
 			trafficGood = 1;
 		} else {
-			System.out.println("Try to use road instead... " + maxAttract + " / " + rand);
+			System.out.println("Try to use road instead... (maxAttract / rand / target / nrRequests / nrRides ) " + maxAttract + " / " + rand+" / "+ target +" / "+nrRequests+" / "+nrRides);
 		}
 		return trafficGood;
 	}
@@ -162,7 +164,7 @@ public class SubwayNetwork {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(
-				"SubwayNetwork [city=" + map + ", connections=" + connections + ", stations=" + stations + "]\r\n");
+				"SubwayNetwork [connections=" + connections + ", stations=" + stations + "]\r\n");
 
 		for (SubwayConnection subwayConnection : connections) {
 			int useCount = 0;

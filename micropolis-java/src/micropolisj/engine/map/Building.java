@@ -69,7 +69,7 @@ class Building {
 		for (int yIdx = 0; yIdx < bi.getHeight(); yIdx++) {
 			for (int xIdx = 0; xIdx < bi.getWidth(); xIdx++) {
 				short curTileNumber = bi.getMembers()[yIdx * bi.getWidth() + xIdx];
-				MapPosition newPos = new MapPosition(xIdx, yIdx);
+				MapPosition newPos = MapPosition.at(xIdx, yIdx);
 				
 				frag.addTile(newPos, new MapTile(Tiles.get(curTileNumber)));
 			}

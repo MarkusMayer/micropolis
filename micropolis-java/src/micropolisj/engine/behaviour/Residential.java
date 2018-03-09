@@ -39,7 +39,7 @@ public class Residential extends BuildingBehaviour {
 
 		int trafficGood = 0;
 
-		trafficGood = city.getSubNet().checkRide(trafficGood,new MapPosition(xpos, ypos),city.getSubwayPercent(),city.getCityPopulation(),city.PRNG);
+		trafficGood = city.getSubNet().checkRide(trafficGood,MapPosition.at(xpos, ypos),city.getSubwayPercent(),city.getCityPopulation(),city.PRNG);
 			
 
 		if (trafficGood == 0) {

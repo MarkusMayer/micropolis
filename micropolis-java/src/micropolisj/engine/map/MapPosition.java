@@ -6,7 +6,7 @@ import java.util.List;
 public class MapPosition {
 	private final int x, y;
 
-	public MapPosition(int x, int y) {
+	private MapPosition(int x, int y) {
 		this.x = x;
 		this.y = y;
 	}
@@ -43,7 +43,7 @@ public class MapPosition {
 		ArrayList<MapPosition> posList = new ArrayList<>();
 		for (int x = getX(); x < rightBottom.getX(); x++) {
 			for (int y = getY(); y < rightBottom.getY(); y++) {
-				posList.add(new MapPosition(x, y));
+				posList.add(MapPosition.at(x, y));
 			}
 		}
 
@@ -51,7 +51,7 @@ public class MapPosition {
 	}
 
 	public boolean isSamePos(int x, int y) {
-		return this.equals(new MapPosition(x, y));
+		return this.equals(MapPosition.at(x, y));
 	}
 
 	public int getDistanceToPos(MapPosition pos) {

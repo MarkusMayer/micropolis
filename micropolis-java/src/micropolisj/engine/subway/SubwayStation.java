@@ -19,7 +19,7 @@ public class SubwayStation {
 	}
 
 	public SubwayStation(int x, int y) {
-		this(new MapPosition(x, y));
+		this(MapPosition.at(x, y));
 	}
 
 	public int getX() {

@@ -78,7 +78,7 @@ public class CityMap implements ReadOnlyCityMap {
 		checkPosInside(pos);
 		// System.out.println(pos+" ==> "+newSpec);
 		boolean res = getTile(pos).setTileSpec(newSpec);
-		BuildingType.getTypeFromSpec(newSpec).map(aType -> buildTopLeft(pos, aType));
+		BuildingType.getTypeFromSpec(newSpec).map(aType -> buildCenter(pos, aType));
 		// System.out.println("after: "+pos+" ==> "+getTileNr(pos));
 		return res;
 	}

@@ -97,7 +97,7 @@ public class TileSpec {
 				for (int xIdx = 0; xIdx < getWidth(); xIdx++) {
 					short curTileNumber = getMembers()[yIdx * getWidth() + xIdx];
 					if (curTileNumber == getCenterTile()) {
-						return new MapPosition(xIdx, yIdx);
+						return MapPosition.at(xIdx, yIdx);
 					}
 				}
 			}

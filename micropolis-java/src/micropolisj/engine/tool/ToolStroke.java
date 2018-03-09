@@ -78,13 +78,13 @@ public class ToolStroke
 
 	public final ToolResult apply()
 	{
-		//TODO: Das Hinzufügen einer Station sollte Map ändern + Station im SubwayNetwork erzeugen.
+		//TODO: Das Hinzufï¿½gen einer Station sollte Map ï¿½ndern + Station im SubwayNetwork erzeugen.
 		// D.h. die city sollte Map und Network synchron halten.
 		ToolEffect eff = new ToolEffect(city);
 		applyArea(eff);
 		ToolResult res=eff.apply();
 		if (res==ToolResult.SUCCESS) {
-			eff.applyCityToolEffect(new MapPosition(xpos, ypos));
+			eff.applyCityToolEffect(MapPosition.at(xpos, ypos));
 		}
 		return res;
 	}

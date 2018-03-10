@@ -238,9 +238,8 @@ public class CityMap implements ReadOnlyCityMap {
 
 	public void rebuildFromTiles() {
 		for (MapPosition aPos : getAllPos()) {
-			// TODO Map Offset is wrong!!! build expects topLeft but will get centerPos
-			// here!!!
-			boolean x = BuildingType.getTypeFromSpec(getSpec(aPos)).map(aType -> buildCenter(aPos, aType)).orElse(false);
+			boolean x = BuildingType.getTypeFromSpec(getSpec(aPos)).map(aType -> buildCenter(aPos, aType))
+					.orElse(false);
 		}
 		System.out.println("rebuildFromTiles: buildMap.size():  " + buildMap.keySet().size());
 	}
@@ -251,5 +250,11 @@ public class CityMap implements ReadOnlyCityMap {
 			return buildMap.getAt(Objects.requireNonNull(target)).getArea();
 		else
 			return MapArea.ofEmpty();
+	}
+
+	@Override
+	public Set<Building> getAllPoweredBuildingsOfType(BuildingType searchType) {
+		return getAllBuildingsOfType(searchType).stream().filter(aBuilding -> aBuilding.getPower() == true)
+				.collect(Collectors.toSet());
 	}
 }

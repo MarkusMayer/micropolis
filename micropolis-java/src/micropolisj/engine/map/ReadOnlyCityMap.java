@@ -13,6 +13,8 @@ public interface ReadOnlyCityMap {
 	
 	public Set<Building> getAllBuildingsOfType(BuildingType searchType);
 	
+	public Set<Building> getAllPoweredBuildingsOfType(BuildingType searchType);
+	
 	// TODO remove code
 	public int findNearestTileFromRange(MapPosition pos, int lowTile, int highTile);
 	

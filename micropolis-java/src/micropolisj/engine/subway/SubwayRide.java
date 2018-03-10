@@ -2,6 +2,8 @@ package micropolisj.engine.subway;
 
 import java.util.List;
 
+import micropolisj.engine.map.MapArea;
+
 public class SubwayRide {
 
 	private final SubwayStation start,finish;
@@ -65,5 +67,9 @@ public class SubwayRide {
 
 	public List<SubwayConnection> getRoute() {
 		return route;
+	}
+	
+	public int getDistanceFromFinishToTarget(MapArea targetArea) {
+		return finish.getPos().getDistanceToArea(targetArea);
 	}
 }

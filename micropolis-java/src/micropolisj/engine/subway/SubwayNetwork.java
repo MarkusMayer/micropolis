@@ -11,7 +11,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import micropolisj.engine.TileConstants;
 import micropolisj.engine.map.BuildingType;
 import micropolisj.engine.map.MapArea;
 import micropolisj.engine.map.MapPosition;
@@ -29,13 +28,15 @@ public class SubwayNetwork {
 	private Set<SubwayConnection> connections;
 	private Set<SubwayStation> stations;
 	private List<SubwayRide> rides;
-	private int nrRides = 0, nrRequests = 0;
+
+	private NetworkStatistic stats;
 
 	public SubwayNetwork(ReadOnlyCityMap map) {
 		this.map = Objects.requireNonNull(map);
 		connections = new HashSet<>();
 		stations = new HashSet<>();
 		rides = new ArrayList<>();
+		stats = new NetworkStatistic();
 	}
 
 	// TODO: Remove station when bulldozed
@@ -57,7 +58,7 @@ public class SubwayNetwork {
 		List<MapPosition> result = new ArrayList<>();
 		for (Entry<BuildingType, List<MapPosition>> entry : buildingPosMap.entrySet()) {
 			for (MapPosition aPos : entry.getValue()) {
-				result.addAll(Collections.nCopies(entry.getKey().getSubwayWeight(),aPos));
+				result.addAll(Collections.nCopies(entry.getKey().getSubwayWeight(), aPos));
 			}
 		}
 		return result;
@@ -69,18 +70,14 @@ public class SubwayNetwork {
 		// Zufallselement
 		List<SubwayStation> nearStations = getStationsNearPos(pos, 10);
 		int attractiveness = 0;
-		nrRequests++;
-		// TODO ensure target != pos
+		stats.incRequest();
 		List<MapPosition> potentialTargets = getWeightAdjustedMapPos(map.getAllMapPosOfAllBuildingTypes());
-		MapPosition target=potentialTargets.get(rndGen.nextInt(potentialTargets.size()));
-		MapArea targetArea=map.getOccupiedArea(target);
-		System.out.println("CXXXheck Rides: "+target);
-		
-		// TODO: subway isPowered
-		// TODO: Route für Anzahl Benützungen
+		MapPosition target = potentialTargets.get(rndGen.nextInt(potentialTargets.size()));
+		MapArea targetArea = map.getOccupiedArea(target);
 
 		// Soll-Wert eine Station pro 50k Einwohner
-		double subPopFactor = map.getAllBuildingsOfType(BuildingType.subway).size() / Math.max(1, (cityPop / 50000));
+		double subPopFactor = map.getAllPoweredBuildingsOfType(BuildingType.subway).size()
+				/ Math.max(1, (cityPop / 50000));
 		// Basis Wert * U-Bahn Budget Faktor * subPopFactor
 		int baseAttraction = (int) Math.round(10 * subwayPercent * (1 + subPopFactor / 10));
 
@@ -92,7 +89,7 @@ public class SubwayNetwork {
 			Set<SubwayRide> newRides = subwayStation.getPossibleRides(getConnections());
 			int shortestDistance = 999;
 			for (SubwayRide aRide : newRides) {
-				int dis = aRide.getFinish().getPos().getDistanceToArea(targetArea);
+				int dis = aRide.getDistanceFromFinishToTarget(targetArea);
 				if (dis < shortestDistance) {
 					shortestDistance = dis;
 					shortestRide = aRide;
@@ -107,12 +104,14 @@ public class SubwayNetwork {
 		}
 		int rand = rndGen.nextInt(10);
 		if (maxAttract > rand) {
-			System.out.println("Took subway (maxAttract / rand / target / nrRequests / nrRides / bestRide ): " + maxAttract + " / " + rand +" / "+ target +" / "+ nrRequests+" / "+nrRides + " / "+ bestRide );
+			stats.incRide();
+			System.out.println("Took subway (maxAttract / rand / target / bestRide / stats ): " + maxAttract + " / "
+					+ rand + " / " + bestRide + " / " + target + " / " + stats);
 			rides.add(bestRide);
-			nrRides++;
 			trafficGood = 1;
 		} else {
-			System.out.println("Try to use road instead... (maxAttract / rand / target / nrRequests / nrRides ) " + maxAttract + " / " + rand+" / "+ target +" / "+nrRequests+" / "+nrRides);
+			System.out.println("Try to use road instead... (maxAttract / rand / target / stats ) " + maxAttract + " / "
+					+ rand + " / " + target + " / " + stats);
 		}
 		return trafficGood;
 	}
@@ -175,9 +174,14 @@ public class SubwayNetwork {
 			sb.append("Connection: " + subwayConnection + " ==> used " + useCount + " times.\r\n");
 		}
 
-		sb.append("ride/request ratio: " + (nrRequests > 0 ? nrRides / nrRequests : -1));
+		sb.append("ride/request ratio: " +stats.getPeriodRideRequestRatio());
 
 		return sb.toString();
+	}
+
+	public void startNewUsageCountPeriod() {
+		rides.clear();
+		stats.startNewPeriod();
 	}
 
 }

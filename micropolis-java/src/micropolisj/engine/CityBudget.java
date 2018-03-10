@@ -10,42 +10,6 @@ package micropolisj.engine;
 
 public class CityBudget
 {
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + fireFundEscrow;
-		result = prime * result + policeFundEscrow;
-		result = prime * result + roadFundEscrow;
-		result = prime * result + taxFund;
-		result = prime * result + totalFunds;
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		CityBudget other = (CityBudget) obj;
-//		if (fireFundEscrow != other.fireFundEscrow)
-//			return false;
-//		if (policeFundEscrow != other.policeFundEscrow)
-//			return false;
-//		if (roadFundEscrow != other.roadFundEscrow)
-//			return false;
-//		if (taxFund != other.taxFund)
-//			return false;
-		if (totalFunds != other.totalFunds)
-			return false;
-		return true;
-	}
-
-//	private final Micropolis city;
-
 	/**
 	 * The amount of cash on hand.
 	 */
@@ -72,8 +36,39 @@ public class CityBudget
 	 */
 	int policeFundEscrow;
 
-//	CityBudget(Micropolis city)
-//	{
-//		this.city = city;
-//	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + fireFundEscrow;
+		result = prime * result + policeFundEscrow;
+		result = prime * result + roadFundEscrow;
+		result = prime * result + taxFund;
+		result = prime * result + totalFunds;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		CityBudget other = (CityBudget) obj;
+		if (fireFundEscrow != other.fireFundEscrow)
+			return false;
+		if (policeFundEscrow != other.policeFundEscrow)
+			return false;
+		if (roadFundEscrow != other.roadFundEscrow)
+			return false;
+		if (taxFund != other.taxFund)
+			return false;
+		if (totalFunds != other.totalFunds)
+			return false;
+		return true;
+	}
+	
+	
 }

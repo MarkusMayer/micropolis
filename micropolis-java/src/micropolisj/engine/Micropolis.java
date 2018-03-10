@@ -674,6 +674,8 @@ public class Micropolis {
 				policeMap[y][x] = 0;
 			}
 		}
+		
+		subNet.startNewUsageCountPeriod();
 	}
 
 	void simulate(int mod16) {

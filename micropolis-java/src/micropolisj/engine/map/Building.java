@@ -107,4 +107,10 @@ class Building {
 	public MapPosition getCenter() {
 		return center;
 	}
+
+	@Override
+	public String toString() {
+		return "Building [base=" + base + ", topLeft=" + topLeft + ", center=" + center + ", area=" + area
+				+ ", isPowered=" + isPowered + ", type=" + type + ", centerIntact=" + centerIntact + "]";
+	}
 }

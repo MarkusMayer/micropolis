@@ -78,7 +78,7 @@ public class ToolStroke
 
 	public final ToolResult apply()
 	{
-		//TODO: Das Hinzufï¿½gen einer Station sollte Map ï¿½ndern + Station im SubwayNetwork erzeugen.
+		//TODO: Das Hinzufügen einer Station sollte Map ändern + Station im SubwayNetwork erzeugen.
 		// D.h. die city sollte Map und Network synchron halten.
 		ToolEffect eff = new ToolEffect(city);
 		applyArea(eff);

@@ -8,17 +8,9 @@
 
 package micropolisj.engine.tool;
 
-import static micropolisj.engine.TileConstants.AIRPORT;
-import static micropolisj.engine.TileConstants.FIRESTATION;
-import static micropolisj.engine.TileConstants.ICERINK;
-import static micropolisj.engine.TileConstants.NUCLEAR;
-import static micropolisj.engine.TileConstants.POLICESTATION;
-import static micropolisj.engine.TileConstants.PORT;
-import static micropolisj.engine.TileConstants.POWERPLANT;
-import static micropolisj.engine.TileConstants.STADIUM;
-import static micropolisj.engine.TileConstants.SUBWAY;
-
 import micropolisj.engine.Micropolis;
+import micropolisj.engine.map.BuildingType;
+import micropolisj.engine.map.MapPosition;
 
 class BuildingTool extends ToolStroke
 {
@@ -26,54 +18,27 @@ class BuildingTool extends ToolStroke
 	{
 		super(engine, tool, xpos, ypos);
 	}
-
+	
 	@Override
-	public void dragTo(int xdest, int ydest)
-	{
-		this.xpos = xdest;
-		this.ypos = ydest;
-		this.xdest = xdest;
-		this.ydest = ydest;
+	protected boolean hasPreview() {
+		return false;
 	}
 
 	@Override
-	boolean apply1(ToolEffectIfc eff)
-	{
-		//TODO: Tool effect apply for new building type
-		switch (tool)
-		{
-		case FIRE:
-			return applyZone(eff, FIRESTATION);
-
-		case POLICE:
-			return applyZone(eff, POLICESTATION);
-
-		case POWERPLANT:
-			return applyZone(eff, POWERPLANT);
-
-		case STADIUM:
-			return applyZone(eff, STADIUM);
-
-		case SEAPORT:
-			return applyZone(eff, PORT);
-
-		case NUCLEAR:
-			return applyZone(eff, NUCLEAR);
-
-		case AIRPORT:
-			return applyZone(eff, AIRPORT);
-		
-		case ICERINK:
-			return applyZone(eff, ICERINK);
-
-		case SUBWAY:{
-			eff.setCityToolEffect(new AddStationToNetwork());
-			return applyZone(eff, SUBWAY);
-		}
-			
-		default:
-			// not expected
-			throw new Error("unexpected tool: "+tool);
-		}
+	protected boolean isDraggable() {
+		return false;
 	}
+
+	@Override
+	protected ToolPreview generatePreview() {
+		throw new UnsupportedOperationException("No Preview available for Building Tool.");
+	}
+
+	@Override
+	protected boolean useCityMapForBuild() {
+		return true;
+	}
+	
+	
+	
 }

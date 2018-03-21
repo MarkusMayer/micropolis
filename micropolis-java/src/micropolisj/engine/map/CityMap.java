@@ -90,7 +90,7 @@ public class CityMap implements ReadOnlyCityMap {
 	public boolean buildCenter(MapPosition pos, BuildingType type) {
 		return build(pos, type, true);
 	}
-
+	
 	private boolean build(MapPosition pos, BuildingType type, boolean isCenter) {
 		System.out.println("build(pos, type): " + pos + " ," + type);
 		checkPosInside(pos);
@@ -108,7 +108,7 @@ public class CityMap implements ReadOnlyCityMap {
 		checkPosInside(pos);
 		MapFragment bulldozeFrag = MapFragment.empty();
 		if (buildMap.containsKey(pos)) {
-			bulldozeFrag = buildMap.getAt(pos).getBulldozeFragment();
+			bulldozeFrag = buildMap.remove(pos).getBulldozeFragment();
 		} else if (getBuilding(pos).isPresent()) {
 			// TODO fix this
 			Building building = getBuilding(pos).get();
@@ -131,7 +131,7 @@ public class CityMap implements ReadOnlyCityMap {
 		map.putAt(pos, tile);
 	}
 
-	private void checkPosInside(MapPosition pos) {
+	public void checkPosInside(MapPosition pos) {
 		if (!isPosInside(pos))
 			throw new IllegalArgumentException(
 					"position outside city bounds. pos: " + pos + ", city-dimmension: " + dim);
@@ -140,7 +140,7 @@ public class CityMap implements ReadOnlyCityMap {
 	public boolean isPosInside(MapPosition pos) {
 		return (pos.greaterOrEqualThan(MapPosition.at(0, 0)) && pos.lessThan(dim));
 	}
-
+	
 	private boolean isRectBuildable(MapPosition leftTop, MapPosition rightBottom) {
 		for (MapPosition aPos : leftTop.getPosForRect(rightBottom)) {
 			if (!isPosInside(aPos))

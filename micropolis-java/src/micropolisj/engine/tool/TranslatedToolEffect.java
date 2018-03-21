@@ -8,13 +8,16 @@
 
 package micropolisj.engine.tool;
 
+import java.util.Collections;
+import java.util.List;
+
 import micropolisj.engine.Sound;
 import micropolisj.engine.map.MapPosition;
+import micropolisj.engine.tool.ToolEvent.EventType;
 
 class TranslatedToolEffect implements ToolEffectIfc
 {
 	final ToolEffectIfc base;
-	CityToolEffect cityEff;
 	final int dx;
 	final int dy;
 
@@ -56,12 +59,12 @@ class TranslatedToolEffect implements ToolEffectIfc
 	}
 
 	@Override
-	public void setCityToolEffect(CityToolEffect cityEff) {
-		base.setCityToolEffect(cityEff);
-		this.cityEff=cityEff;
+	public void addEvent(EventType ev,MapPosition relOffset) {
+		base.addEvent(ev,relOffset.plus(MapPosition.at(dx, dy)));		
 	}
-
+	
 	@Override
-	public void applyCityToolEffect(MapPosition pos) {
+	public List<ToolEvent> getEvents() {
+		return base.getEvents();
 	}
 }

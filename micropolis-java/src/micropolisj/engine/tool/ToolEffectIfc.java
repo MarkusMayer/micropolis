@@ -8,8 +8,11 @@
 
 package micropolisj.engine.tool;
 
+import java.util.List;
+
 import micropolisj.engine.Sound;
 import micropolisj.engine.map.MapPosition;
+import micropolisj.engine.tool.ToolEvent.EventType;
 
 public interface ToolEffectIfc
 {
@@ -32,8 +35,8 @@ public interface ToolEffectIfc
 	void spend(int amount);
 
 	void toolResult(ToolResult tr);
+
+	void addEvent(EventType ev,MapPosition relOffset);
 	
-	void setCityToolEffect(CityToolEffect cityEff);
-	
-	void applyCityToolEffect(MapPosition pos);
+	List<ToolEvent> getEvents();
 }

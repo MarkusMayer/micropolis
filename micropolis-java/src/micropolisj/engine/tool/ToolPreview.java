@@ -17,6 +17,7 @@ import java.util.List;
 import micropolisj.engine.CityRect;
 import micropolisj.engine.Sound;
 import micropolisj.engine.map.MapPosition;
+import micropolisj.engine.tool.ToolEvent.EventType;
 
 public class ToolPreview implements ToolEffectIfc
 {
@@ -27,7 +28,6 @@ public class ToolPreview implements ToolEffectIfc
 	public ToolResult toolResult;
 	public List<SoundInfo> sounds;
 	@SuppressWarnings("unused")
-	private CityToolEffect cityEff;
 
 	public static class SoundInfo
 	{
@@ -174,11 +174,13 @@ public class ToolPreview implements ToolEffectIfc
 	}
 
 	@Override
-	public void setCityToolEffect(CityToolEffect cityEff) {
-		this.cityEff=cityEff;
+	public void addEvent(EventType ev, MapPosition relOffset) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void applyCityToolEffect(MapPosition pos) {
+	public List<ToolEvent> getEvents() {
+		throw new UnsupportedOperationException();
 	}
+
 }

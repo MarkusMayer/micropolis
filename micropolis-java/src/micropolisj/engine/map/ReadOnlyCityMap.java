@@ -9,6 +9,8 @@ public interface ReadOnlyCityMap {
 
 	public boolean isPosInside(MapPosition pos);
 	
+	public void checkPosInside(MapPosition pos);
+	
 	public MapPosition getDimension();
 	
 	public Set<Building> getAllBuildingsOfType(BuildingType searchType);

@@ -10,9 +10,14 @@ package micropolisj.engine.tool;
 
 import static micropolisj.engine.TileConstants.CLEAR;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.Sound;
 import micropolisj.engine.map.MapPosition;
+import micropolisj.engine.tool.ToolEvent.EventType;
 
 public class ToolEffect implements ToolEffectIfc
 {
@@ -20,7 +25,7 @@ public class ToolEffect implements ToolEffectIfc
 	final ToolPreview preview;
 	final int originX;
 	final int originY;
-	private CityToolEffect cityEff;
+	final List<ToolEvent> events;
 
 	public ToolEffect(Micropolis city)
 	{
@@ -33,6 +38,7 @@ public class ToolEffect implements ToolEffectIfc
 		this.preview = new ToolPreview();
 		this.originX = xpos;
 		this.originY = ypos;
+		this.events=new ArrayList<>();
 	}
 
 	//implements ToolEffectIfc
@@ -115,15 +121,12 @@ public class ToolEffect implements ToolEffectIfc
 			return preview.toolResult;
 		}
 	}
-
-	@Override
-	public void setCityToolEffect(CityToolEffect cityEff) {
-		this.cityEff=cityEff;
+	
+	public void addEvent(EventType evType,MapPosition relOffset) {
+		events.add(new ToolEvent(evType,relOffset.plus(MapPosition.at(originX, originY))));
 	}
 
-	@Override
-	public void applyCityToolEffect(MapPosition pos) {
-		if (cityEff!=null)
-			cityEff.applyEffect(city, pos);
+	public List<ToolEvent> getEvents() {
+		return Collections.unmodifiableList(events);
 	}
 }

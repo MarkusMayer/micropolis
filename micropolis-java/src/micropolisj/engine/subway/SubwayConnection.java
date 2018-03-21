@@ -41,6 +41,10 @@ public class SubwayConnection {
 	public SubwayStation getStation2() {
 		return station2;
 	}
+	
+	public boolean goesThrough(SubwayStation station) {
+		return station.equals(station1)||station.equals(station2);
+	}
 
 	public boolean doesConnect(SubwayStation aStation1, SubwayStation aStation2) {
 		return ((aStation1.equals(station1) || aStation1.equals(station2))

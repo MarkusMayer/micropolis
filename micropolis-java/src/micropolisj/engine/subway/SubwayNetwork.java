@@ -41,7 +41,21 @@ public class SubwayNetwork {
 
 	// TODO: Remove station when bulldozed
 	public boolean addStation(MapPosition pos) {
-		return map.isPosInside(Objects.requireNonNull(pos)) && stations.add(new SubwayStation(pos));
+		map.checkPosInside(Objects.requireNonNull(pos));
+		return stations.add(new SubwayStation(pos));
+	}
+	
+	public boolean removeStation(MapPosition pos) {
+		map.checkPosInside(Objects.requireNonNull(pos));
+		SubwayStation stationToRemove = new SubwayStation(pos);
+		boolean didRemove=stations.remove(stationToRemove);
+		if (didRemove) {
+			for (SubwayConnection subwayConnection : connections) {
+				if (subwayConnection.goesThrough(stationToRemove))
+					connections.remove(subwayConnection);
+			}
+		}
+		return didRemove;
 	}
 
 	public SubwayConnection connect(SubwayStation station1, SubwayStation station2) {

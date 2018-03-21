@@ -37,76 +37,123 @@ import static micropolisj.engine.TileConstants.wireConnectsNorth;
 import static micropolisj.engine.TileConstants.wireConnectsSouth;
 import static micropolisj.engine.TileConstants.wireConnectsWest;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import micropolisj.engine.CityRect;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.TileSpec;
 import micropolisj.engine.Tiles;
+import micropolisj.engine.map.BuildingType;
 import micropolisj.engine.map.MapPosition;
+import micropolisj.engine.tool.ToolEvent.EventType;
 
-public class ToolStroke
-{
+public class ToolStroke {
 	final Micropolis city;
 	final MicropolisTool tool;
+	final List<ToolEvent> events;
 	int xpos;
 	int ypos;
 	int xdest;
 	int ydest;
 	boolean inPreview;
 
-	ToolStroke(Micropolis city, MicropolisTool tool, int xpos, int ypos)
-	{
+	ToolStroke(Micropolis city, MicropolisTool tool, int xpos, int ypos) {
 		this.city = city;
 		this.tool = tool;
 		this.xpos = xpos;
 		this.ypos = ypos;
 		this.xdest = xpos;
 		this.ydest = ypos;
+		this.events = new ArrayList<>();
 	}
 
-	public final ToolPreview getPreview()
-	{
+	protected boolean hasPreview() {
+		return true;
+	}
+
+	protected boolean isDraggable() {
+		return true;
+	}
+
+	protected boolean useCityMapForBuild() {
+		return false;
+	}
+
+	public ToolPreview getPreview() {
+		if (hasPreview())
+			return generatePreview();
+		else
+			return new ToolPreview();
+	}
+
+	protected ToolPreview generatePreview() {
 		ToolEffect eff = new ToolEffect(city);
 		inPreview = true;
 		try {
 			applyArea(eff);
-		}
-		finally {
+		} finally {
 			inPreview = false;
 		}
 		return eff.preview;
 	}
 
-	public final ToolResult apply()
-	{
-		//TODO: Das Hinzufügen einer Station sollte Map ändern + Station im SubwayNetwork erzeugen.
+	private ToolResult buildWithCityMap() {
+		BuildingType buildType = tool.getBuildingType().get();
+		// TODO Autobulldoze cost is missing
+		if (city.budget.totalFunds < buildType.getCost())
+			return ToolResult.INSUFFICIENT_FUNDS;
+
+		MapPosition centerPos = MapPosition.at(xpos, ypos);
+
+		if (city.getMap().buildCenter(centerPos, tool.getBuildingType().get())) {
+			events.add(new ToolEvent(EventType.build, buildType, centerPos));
+			return ToolResult.SUCCESS;
+		} else
+			return ToolResult.UH_OH;
+	}
+
+	private ToolResult buildWithToolEffect() {
+		// TODO: Das Hinzufügen einer Station sollte Map ändern + Station im
+		// SubwayNetwork erzeugen.
 		// D.h. die city sollte Map und Network synchron halten.
 		ToolEffect eff = new ToolEffect(city);
 		applyArea(eff);
-		ToolResult res=eff.apply();
-		if (res==ToolResult.SUCCESS) {
-			eff.applyCityToolEffect(MapPosition.at(xpos, ypos));
-		}
+		ToolResult res = eff.apply();
+		events.addAll(eff.getEvents());
 		return res;
+		// TODO send BuildEvent, bulldozeEvent to city for update of SubwayNetwork
 	}
 
-	protected void applyArea(ToolEffectIfc eff)
-	{
+	public ToolResult apply() {
+		ToolResult result;
+		if (useCityMapForBuild())
+			result=buildWithCityMap();
+		else
+			result=buildWithToolEffect();
+		
+		if(result==ToolResult.SUCCESS) {
+			city.sendToolEvents(events);
+		}
+		
+		return result;
+	}
+
+	protected void applyArea(ToolEffectIfc eff) {
 		CityRect r = getBounds();
 
 		for (int i = 0; i < r.height; i += tool.getHeight()) {
 			for (int j = 0; j < r.width; j += tool.getWidth()) {
-				apply1(new TranslatedToolEffect(eff, r.x+j, r.y+i));
+				apply1(new TranslatedToolEffect(eff, r.x + j, r.y + i));
 			}
 		}
 	}
 
-	boolean apply1(ToolEffectIfc eff)
-	{
-		switch (tool)
-		{
+	boolean apply1(ToolEffectIfc eff) {
+		switch (tool) {
 		case PARK:
 			return applyParkTool(eff);
-
+		// TODO refactor to use build with city map
 		case RESIDENTIAL:
 			return applyZone(eff, RESCLR);
 
@@ -118,18 +165,20 @@ public class ToolStroke
 
 		default:
 			// not expected
-			throw new Error("unexpected tool: "+tool);
+			throw new Error("unexpected tool: " + tool);
 		}
 	}
 
-	public void dragTo(int xdest, int ydest)
-	{
+	public void dragTo(int xdest, int ydest) {
 		this.xdest = xdest;
 		this.ydest = ydest;
+		if (!isDraggable()) {
+			this.xpos = xdest;
+			this.ypos = ydest;
+		}
 	}
 
-	public CityRect getBounds()
-	{
+	public CityRect getBounds() {
 		CityRect r = new CityRect();
 
 		r.x = xpos;
@@ -137,10 +186,9 @@ public class ToolStroke
 			r.x--;
 		}
 		if (xdest >= xpos) {
-			r.width = ((xdest-xpos) / tool.getWidth() + 1) * tool.getWidth();
-		}
-		else {
-			r.width = ((xpos-xdest) / tool.getWidth() + 1) * tool.getHeight();
+			r.width = ((xdest - xpos) / tool.getWidth() + 1) * tool.getWidth();
+		} else {
+			r.width = ((xpos - xdest) / tool.getWidth() + 1) * tool.getHeight();
 			r.x += tool.getWidth() - r.width;
 		}
 
@@ -149,43 +197,38 @@ public class ToolStroke
 			r.y--;
 		}
 		if (ydest >= ypos) {
-			r.height = ((ydest-ypos) / tool.getHeight() + 1) * tool.getHeight();
-		}
-		else {
-			r.height = ((ypos-ydest) / tool.getHeight() + 1) * tool.getHeight();
+			r.height = ((ydest - ypos) / tool.getHeight() + 1) * tool.getHeight();
+		} else {
+			r.height = ((ypos - ydest) / tool.getHeight() + 1) * tool.getHeight();
 			r.y += tool.getHeight() - r.height;
 		}
 
 		return r;
 	}
 
-	public MapPosition getLocation()
-	{
+	public MapPosition getLocation() {
 		return MapPosition.at(xpos, ypos);
 	}
 
-	boolean applyZone(ToolEffectIfc eff, int base)
-	{
+	boolean applyZone(ToolEffectIfc eff, int base) {
 		assert isZoneCenter(base);
 
 		TileSpec.BuildingInfo bi = Tiles.get(base).getBuildingInfo();
 		if (bi == null) {
-			throw new Error("Cannot applyZone to #"+base);
+			throw new Error("Cannot applyZone to #" + base);
 		}
 
 		int cost = tool.getToolCost();
 		boolean canBuild = true;
 		for (int rowNum = 0; rowNum < bi.getHeight(); rowNum++) {
-			for (int columnNum = 0; columnNum < bi.getWidth(); columnNum++)
-			{
+			for (int columnNum = 0; columnNum < bi.getWidth(); columnNum++) {
 				int tileValue = eff.getTile(columnNum, rowNum);
 				tileValue = tileValue & LOMASK;
 
 				if (tileValue != DIRT) {
-					if (city.autoBulldoze && canAutoBulldozeZ((char)tileValue)) {
+					if (city.autoBulldoze && canAutoBulldozeZ((char) tileValue)) {
 						cost++;
-					}
-					else {
+					} else {
 						canBuild = false;
 					}
 				}
@@ -199,10 +242,8 @@ public class ToolStroke
 		eff.spend(cost);
 
 		int i = 0;
-		for (int rowNum = 0; rowNum < bi.getHeight(); rowNum++)
-		{
-			for (int columnNum = 0; columnNum < bi.getWidth(); columnNum++)
-			{
+		for (int rowNum = 0; rowNum < bi.getHeight(); rowNum++) {
+			for (int columnNum = 0; columnNum < bi.getWidth(); columnNum++) {
 				eff.setTile(columnNum, rowNum, (char) bi.getMembers()[i]);
 				i++;
 			}
@@ -212,30 +253,25 @@ public class ToolStroke
 		return true;
 	}
 
-	//compatible function
-	void fixBorder(int left, int top, int right, int bottom)
-	{
+	// compatible function
+	void fixBorder(int left, int top, int right, int bottom) {
 		ToolEffect eff = new ToolEffect(city, left, top);
-		fixBorder(eff, right+1-left, bottom+1-top);
+		fixBorder(eff, right + 1 - left, bottom + 1 - top);
 		eff.apply();
 	}
 
-	void fixBorder(ToolEffectIfc eff, int width, int height)
-	{
-		for (int x = 0; x < width; x++)
-		{
+	void fixBorder(ToolEffectIfc eff, int width, int height) {
+		for (int x = 0; x < width; x++) {
 			fixZone(new TranslatedToolEffect(eff, x, 0));
-			fixZone(new TranslatedToolEffect(eff, x, height-1));
+			fixZone(new TranslatedToolEffect(eff, x, height - 1));
 		}
-		for (int y = 1; y < height - 1; y++)
-		{
+		for (int y = 1; y < height - 1; y++) {
 			fixZone(new TranslatedToolEffect(eff, 0, y));
-			fixZone(new TranslatedToolEffect(eff, width-1, y));
+			fixZone(new TranslatedToolEffect(eff, width - 1, y));
 		}
 	}
 
-	boolean applyParkTool(ToolEffectIfc eff)
-	{
+	boolean applyParkTool(ToolEffectIfc eff) {
 		int cost = tool.getToolCost();
 
 		if (eff.getTile(0, 0) != DIRT) {
@@ -245,12 +281,11 @@ public class ToolStroke
 				return false;
 			}
 
-			//FIXME- use a canAutoBulldoze-style function here
+			// FIXME- use a canAutoBulldoze-style function here
 			if (isRubble(eff.getTile(0, 0))) {
 				// this tile can be auto-bulldozed
 				cost++;
-			}
-			else {
+			} else {
 				// cannot be auto-bulldozed
 				eff.toolResult(ToolResult.UH_OH);
 				return false;
@@ -271,15 +306,13 @@ public class ToolStroke
 		return true;
 	}
 
-	protected void fixZone(int xpos, int ypos)
-	{
+	protected void fixZone(int xpos, int ypos) {
 		ToolEffect eff = new ToolEffect(city, xpos, ypos);
 		fixZone(eff);
 		eff.apply();
 	}
 
-	protected void fixZone(ToolEffectIfc eff)
-	{
+	protected void fixZone(ToolEffectIfc eff) {
 		fixSingle(eff);
 
 		// "fix" the cells to the north, west, east, and south
@@ -289,105 +322,89 @@ public class ToolStroke
 		fixSingle(new TranslatedToolEffect(eff, 0, 1));
 	}
 
-	private void fixSingle(ToolEffectIfc eff)
-	{
+	private void fixSingle(ToolEffectIfc eff) {
 		int tile = eff.getTile(0, 0);
 
-		if (isRoadDynamic(tile))
-		{
+		if (isRoadDynamic(tile)) {
 			// cleanup road
 			int adjTile = 0;
 
 			// check road to north
-			if (roadConnectsSouth(eff.getTile(0, -1)))
-			{
+			if (roadConnectsSouth(eff.getTile(0, -1))) {
 				adjTile |= 1;
 			}
 
 			// check road to east
-			if (roadConnectsWest(eff.getTile(1, 0)))
-			{
+			if (roadConnectsWest(eff.getTile(1, 0))) {
 				adjTile |= 2;
 			}
 
 			// check road to south
-			if (roadConnectsNorth(eff.getTile(0, 1)))
-			{
+			if (roadConnectsNorth(eff.getTile(0, 1))) {
 				adjTile |= 4;
 			}
 
 			// check road to west
-			if (roadConnectsEast(eff.getTile(-1, 0)))
-			{
+			if (roadConnectsEast(eff.getTile(-1, 0))) {
 				adjTile |= 8;
 			}
 
 			eff.setTile(0, 0, RoadTable[adjTile]);
-		} //endif on a road tile
+		} // endif on a road tile
 
-		else if (isRailDynamic(tile))
-		{
+		else if (isRailDynamic(tile)) {
 			// cleanup Rail
 			int adjTile = 0;
 
 			// check rail to north
-			if (railConnectsSouth(eff.getTile(0, -1)))
-			{
+			if (railConnectsSouth(eff.getTile(0, -1))) {
 				adjTile |= 1;
 			}
 
 			// check rail to east
-			if (railConnectsWest(eff.getTile(1, 0)))
-			{
+			if (railConnectsWest(eff.getTile(1, 0))) {
 				adjTile |= 2;
 			}
 
 			// check rail to south
-			if (railConnectsNorth(eff.getTile(0, 1)))
-			{
+			if (railConnectsNorth(eff.getTile(0, 1))) {
 				adjTile |= 4;
 			}
 
 			// check rail to west
-			if (railConnectsEast(eff.getTile(-1, 0)))
-			{
+			if (railConnectsEast(eff.getTile(-1, 0))) {
 				adjTile |= 8;
 			}
 
 			eff.setTile(0, 0, RailTable[adjTile]);
-		} //end if on a rail tile
+		} // end if on a rail tile
 
-		else if (isWireDynamic(tile))
-		{
+		else if (isWireDynamic(tile)) {
 			// Cleanup Wire
 			int adjTile = 0;
 
 			// check wire to north
-			if (wireConnectsSouth(eff.getTile(0, -1)))
-			{
+			if (wireConnectsSouth(eff.getTile(0, -1))) {
 				adjTile |= 1;
 			}
 
 			// check wire to east
-			if (wireConnectsWest(eff.getTile(1, 0)))
-			{
+			if (wireConnectsWest(eff.getTile(1, 0))) {
 				adjTile |= 2;
 			}
 
 			// check wire to south
-			if (wireConnectsNorth(eff.getTile(0, 1)))
-			{
+			if (wireConnectsNorth(eff.getTile(0, 1))) {
 				adjTile |= 4;
 			}
 
 			// check wire to west
-			if (wireConnectsEast(eff.getTile(-1, 0)))
-			{
+			if (wireConnectsEast(eff.getTile(-1, 0))) {
 				adjTile |= 8;
 			}
 
 			eff.setTile(0, 0, WireTable[adjTile]);
-		} //end if on a rail tile
+		} // end if on a rail tile
 
 		return;
 	}

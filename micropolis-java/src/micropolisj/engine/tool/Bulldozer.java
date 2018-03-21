@@ -21,6 +21,9 @@ import micropolisj.engine.CityDimension;
 import micropolisj.engine.CityRect;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.Sound;
+import micropolisj.engine.map.BuildingType;
+import micropolisj.engine.map.MapPosition;
+import micropolisj.engine.tool.ToolEvent.EventType;
 
 class Bulldozer extends ToolStroke
 {
@@ -108,6 +111,7 @@ class Bulldozer extends ToolStroke
 
 		fixZone(eff);
 		eff.spend(1);
+		eff.addEvent(EventType.bulldoze,MapPosition.at(0,0));
 		return;
 	}
 
@@ -123,6 +127,7 @@ class Bulldozer extends ToolStroke
 					int z = inPreview ? 0 : city.PRNG.nextInt(3);
 					int nTile = TINYEXP + z;
 					eff.setTile(xx, yy, nTile);
+					eff.addEvent(EventType.bulldoze,MapPosition.at(xx, yy));
 				}
 			}
 		}

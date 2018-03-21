@@ -51,6 +51,10 @@ public class MapBase<T> {
 		return map.containsKey(Objects.requireNonNull(pos));
 	}
 	
+	public T remove(MapPosition pos) {
+		return map.remove(pos);
+	}
+	
 	public Set<MapPosition> keySet() {
 		return map.keySet();
 	}
@@ -77,5 +81,12 @@ public class MapBase<T> {
 	    }
 	    return result;
 	}
+
+	@Override
+	public String toString() {
+		return "MapBase [map=" + map + ", dim=" + dim + "]";
+	}
+	
+	
 	
 }

@@ -89,6 +89,8 @@ import micropolisj.engine.subway.SubwayNetwork;
 import micropolisj.engine.subway.SubwayStation;
 import micropolisj.engine.tool.ToolEffect;
 import micropolisj.engine.tool.ToolEffectIfc;
+import micropolisj.engine.tool.ToolEvent;
+import micropolisj.engine.tool.ToolEvent.EventType;
 
 /**
  * The main simulation engine for Micropolis. The front-end should call
@@ -330,8 +332,12 @@ public class Micropolis {
 		centerMassY = hY;
 	}
 
-	public void addSubwayStation(MapPosition pos) {
-		subNet.addStation(pos);
+	public boolean addSubwayStation(MapPosition pos) {
+		return subNet.addStation(pos);
+	}
+
+	public boolean removeSubwayStation(MapPosition pos) {
+		return subNet.removeStation(pos);
 	}
 
 	public void setSubwayPercent(double newSubPerc) {
@@ -674,7 +680,7 @@ public class Micropolis {
 				policeMap[y][x] = 0;
 			}
 		}
-		
+
 		subNet.startNewUsageCountPeriod();
 	}
 
@@ -1645,6 +1651,7 @@ public class Micropolis {
 	Map<String, TileBehavior> tileBehaviors;
 
 	void initTileBehaviors() {
+		// TODO integrate with BuildingType, caution special cases like ChurchHospital,
 		HashMap<String, TileBehavior> bb;
 		bb = new HashMap<String, TileBehavior>();
 
@@ -2974,12 +2981,26 @@ public class Micropolis {
 
 	// TODO move to map, TODO subway ass Building
 	public List<SubwayStation> getSubways() {
-		return map.getAllMapPosOfType(BuildingType.subway).stream().map(aPos -> new SubwayStation(aPos))
-				.collect(Collectors.toList());
+		return subNet.getStations();
 	}
 
 	public SubwayNetwork getSubNet() {
 		return subNet;
+	}
+
+	public void sendToolEvents(List<ToolEvent> events) {
+		for (ToolEvent toolEvent : events) {
+			MapPosition centerPos = toolEvent.getCenterPos();
+			if (toolEvent.getEvType() == EventType.build) {
+				if (toolEvent.getBuilding() == BuildingType.subway) {
+					addSubwayStation(centerPos);
+				}
+			} else if (toolEvent.getEvType() == EventType.bulldoze) {
+				map.bulldoze(centerPos);
+				removeSubwayStation(centerPos);
+			} else
+				throw new UnsupportedOperationException();
+		}
 	}
 
 }
